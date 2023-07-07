@@ -1,12 +1,7 @@
 bindkey -e
 
-if which zsh > /dev/null; then
-  export SHELL=$(which zsh)
-fi
-
-
-
 # #load common functions
+source ~/.config/terminal-config/bash-files/common-functions.sh
 source ~/.config/terminal-config/bash-files/zsh/functions.sh
 source ~/.config/terminal-config/bash-files/zsh/bindings.sh
 source ~/.config/terminal-config/bash-files/zsh/fzf-config.sh
