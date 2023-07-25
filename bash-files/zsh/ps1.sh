@@ -30,20 +30,22 @@ function git_branch() {
     fi
 }
 
-function backround_jobs {
-  echo $(jobs -l |awk '{print $5}'|sort|uniq -c|awk '{printf("%s: %s ", $2, $1)}')
+function _background_jobs() {
+  if [[ -n "$(jobs)" ]]; then
+    __jobs="$(jobs -p |awk '{print $5}'|uniq -c|xargs)"
+    export background_jobs="%F{yellow}* %F{cyan}${__jobs}%F{yellow} ¯\_(ツ)_/¯"
+  else
+    export background_jobs=""
+  fi
 }
 
-function show_background_jobs {
-  HAS_JOBS="$(jobs -p)"
-  JOBS="jobs: %F{cyan} ❇️  %F{yellow}$(backround_jobs)%f"
-  echo "${HAS_JOBS:+$JOBS}"
-}
 export CLICOLOR=1
 
 export LSCOLORS=ExFxBxDxCxegedabagacad
 
-
 setopt prompt_subst
 
-PROMPT='%F{green}%n%f@%F{red}%~%f $(git_branch) $(show_background_jobs)'$'\n%f%F{yellow}~> %f'
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _background_jobs
+
+PROMPT='%F{green}%n%f@%F{red}%~%f $(git_branch)${background_jobs:+$background_jobs}'$'\n%f%F{yellow}~> %f'

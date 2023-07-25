@@ -1,4 +1,3 @@
-bindkey -e
 
 # #load common functions
 source ~/.config/terminal-config/bash-files/common-functions.sh
@@ -13,3 +12,4 @@ source ~/.config/terminal-config/bash-files/zsh/autocomplete.sh
 source ~/.config/terminal-config/bash-files/aliases.sh
 source ~/.config/terminal-config/bash-files/dircolors.sh
 source ~/.config/terminal-config/bash-files/rbenv.sh
+source ~/.config/terminal-config/bash-files/zsh/history.sh

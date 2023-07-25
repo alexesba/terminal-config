@@ -8,13 +8,6 @@ case $- in
       *) return;;
 esac
 
-export CLICOLOR=1
-export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
 source ~/.config/terminal-config/bash-files/os-config.sh
 
 export PATH="/usr/local/bin:$PATH"
-
-export HISTFILE=~/.zsh_history
-export HISTTIMEFORMAT="[%F %T] "
-setopt HIST_FIND_NO_DUPS
-setopt INC_APPEND_HISTORY

@@ -1,3 +1,5 @@
+bindkey -e
+
 zle -N fz-then-open-in-editor fzf_then_open_in_editor
 
 bindkey "^o" fz-then-open-in-editor
