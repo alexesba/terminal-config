@@ -8,6 +8,7 @@ source ~/.config/terminal-config/bash-files/zsh/nvm.sh
 source ~/.config/terminal-config/bash-files/zsh/ps1.sh
 source ~/.config/terminal-config/bash-files/zsh/nvmrc.sh
 source ~/.config/terminal-config/bash-files/zsh/autocomplete.sh
+source ~/.config/terminal-config/bash-files/zsh/pyenv.sh
 
 source ~/.config/terminal-config/bash-files/aliases.sh
 source ~/.config/terminal-config/bash-files/dircolors.sh

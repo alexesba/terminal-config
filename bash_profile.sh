@@ -8,6 +8,10 @@ case $- in
       *) return;;
 esac
 
-source ~/.config/terminal-config/bash-files/os-config.sh
+if [ -f ~/.bash_custom ]; then
+  source ~/.bash_custom
+fi
 
 export PATH="/usr/local/bin:$PATH"
+
+source ~/.config/terminal-config/bash-files/os-config.sh
