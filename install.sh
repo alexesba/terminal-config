@@ -198,7 +198,10 @@ if [[ $INSTALL_RBENV =~ ^[Yy]$ ]]; then
     echo -e "  ${GREEN}✓${RESET}  rbenv already installed — skipping."
   else
     if [[ "$OSTYPE" =~ ^darwin ]]; then
-      brew install rbenv ruby-build
+      # libffi is required to build Ruby on macOS (especially newer Clang versions)
+      echo -e "  Installing dependencies…"
+      brew install rbenv ruby-build libffi
+      echo -e "  ${GREEN}✓${RESET}  rbenv + ruby-build + libffi installed."
     else
       if [ -d ~/.rbenv ]; then
         echo -e "  ${GREEN}✓${RESET}  ~/.rbenv already exists — skipping clone."
