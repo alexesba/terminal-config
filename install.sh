@@ -46,6 +46,33 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
+# Prompts yes/no and loops until the user enters y or n (case-insensitive).
+# Usage: ask_yn "prompt text"; result in $REPLY
+ask_yn() {
+  local prompt="$1"
+  while true; do
+    read -p $"   $prompt \033[2m(y/n)\033[0m " -n 1 -r; echo
+    case "$REPLY" in
+      [Yy]|[Nn]) return ;;
+      *) echo -e "  ${YELLOW}⚠${RESET}  Please enter ${BOLD}y${RESET} or ${BOLD}n${RESET}." ;;
+    esac
+  done
+}
+
+# Prompts a numbered choice and loops until a valid number is entered.
+# Usage: ask_choice "prompt text" <max>; result in $REPLY
+ask_choice() {
+  local prompt="$1"
+  local max="$2"
+  while true; do
+    read -p $"   $prompt \033[2m[1-${max}]\033[0m: " -n 1 -r; echo
+    if [[ "$REPLY" =~ ^[1-9]$ ]] && (( REPLY >= 1 && REPLY <= max )); then
+      return
+    fi
+    echo -e "  ${YELLOW}⚠${RESET}  Please enter a number between ${BOLD}1${RESET} and ${BOLD}${max}${RESET}."
+  done
+}
+
 # Detect shell
 if which zsh > /dev/null; then
   TEM_SHELL=$(which zsh)
@@ -69,7 +96,7 @@ echo ""
 echo -e "${BOLD}1. Shell RC ($BASHFILE)${RESET}"
 echo -e "   ${DIM}Links bash_profile.sh → ~/$BASHFILE${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_SHELL=$REPLY
 echo ""
 
@@ -77,14 +104,14 @@ echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
 echo -e "   ${DIM}Links tmux.conf → ~/.tmux.conf${RESET}"
 echo    "   Custom keybindings, status bar, and plugin settings."
 echo    "   tmux will be installed via apt/brew if not already present."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_TMUX=$REPLY
 echo ""
 
 echo -e "${BOLD}3. Bash aliases (.bash_aliases)${RESET}"
 echo -e "   ${DIM}Links bash-files/bash_aliases.sh → ~/.bash_aliases${RESET}"
 echo    "   Shorthand commands and convenience functions."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_ALIASES=$REPLY
 echo ""
 
@@ -94,35 +121,35 @@ echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacrit
 echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
 echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ ~/.config/wezterm/wezterm.lua${RESET}"
 echo -e "     ${BOLD}4)${RESET} Skip"
-read -p $'   Choice \033[2m[1-4]\033[0m: ' -n 1 -r; echo
+ask_choice "Choice" 4
 INSTALL_TERMINAL=$REPLY
 echo ""
 
 echo -e "${BOLD}5. zsh-autosuggestions${RESET}"
 echo -e "   ${DIM}Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions).${RESET}"
 echo    "   Suggests commands as you type based on your history."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_AUTOSUGG=$REPLY
 echo ""
 
-echo -e "${BOLD}7. rbenv — Ruby version manager${RESET}"
+echo -e "${BOLD}6. rbenv — Ruby version manager${RESET}"
 echo -e "   ${DIM}Installed via brew (macOS) or git clone on Linux.${RESET}"
 echo    "   Manages multiple Ruby versions per project via .ruby-version."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_RBENV=$REPLY
 echo ""
 
-echo -e "${BOLD}8. nvm — Node version manager${RESET}"
+echo -e "${BOLD}7. nvm — Node version manager${RESET}"
 echo -e "   ${DIM}Installed via the official nvm install script (latest version).${RESET}"
 echo    "   Switches Node versions automatically based on .nvmrc files."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_NVM=$REPLY
 echo ""
 
-echo -e "${BOLD}9. FZF — fuzzy finder${RESET}"
+echo -e "${BOLD}8. FZF — fuzzy finder${RESET}"
 echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
 echo    "   Fuzzy search for files, command history, and more."
-read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+ask_yn "Install?"
 INSTALL_FZF=$REPLY
 echo ""
 
