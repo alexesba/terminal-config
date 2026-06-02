@@ -1,16 +1,16 @@
 
 # #load common functions
-source ~/.config/terminal-config/bash-files/common-functions.sh
-source ~/.config/terminal-config/bash-files/zsh/functions.sh
-source ~/.config/terminal-config/bash-files/zsh/bindings.sh
-source ~/.config/terminal-config/bash-files/zsh/fzf-config.sh
-source ~/.config/terminal-config/bash-files/zsh/nvm.sh
-source ~/.config/terminal-config/bash-files/zsh/ps1.sh
-source ~/.config/terminal-config/bash-files/zsh/nvmrc.sh
-source ~/.config/terminal-config/bash-files/zsh/autocomplete.sh
-source ~/.config/terminal-config/bash-files/zsh/pyenv.sh
+source "$DOTFILES_DIR/bash-files/common-functions.sh"
+source "$DOTFILES_DIR/bash-files/zsh/functions.sh"
+source "$DOTFILES_DIR/bash-files/zsh/bindings.sh"
+source "$DOTFILES_DIR/bash-files/zsh/fzf-config.sh"
+source "$DOTFILES_DIR/bash-files/zsh/nvm.sh"
+source "$DOTFILES_DIR/bash-files/zsh/ps1.sh"
+source "$DOTFILES_DIR/bash-files/zsh/nvmrc.sh"
+source "$DOTFILES_DIR/bash-files/zsh/autocomplete.sh"
+source "$DOTFILES_DIR/bash-files/zsh/pyenv.sh"
 
-source ~/.config/terminal-config/bash-files/aliases.sh
-source ~/.config/terminal-config/bash-files/dircolors.sh
-source ~/.config/terminal-config/bash-files/rbenv.sh
-source ~/.config/terminal-config/bash-files/zsh/history.sh
+source "$DOTFILES_DIR/bash-files/aliases.sh"
+source "$DOTFILES_DIR/bash-files/dircolors.sh"
+source "$DOTFILES_DIR/bash-files/rbenv.sh"
+source "$DOTFILES_DIR/bash-files/zsh/history.sh"

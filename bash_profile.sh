@@ -1,4 +1,4 @@
-# ~/.bashrc: executed by bash(1) for non-login shellskk.
+# ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
@@ -8,10 +8,17 @@ case $- in
       *) return;;
 esac
 
-if [ -f ~/.bash_custom ]; then
-  source ~/.bash_custom
+# Resolve the dotfiles directory regardless of where the repo lives
+if [ -n "$ZSH_VERSION" ]; then
+  export DOTFILES_DIR="${${(%):-%x}:A:h}"
+else
+  export DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+if [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ]; then
+  source "$DOTFILES_DIR/bash-files/bash_custom.sh"
 fi
 
 export PATH="/usr/local/bin:$PATH"
 
-source ~/.config/terminal-config/bash-files/os-config.sh
+source "$DOTFILES_DIR/bash-files/os-config.sh"
