@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 cat << "EOF"
        _       _    __ _ _             _           _        _ _
     __| | ___ | |_ / _(_) | ___  ___  (_)_ __  ___| |_ __ _| | | ___ _ __
@@ -6,14 +7,51 @@ cat << "EOF"
    \__,_|\___/ \__|_| |_|_|\___||___/ |_|_| |_|___/\__\__,_|_|_|\___|_|
 EOF
 
-# Shell configuration
+# Resolve the directory where this script lives, regardless of where it's called from
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Colors
+RESET="\033[0m"
+BOLD="\033[1m"
+CYAN="\033[1;36m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+DIM="\033[2m"
+
+echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
+echo ""
+
+# Links $1 (source) to $2 (destination), idempotently:
+#   • already correct symlink  → skips
+#   • symlink to wrong target  → removes and relinks
+#   • regular file/dir         → backs up then links
+link_file() {
+  local src="$1"
+  local dest="$2"
+
+  if [ -L "$dest" ]; then
+    if [ "$(readlink "$dest")" = "$src" ]; then
+      echo -e "  ${GREEN}✓${RESET}  $dest already linked — skipping."
+      return
+    else
+      echo -e "  ${YELLOW}⚠${RESET}  $dest points elsewhere — relinking."
+      rm "$dest"
+    fi
+  elif [ -e "$dest" ]; then
+    echo -e "  ${YELLOW}⚠${RESET}  $dest already exists — backing up as ${DIM}$dest.old${RESET}"
+    mv "$dest" "$dest.old"
+  fi
+
+  ln -s "$src" "$dest"
+  echo -e "  ${GREEN}✓${RESET}  $dest linked."
+}
+
+# Detect shell
 if which zsh > /dev/null; then
   TEM_SHELL=$(which zsh)
 elif which bash > /dev/null; then
   TEM_SHELL=$(which bash)
 fi
-
 
 if [[ $TEM_SHELL == *'zsh' ]]; then
   BASHFILE=".zshrc"
@@ -21,95 +59,118 @@ elif [[ $TEM_SHELL == *'bash' ]]; then
   BASHFILE=".bashrc"
 fi
 
-echo "$TEM_SHELL was selected as default shell"
+echo -e "${DIM}Detected shell: $TEM_SHELL → will configure ~/$BASHFILE${RESET}"
+echo ""
 
-read -p "Do you want to install $BASHFILE config file?(y/n)" -n 1 -r
-echo
+# ── Gather input ──────────────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}Let's set up your environment. Answer a few questions first:${RESET}"
+echo ""
 
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  if [ -f ~/$BASHFILE ]; then
-    echo "$BASHFILE already exist.. performing a backup before link the $BASHFILE"
-    mv ~/$BASHFILE ~/$BASHFILE.old
-    echo "your previous configuration was renamed as ~/$BASHFILE.old"
-  fi
+echo -e "${BOLD}1. Shell RC ($BASHFILE)${RESET}"
+echo -e "   ${DIM}Links bash_profile.sh → ~/$BASHFILE${RESET}"
+echo    "   Provides aliases, PATH tweaks, and prompt settings."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_SHELL=$REPLY
+echo ""
 
-  ln -s ~/.config/nvim/bash_profile.sh ~/$BASHFILE
+echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
+echo -e "   ${DIM}Links tmux.conf → ~/.tmux.conf${RESET}"
+echo    "   Custom keybindings, status bar, and plugin settings."
+echo    "   tmux will be installed via apt/brew if not already present."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_TMUX=$REPLY
+echo ""
 
-  echo "$BASHFILE linked correctly!"
+echo -e "${BOLD}3. Bash aliases (.bash_aliases)${RESET}"
+echo -e "   ${DIM}Links bash-files/bash_aliases.sh → ~/.bash_aliases${RESET}"
+echo    "   Shorthand commands and convenience functions."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_ALIASES=$REPLY
+echo ""
+
+echo -e "${BOLD}4. Terminal emulator config${RESET}"
+echo    "   Pick a terminal (or skip):"
+echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacritty.yml${RESET}"
+echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
+echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ ~/.config/wezterm/wezterm.lua${RESET}"
+echo -e "     ${BOLD}4)${RESET} Skip"
+read -p $'   Choice \033[2m[1-4]\033[0m: ' -n 1 -r; echo
+INSTALL_TERMINAL=$REPLY
+echo ""
+
+echo -e "${BOLD}5. FZF — fuzzy finder${RESET}"
+echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
+echo    "   Fuzzy search for files, command history, and more."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_FZF=$REPLY
+echo ""
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}━━━  Installing  ━━━${RESET}"
+echo ""
+
+# ── Shell RC ──────────────────────────────────────────────────────────────────
+if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ Shell RC${RESET}"
+  link_file "$DOTFILES_DIR/bash_profile.sh" ~/$BASHFILE
+  echo ""
 fi
 
-read -p "Do you want to install .tmux.conf config file?(y/n)" -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-  if [[ "$OSTYPE" =~ ^linux ]]; then
-    sudo apt install tmux
+# ── tmux ──────────────────────────────────────────────────────────────────────
+if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ tmux${RESET}"
+  if ! command -v tmux &>/dev/null; then
+    if [[ "$OSTYPE" =~ ^linux ]]; then
+      sudo apt install tmux
+    else
+      brew install tmux
+    fi
   else
-    brew install tmux
+    echo -e "  ${GREEN}✓${RESET}  tmux already installed — skipping package install."
   fi
-  if [ -f ~/.tmux.conf ]; then
-    echo ".tmux.conf already exist.. performing a backup before link the .tmux.conf"
-    mv ~/.tmux.conf ~/.tmux.conf.old
-    echo "your previous configuration was renamed as ~/.tmux.conf.old"
+  link_file "$DOTFILES_DIR/tmux.conf" ~/.tmux.conf
+  echo ""
+fi
+
+# ── Bash aliases ──────────────────────────────────────────────────────────────
+if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ Bash aliases${RESET}"
+  link_file "$DOTFILES_DIR/bash-files/bash_aliases.sh" ~/.bash_aliases
+  echo ""
+fi
+
+# ── Terminal emulator ─────────────────────────────────────────────────────────
+if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  echo -e "${BOLD}→ Terminal emulator${RESET}"
+  case "$INSTALL_TERMINAL" in
+    1)
+      mkdir -p ~/.config/alacritty
+      source "$DOTFILES_DIR/terminfo/install.sh"
+      link_file "$DOTFILES_DIR/terminals/alacritty.yml" ~/.config/alacritty/alacritty.yml
+      ;;
+    2)
+      mkdir -p ~/.config/kitty
+      source "$DOTFILES_DIR/terminfo/install.sh"
+      link_file "$DOTFILES_DIR/terminals/kitty.conf" ~/.config/kitty/kitty.conf
+      ;;
+    3)
+      mkdir -p ~/.config/wezterm
+      link_file "$DOTFILES_DIR/terminals/wezterm.lua" ~/.config/wezterm/wezterm.lua
+      ;;
+  esac
+  echo ""
+fi
+
+# ── FZF ───────────────────────────────────────────────────────────────────────
+if [[ $INSTALL_FZF =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ FZF${RESET}"
+  if [ -d ~/.fzf ]; then
+    echo -e "  ${GREEN}✓${RESET}  ~/.fzf already exists — skipping clone."
+  else
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    ~/.fzf/install
   fi
-
-  ln -s ~/.config/nvim/tmux.conf ~/.tmux.conf
-
-
-  echo "tmux.conf linked correctly!."
+  echo ""
 fi
 
-read -p "Do you want to install .bash_aliases config file?(y/n)" -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  ln -s ~/.config/nvim/bash-files/bash_aliases.sh ~/.bash_aliases
-  echo ".bash_aliases linked correctly!."
-fi
-
-read -p "Do you want to install alacritty.yml config file?(y/n)" -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-
-  mkdir ~/.config/alacritty -p
-
-  if [ -f ~/.config/alacritty/alacritty.yml ]; then
-    echo "~/.config/alacritty/alacritty.yml already exist.. performing a backup before link the alacritty.yml"
-    mv ~/.config/alacritty/alacritty.yml ~/.config/alacritty/alacritty.yml.old
-    echo "your previous configuration was renamed as ~/.config/alacritty/alacritty.yml.old"
-  fi
-
-  source ~/.config/nvim/terminfo/install.sh
-
-  ln -s ~/.config/nvim/terminals/alacritty.yml ~/.config/alacritty
-  echo "alacritty.yml linked correctly!."
-fi
-
-read -p "Do you want to install kitty.conf config file?(y/n)" -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-
-  mkdir ~/.config/kitty -p
-
-  if [ -f ~/.config/kitty/kitty.conf ]; then
-    echo "~/.config/kitty/kitty.conf already exist.. performing a backup before link the alacritty.yml"
-    mv ~/.config/kitty/kitty.conf ~/.config/kitty/kitty.conf.old
-    echo "your previous configuration was renamed as ~/.config/kitty/kitty.conf.old"
-  fi
-
-  source ~/.config/nvim/terminfo/install.sh
-
-  ln -s ~/.config/nvim/terminals/kitty.conf ~/.config/kitty
-  echo "kitty.conf linked correctly!."
-fi
-
-read -p "Do you want to install FZF (command line fuzzy finder)?(y/n)" -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-  ~/.fzf/install
-fi
+echo -e "${GREEN}${BOLD}Done!${RESET}"
