@@ -33,7 +33,7 @@ function _precmd_jobs() {
     parts+=("%F{yellow}${counts[$prog]}%F{white}[${prog}]%f")
   done
 
-  _jobs_prompt="%F{yellow}⚙ ${(j:, :)parts} "
+  _jobs_prompt="%F{yellow}⏸ ${(j:, :)parts} "
 }
 
 add-zsh-hook precmd _precmd_jobs
