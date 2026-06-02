@@ -2,7 +2,7 @@ local wezterm = require('wezterm')
 
 return {
   color_scheme = 'Sonokai (Gogh)',
-  default_prog = { '/opt/homebrew/bin/zsh', '-l' },
+  default_prog = { '/bin/zsh', '-l' },
   font_size = 14.0,
   window_decorations = 'RESIZE',
   enable_tab_bar = false,
