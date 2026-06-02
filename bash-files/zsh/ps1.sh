@@ -13,14 +13,27 @@ zstyle ':vcs_info:git:*' actionformats ' %F{yellow}(%b|%a%f%c%u%F{yellow})%f'
 add-zsh-hook precmd vcs_info
 
 # ── Background jobs ───────────────────────────────────────────────────────────
-# ${#jobstates} is a zsh builtin — no subshell needed
+# $jobtexts is a zsh builtin associative array: job_id -> command string
+# Displays grouped counts per program, e.g.: ⚙ 2[nvim], 1[ruby]
 function _precmd_jobs() {
-  local count=${#jobstates}
-  if (( count > 0 )); then
-    _jobs_prompt="%F{yellow}⚙ ${count}%f "
-  else
+  if (( ${#jobstates} == 0 )); then
     _jobs_prompt=""
+    return
   fi
+
+  local -A counts=()
+  local job
+  for job in ${(k)jobtexts}; do
+    local prog="${jobtexts[$job]%% *}"
+    (( counts[$prog]++ ))
+  done
+
+  local parts=()
+  for prog in ${(k)counts}; do
+    parts+=("%F{yellow}${counts[$prog]}%F{white}[${prog}]%f")
+  done
+
+  _jobs_prompt="%F{yellow}⚙ ${(j:, :)parts} "
 }
 
 add-zsh-hook precmd _precmd_jobs
