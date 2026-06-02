@@ -112,7 +112,14 @@ read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
 INSTALL_RBENV=$REPLY
 echo ""
 
-echo -e "${BOLD}8. FZF — fuzzy finder${RESET}"
+echo -e "${BOLD}8. nvm — Node version manager${RESET}"
+echo -e "   ${DIM}Installed via the official nvm install script (latest version).${RESET}"
+echo    "   Switches Node versions automatically based on .nvmrc files."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_NVM=$REPLY
+echo ""
+
+echo -e "${BOLD}9. FZF — fuzzy finder${RESET}"
 echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
 echo    "   Fuzzy search for files, command history, and more."
 read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
@@ -210,6 +217,22 @@ if [[ $INSTALL_RBENV =~ ^[Yy]$ ]]; then
         git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
       fi
     fi
+  fi
+  echo ""
+fi
+
+# ── nvm ───────────────────────────────────────────────────────────────────────
+if [[ $INSTALL_NVM =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ nvm${RESET}"
+  if [ -d "$HOME/.nvm" ]; then
+    echo -e "  ${GREEN}✓${RESET}  ~/.nvm already exists — skipping."
+  else
+    echo -e "  Fetching latest nvm version…"
+    NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest \
+      | grep '"tag_name"' | cut -d'"' -f4)
+    echo -e "  Installing nvm ${NVM_VERSION}…"
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+    echo -e "  ${GREEN}✓${RESET}  nvm ${NVM_VERSION} installed."
   fi
   echo ""
 fi
