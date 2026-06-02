@@ -174,3 +174,6 @@ if [[ $INSTALL_FZF =~ ^[Yy]$ ]]; then
 fi
 
 echo -e "${GREEN}${BOLD}Done!${RESET}"
+echo ""
+echo -e "  Reloading shell…"
+exec $SHELL -l
