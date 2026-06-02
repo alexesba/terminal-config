@@ -98,7 +98,14 @@ read -p $'   Choice \033[2m[1-4]\033[0m: ' -n 1 -r; echo
 INSTALL_TERMINAL=$REPLY
 echo ""
 
-echo -e "${BOLD}5. FZF — fuzzy finder${RESET}"
+echo -e "${BOLD}5. zsh-autosuggestions${RESET}"
+echo -e "   ${DIM}Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions).${RESET}"
+echo    "   Suggests commands as you type based on your history."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_AUTOSUGG=$REPLY
+echo ""
+
+echo -e "${BOLD}6. FZF — fuzzy finder${RESET}"
 echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
 echo    "   Fuzzy search for files, command history, and more."
 read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
@@ -158,6 +165,22 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
       link_file "$DOTFILES_DIR/terminals/wezterm.lua" ~/.config/wezterm/wezterm.lua
       ;;
   esac
+  echo ""
+fi
+
+# ── zsh-autosuggestions ───────────────────────────────────────────────────────
+if [[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ zsh-autosuggestions${RESET}"
+  if [[ "$OSTYPE" =~ ^darwin ]]; then
+    brew install zsh-autosuggestions
+  else
+    if [ -d ~/.zsh/zsh-autosuggestions ]; then
+      echo -e "  ${GREEN}✓${RESET}  ~/.zsh/zsh-autosuggestions already exists — skipping."
+    else
+      mkdir -p ~/.zsh
+      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+    fi
+  fi
   echo ""
 fi
 
