@@ -1,20 +1,11 @@
 local wezterm = require('wezterm')
 
--- Resolve zsh path at runtime so it works regardless of where it's installed
--- (e.g. /bin/zsh on macOS system, /usr/bin/zsh on Linux, /opt/homebrew/bin/zsh on Apple Silicon)
-local function find_shell(name)
-  local handle = io.popen('which ' .. name .. ' 2>/dev/null')
-  if handle then
-    local path = handle:read('*l')
-    handle:close()
-    if path and path ~= '' then return path end
-  end
-  return '/bin/' .. name
-end
+-- Use the user's default shell ($SHELL), falling back to /bin/sh if unset
+local default_shell = os.getenv('SHELL') or '/bin/sh'
 
 return {
   color_scheme = 'Sonokai (Gogh)',
-  default_prog = { find_shell('zsh'), '-l' },
+  default_prog = { default_shell, '-l' },
   font_size = 14.0,
   window_decorations = 'RESIZE',
   enable_tab_bar = false,
