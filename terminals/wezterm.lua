@@ -1,11 +1,9 @@
 local wezterm = require('wezterm')
 
--- Use the user's default shell ($SHELL), falling back to /bin/sh if unset
-local default_shell = os.getenv('SHELL') or '/bin/sh'
-
 return {
   color_scheme = 'Sonokai (Gogh)',
-  default_prog = { default_shell, '-l' },
+  -- default_prog is intentionally unset — WezTerm will use $SHELL as a login
+  -- shell automatically, which works correctly for any shell (zsh, fish, nushell, etc.)
   font_size = 14.0,
   window_decorations = 'RESIZE',
   enable_tab_bar = false,
