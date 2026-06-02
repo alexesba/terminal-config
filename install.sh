@@ -105,7 +105,14 @@ read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
 INSTALL_AUTOSUGG=$REPLY
 echo ""
 
-echo -e "${BOLD}6. FZF — fuzzy finder${RESET}"
+echo -e "${BOLD}7. rbenv — Ruby version manager${RESET}"
+echo -e "   ${DIM}Installed via brew (macOS) or git clone on Linux.${RESET}"
+echo    "   Manages multiple Ruby versions per project via .ruby-version."
+read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
+INSTALL_RBENV=$REPLY
+echo ""
+
+echo -e "${BOLD}8. FZF — fuzzy finder${RESET}"
 echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
 echo    "   Fuzzy search for files, command history, and more."
 read -p $'   Install? \033[2m(y/n)\033[0m ' -n 1 -r; echo
@@ -179,6 +186,26 @@ if [[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]]; then
     else
       mkdir -p ~/.zsh
       git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+    fi
+  fi
+  echo ""
+fi
+
+# ── rbenv ─────────────────────────────────────────────────────────────────────
+if [[ $INSTALL_RBENV =~ ^[Yy]$ ]]; then
+  echo -e "${BOLD}→ rbenv${RESET}"
+  if command -v rbenv &>/dev/null; then
+    echo -e "  ${GREEN}✓${RESET}  rbenv already installed — skipping."
+  else
+    if [[ "$OSTYPE" =~ ^darwin ]]; then
+      brew install rbenv ruby-build
+    else
+      if [ -d ~/.rbenv ]; then
+        echo -e "  ${GREEN}✓${RESET}  ~/.rbenv already exists — skipping clone."
+      else
+        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+        git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+      fi
     fi
   fi
   echo ""
