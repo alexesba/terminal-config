@@ -51,7 +51,7 @@ link_file() {
 ask_yn() {
   local prompt="$1"
   while true; do
-    read -p $"   $prompt \033[2m(y/n)\033[0m " -n 1 -r; echo
+    read -p "   ${prompt} $(printf '\033[2m')(y/n)$(printf '\033[0m') " -n 1 -r; echo
     case "$REPLY" in
       [Yy]|[Nn]) return ;;
       *) echo -e "  ${YELLOW}⚠${RESET}  Please enter ${BOLD}y${RESET} or ${BOLD}n${RESET}." ;;
@@ -65,7 +65,7 @@ ask_choice() {
   local prompt="$1"
   local max="$2"
   while true; do
-    read -p $"   $prompt \033[2m[1-${max}]\033[0m: " -n 1 -r; echo
+    read -p "   ${prompt} $(printf '\033[2m')[1-${max}]$(printf '\033[0m'): " -n 1 -r; echo
     if [[ "$REPLY" =~ ^[1-9]$ ]] && (( REPLY >= 1 && REPLY <= max )); then
       return
     fi
