@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
+# Resolve the directory where this script lives, regardless of where it's called from
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$DOTFILES_DIR/lib/helpers.sh"
+
+printf "${CYAN}${BOLD}"
 cat << "EOF"
        _       _    __ _ _             _           _        _ _
     __| | ___ | |_ / _(_) | ___  ___  (_)_ __  ___| |_ __ _| | | ___ _ __
@@ -6,74 +13,9 @@ cat << "EOF"
   | (_| | (_) | |_|  _| | |  __/\__ \ | | | | \__ \ || (_| | | |  __/ |
    \__,_|\___/ \__|_| |_|_|\___||___/ |_|_| |_|___/\__\__,_|_|_|\___|_|
 EOF
+printf "${RESET}\n"
 
-# Resolve the directory where this script lives, regardless of where it's called from
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Colors
-RESET="\033[0m"
-BOLD="\033[1m"
-CYAN="\033[1;36m"
-GREEN="\033[1;32m"
-YELLOW="\033[1;33m"
-DIM="\033[2m"
-
-echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
-echo ""
-
-# Links $1 (source) to $2 (destination), idempotently:
-#   • already correct symlink  → skips
-#   • symlink to wrong target  → removes and relinks
-#   • regular file/dir         → backs up then links
-link_file() {
-  local src="$1"
-  local dest="$2"
-
-  if [ -L "$dest" ]; then
-    if [ "$(readlink "$dest")" = "$src" ]; then
-      echo -e "  ${GREEN}✓${RESET}  $dest already linked — skipping."
-      return
-    else
-      echo -e "  ${YELLOW}⚠${RESET}  $dest points elsewhere — relinking."
-      rm "$dest"
-    fi
-  elif [ -e "$dest" ]; then
-    echo -e "  ${YELLOW}⚠${RESET}  $dest already exists — backing up as ${DIM}$dest.old${RESET}"
-    mv "$dest" "$dest.old"
-  fi
-
-  ln -s "$src" "$dest"
-  echo -e "  ${GREEN}✓${RESET}  $dest linked."
-}
-
-# Prompts yes/no and loops until the user enters y or n (case-insensitive).
-# Usage: ask_yn "prompt text"; result in $REPLY
-ask_yn() {
-  local prompt="$1"
-  while true; do
-    read -p "   ${prompt} $(printf '\033[2m')(y/n)$(printf '\033[0m') " -n 1 -r; echo
-    case "$REPLY" in
-      [Yy]|[Nn]) return ;;
-      *) echo -e "  ${YELLOW}⚠${RESET}  Please enter ${BOLD}y${RESET} or ${BOLD}n${RESET}." ;;
-    esac
-  done
-}
-
-# Prompts a numbered choice and loops until a valid number is entered.
-# Usage: ask_choice "prompt text" <max>; result in $REPLY
-ask_choice() {
-  local prompt="$1"
-  local max="$2"
-  while true; do
-    read -p "   ${prompt} $(printf '\033[2m')[1-${max}]$(printf '\033[0m'): " -n 1 -r; echo
-    if [[ "$REPLY" =~ ^[1-9]$ ]] && (( REPLY >= 1 && REPLY <= max )); then
-      return
-    fi
-    echo -e "  ${YELLOW}⚠${RESET}  Please enter a number between ${BOLD}1${RESET} and ${BOLD}${max}${RESET}."
-  done
-}
-
-# Detect shell
+# ── Detect shell ──────────────────────────────────────────────────────────────
 if which zsh > /dev/null; then
   TEM_SHELL=$(which zsh)
 elif which bash > /dev/null; then
@@ -86,7 +28,8 @@ elif [[ $TEM_SHELL == *'bash' ]]; then
   BASHFILE=".bashrc"
 fi
 
-echo -e "${DIM}Detected shell: $TEM_SHELL → will configure ~/$BASHFILE${RESET}"
+echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
+echo -e "${DIM}Detected shell:  $TEM_SHELL → will configure ~/$BASHFILE${RESET}"
 echo ""
 
 # ── Gather input ──────────────────────────────────────────────────────────────
@@ -103,7 +46,7 @@ echo ""
 echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
 echo -e "   ${DIM}Links tmux.conf → ~/.tmux.conf${RESET}"
 echo    "   Custom keybindings, status bar, and plugin settings."
-echo    "   tmux will be installed via apt/brew if not already present."
+echo    "   tmux binary will be installed if not already present."
 ask_yn "Install?"
 INSTALL_TMUX=$REPLY
 echo ""
@@ -153,41 +96,28 @@ ask_yn "Install?"
 INSTALL_FZF=$REPLY
 echo ""
 
-# ── Summary ───────────────────────────────────────────────────────────────────
-echo -e "${CYAN}${BOLD}━━━  Installing  ━━━${RESET}"
+# ── Link dotfiles ─────────────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}━━━  Linking dotfiles  ━━━${RESET}"
 echo ""
 
-# ── Shell RC ──────────────────────────────────────────────────────────────────
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ Shell RC${RESET}"
   link_file "$DOTFILES_DIR/bash_profile.sh" ~/$BASHFILE
   echo ""
 fi
 
-# ── tmux ──────────────────────────────────────────────────────────────────────
 if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ tmux${RESET}"
-  if ! command -v tmux &>/dev/null; then
-    if [[ "$OSTYPE" =~ ^linux ]]; then
-      sudo apt install tmux
-    else
-      brew install tmux
-    fi
-  else
-    echo -e "  ${GREEN}✓${RESET}  tmux already installed — skipping package install."
-  fi
   link_file "$DOTFILES_DIR/tmux.conf" ~/.tmux.conf
   echo ""
 fi
 
-# ── Bash aliases ──────────────────────────────────────────────────────────────
 if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ Bash aliases${RESET}"
   link_file "$DOTFILES_DIR/bash-files/bash_aliases.sh" ~/.bash_aliases
   echo ""
 fi
 
-# ── Terminal emulator ─────────────────────────────────────────────────────────
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   echo -e "${BOLD}→ Terminal emulator${RESET}"
   case "$INSTALL_TERMINAL" in
@@ -209,73 +139,19 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   echo ""
 fi
 
-# ── zsh-autosuggestions ───────────────────────────────────────────────────────
-if [[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ zsh-autosuggestions${RESET}"
-  if [[ "$OSTYPE" =~ ^darwin ]]; then
-    brew install zsh-autosuggestions
-  else
-    if [ -d ~/.zsh/zsh-autosuggestions ]; then
-      echo -e "  ${GREEN}✓${RESET}  ~/.zsh/zsh-autosuggestions already exists — skipping."
-    else
-      mkdir -p ~/.zsh
-      git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
-    fi
-  fi
-  echo ""
+# ── Delegate tool installation to bootstrap.sh ────────────────────────────────
+BOOTSTRAP_FLAGS=()
+[[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tmux)
+[[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--autosuggestions)
+[[ $INSTALL_RBENV   =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--rbenv)
+[[ $INSTALL_NVM     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--nvm)
+[[ $INSTALL_FZF     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--fzf)
+
+if [ ${#BOOTSTRAP_FLAGS[@]} -gt 0 ]; then
+  bash "$DOTFILES_DIR/bootstrap.sh" "${BOOTSTRAP_FLAGS[@]}"
 fi
 
-# ── rbenv ─────────────────────────────────────────────────────────────────────
-if [[ $INSTALL_RBENV =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ rbenv${RESET}"
-  if command -v rbenv &>/dev/null; then
-    echo -e "  ${GREEN}✓${RESET}  rbenv already installed — skipping."
-  else
-    if [[ "$OSTYPE" =~ ^darwin ]]; then
-      # libffi is required to build Ruby on macOS (especially newer Clang versions)
-      echo -e "  Installing dependencies…"
-      brew install rbenv ruby-build libffi
-      echo -e "  ${GREEN}✓${RESET}  rbenv + ruby-build + libffi installed."
-    else
-      if [ -d ~/.rbenv ]; then
-        echo -e "  ${GREEN}✓${RESET}  ~/.rbenv already exists — skipping clone."
-      else
-        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
-        git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
-      fi
-    fi
-  fi
-  echo ""
-fi
-
-# ── nvm ───────────────────────────────────────────────────────────────────────
-if [[ $INSTALL_NVM =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ nvm${RESET}"
-  if [ -d "$HOME/.nvm" ]; then
-    echo -e "  ${GREEN}✓${RESET}  ~/.nvm already exists — skipping."
-  else
-    echo -e "  Fetching latest nvm version…"
-    NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest \
-      | grep '"tag_name"' | cut -d'"' -f4)
-    echo -e "  Installing nvm ${NVM_VERSION}…"
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
-    echo -e "  ${GREEN}✓${RESET}  nvm ${NVM_VERSION} installed."
-  fi
-  echo ""
-fi
-
-# ── FZF ───────────────────────────────────────────────────────────────────────
-if [[ $INSTALL_FZF =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ FZF${RESET}"
-  if [ -d ~/.fzf ]; then
-    echo -e "  ${GREEN}✓${RESET}  ~/.fzf already exists — skipping clone."
-  else
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install
-  fi
-  echo ""
-fi
-
+echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
 echo ""
 echo -e "  Reloading shell…"
