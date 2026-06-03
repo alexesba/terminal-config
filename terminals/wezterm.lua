@@ -9,6 +9,8 @@ return {
   enable_tab_bar = false,
   use_fancy_tab_bar = false,
   force_reverse_video_cursor = true,
+  default_cursor_style = 'BlinkingBlock',
+  cursor_blink_rate = 500,
   freetype_load_flags = 'NO_HINTING',
   font = wezterm.font({
     -- family = 'JetBrainsMonoNL Nerd Font',
