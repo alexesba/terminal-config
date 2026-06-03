@@ -134,7 +134,35 @@ ask_yn "Install?"
 INSTALL_FZF=$REPLY
 echo ""
 
-# ── Link dotfiles ─────────────────────────────────────────────────────────────
+echo -e "${BOLD}9. ripgrep — fast file search${RESET}"
+echo -e "   ${DIM}Used by FZF for file finding (faster than ag/find).${RESET}"
+echo    "   Also available as 'rg' for quick searches from the terminal."
+ask_yn "Install?"
+INSTALL_RIPGREP=$REPLY
+echo ""
+
+echo -e "${BOLD}10. bat — better cat${RESET}"
+echo -e "   ${DIM}Used by FZF for syntax-highlighted file previews.${RESET}"
+echo    "   Also replaces cat for reading files with line numbers and colour."
+ask_yn "Install?"
+INSTALL_BAT=$REPLY
+echo ""
+
+echo -e "${BOLD}11. hub — GitHub CLI wrapper${RESET}"
+echo -e "   ${DIM}Wraps git with GitHub-aware commands (alias git=hub).${RESET}"
+echo    "   Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
+ask_yn "Install?"
+INSTALL_HUB=$REPLY
+echo ""
+
+echo -e "${BOLD}12. Gogh — terminal colour schemes${RESET}"
+echo -e "   ${DIM}Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh.${RESET}"
+echo    "   Run ${BOLD}colorscheme${RESET} in your shell to fuzzy-pick and apply any scheme."
+ask_yn "Install?"
+INSTALL_GOGH=$REPLY
+echo ""
+
+
 echo -e "${CYAN}${BOLD}━━━  Linking dotfiles  ━━━${RESET}"
 echo ""
 
@@ -179,11 +207,15 @@ fi
 
 # ── Delegate tool installation to bootstrap.sh ────────────────────────────────
 BOOTSTRAP_FLAGS=()
-[[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tmux)
+[[ $INSTALL_TMUX     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tmux)
 [[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--autosuggestions)
-[[ $INSTALL_RBENV   =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--rbenv)
-[[ $INSTALL_NVM     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--nvm)
-[[ $INSTALL_FZF     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--fzf)
+[[ $INSTALL_RBENV    =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--rbenv)
+[[ $INSTALL_NVM      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--nvm)
+[[ $INSTALL_FZF      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--fzf)
+[[ $INSTALL_RIPGREP  =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--ripgrep)
+[[ $INSTALL_BAT      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--bat)
+[[ $INSTALL_HUB      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--hub)
+[[ $INSTALL_GOGH     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--gogh)
 
 if [ ${#BOOTSTRAP_FLAGS[@]} -gt 0 ]; then
   bash "$DOTFILES_DIR/bootstrap.sh" "${BOOTSTRAP_FLAGS[@]}"

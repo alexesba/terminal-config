@@ -1,0 +1,24 @@
+# bash_custom.sh — personal overrides loaded by bash_profile.sh
+#
+# This file is NOT tracked by git (see .gitignore).
+# Copy bash_custom.sh.example → bash_custom.sh and customise freely.
+#
+# Good things to put here:
+#   • Private API keys / tokens (export GITHUB_TOKEN="...")
+#   • Machine-specific PATH entries
+#   • Work-only aliases
+#   • Language server / tool paths
+
+# ── Example: extra PATH entries ───────────────────────────────────────────────
+# export PATH="$HOME/.cargo/bin:$PATH"
+# export PATH="$HOME/go/bin:$PATH"
+
+# ── Example: default editor ───────────────────────────────────────────────────
+# export EDITOR=nvim
+# export VISUAL=nvim
+
+# ── Example: gogh colour-scheme directory (used by colorscheme() function) ────
+# export GOGH_DIR="$HOME/src/gogh/installs"
+
+# ── Example: work aliases ─────────────────────────────────────────────────────
+# alias work='cd ~/Projects/work'

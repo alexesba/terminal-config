@@ -1,0 +1,19 @@
+# Personal overrides — copy bash_custom.sh.example → bash_custom.sh to customise
+bash_custom.sh
+
+# Backup files created by install.sh link_file helper
+*.old
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor swap / temp files
+*.swp
+*.swo
+*~
+
+# Environment / secrets
+.env
+.env.*

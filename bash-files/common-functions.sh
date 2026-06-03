@@ -37,7 +37,14 @@ loadnvmrc() {
 }
 
 function colorscheme() {
-  sh ~/src/gogh/installs/$(ls ~/src/gogh/installs/ |sed -e 's/\.sh$//' | fzf).sh
+  local gogh_dir="${GOGH_DIR:-$HOME/src/gogh/installs}"
+  if [ ! -d "$gogh_dir" ]; then
+    echo "gogh not found at $gogh_dir"
+    echo "Clone it: git clone https://github.com/Gogh-Co/Gogh ~/src/gogh"
+    echo "Or set GOGH_DIR in bash_custom.sh to point to your install."
+    return 1
+  fi
+  sh "$gogh_dir/$(ls "$gogh_dir" | sed -e 's/\.sh$//' | fzf).sh"
 }
 
 function restore_db {

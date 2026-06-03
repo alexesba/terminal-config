@@ -3,6 +3,7 @@
 #
 # Usage:
 #   ./bootstrap.sh [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf]
+#                  [--ripgrep] [--bat] [--hub]
 #
 # Can be called by install.sh or run standalone to (re)install individual tools.
 
@@ -14,6 +15,10 @@ DO_AUTOSUGG=false
 DO_RBENV=false
 DO_NVM=false
 DO_FZF=false
+DO_RIPGREP=false
+DO_BAT=false
+DO_HUB=false
+DO_GOGH=false
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
 for arg in "$@"; do
@@ -23,8 +28,12 @@ for arg in "$@"; do
     --rbenv)           DO_RBENV=true ;;
     --nvm)             DO_NVM=true ;;
     --fzf)             DO_FZF=true ;;
+    --ripgrep)         DO_RIPGREP=true ;;
+    --bat)             DO_BAT=true ;;
+    --hub)             DO_HUB=true ;;
+    --gogh)            DO_GOGH=true ;;
     --help)
-      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf]"
+      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh]"
       exit 0
       ;;
     *)
@@ -33,7 +42,8 @@ for arg in "$@"; do
   esac
 done
 
-if ! $DO_TMUX && ! $DO_AUTOSUGG && ! $DO_RBENV && ! $DO_NVM && ! $DO_FZF; then
+if ! $DO_TMUX && ! $DO_AUTOSUGG && ! $DO_RBENV && ! $DO_NVM && ! $DO_FZF && \
+   ! $DO_RIPGREP && ! $DO_BAT && ! $DO_HUB && ! $DO_GOGH; then
   echo -e "${YELLOW}No tools selected. Run with --help to see available flags.${RESET}"
   exit 0
 fi
@@ -69,6 +79,14 @@ if $DO_TMUX; then
     fi
   else
     brew install tmux
+  fi
+  # ── TPM (Tmux Plugin Manager) ───────────────────────────────────────────────
+  if [ -d ~/.tmux/plugins/tpm ]; then
+    echo -e "  ${GREEN}✓${RESET}  TPM already installed — skipping."
+  else
+    echo -e "  Installing TPM…"
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+    echo -e "  ${GREEN}✓${RESET}  TPM installed. Open tmux and press ${BOLD}prefix + I${RESET} to install plugins."
   fi
   echo ""
 fi
@@ -133,6 +151,59 @@ if $DO_FZF; then
   else
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     ~/.fzf/install
+  fi
+  echo ""
+fi
+
+# ── ripgrep ───────────────────────────────────────────────────────────────────
+if $DO_RIPGREP; then
+  echo -e "${BOLD}→ ripgrep (rg)${RESET}"
+  if command -v rg &>/dev/null; then
+    echo -e "  ${GREEN}✓${RESET}  ripgrep already installed — skipping."
+  elif [[ "$OSTYPE" =~ ^darwin ]]; then
+    brew install ripgrep
+  else
+    _linux_install ripgrep
+  fi
+  echo ""
+fi
+
+# ── bat ───────────────────────────────────────────────────────────────────────
+if $DO_BAT; then
+  echo -e "${BOLD}→ bat${RESET}"
+  if command -v bat &>/dev/null; then
+    echo -e "  ${GREEN}✓${RESET}  bat already installed — skipping."
+  elif [[ "$OSTYPE" =~ ^darwin ]]; then
+    brew install bat
+  else
+    _linux_install bat
+  fi
+  echo ""
+fi
+
+# ── hub ───────────────────────────────────────────────────────────────────────
+if $DO_HUB; then
+  echo -e "${BOLD}→ hub${RESET}"
+  if command -v hub &>/dev/null; then
+    echo -e "  ${GREEN}✓${RESET}  hub already installed — skipping."
+  elif [[ "$OSTYPE" =~ ^darwin ]]; then
+    brew install hub
+  else
+    _linux_install hub
+  fi
+  echo ""
+fi
+
+# ── Gogh — terminal colour schemes ───────────────────────────────────────────
+if $DO_GOGH; then
+  echo -e "${BOLD}→ Gogh${RESET}"
+  local_gogh_dir="${GOGH_DIR:-$HOME/src/gogh}"
+  if [ -d "$local_gogh_dir" ]; then
+    echo -e "  ${GREEN}✓${RESET}  Gogh already cloned at $local_gogh_dir — skipping."
+  else
+    echo -e "  Cloning Gogh into $local_gogh_dir…"
+    git clone --depth 1 https://github.com/Gogh-Co/Gogh "$local_gogh_dir"
+    echo -e "  ${GREEN}✓${RESET}  Gogh installed. Run ${BOLD}colorscheme${RESET} in your shell to pick a theme."
   fi
   echo ""
 fi

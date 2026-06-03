@@ -15,6 +15,12 @@ else
   export DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+# Auto-create bash_custom.sh from the example template on first run
+if [ ! -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ] && \
+   [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh.example" ]; then
+  cp "$DOTFILES_DIR/bash-files/bash_custom.sh.example" "$DOTFILES_DIR/bash-files/bash_custom.sh"
+fi
+
 if [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ]; then
   source "$DOTFILES_DIR/bash-files/bash_custom.sh"
 fi
