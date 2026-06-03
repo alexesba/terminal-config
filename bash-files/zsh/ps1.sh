@@ -1,20 +1,26 @@
 autoload -Uz vcs_info
 autoload -Uz add-zsh-hook
 
-# ── vcs_info ──────────────────────────────────────────────────────────────────
-# check-for-changes enables %c (staged) and %u (unstaged) — no git status call
+# ── vcs_info base setup (formats are overridden per theme) ────────────────────
 zstyle ':vcs_info:*' enable git
-zstyle ':vcs_info:git:*' check-for-changes true
-zstyle ':vcs_info:git:*' stagedstr   '%F{blue}+%f'    # staged
-zstyle ':vcs_info:git:*' unstagedstr '%F{red}!%f'     # unstaged
-zstyle ':vcs_info:git:*' formats       ' %F{cyan}(%b%f%c%u%F{cyan})%f'
-zstyle ':vcs_info:git:*' actionformats ' %F{yellow}(%b|%a%f%c%u%F{yellow})%f'
-
 add-zsh-hook precmd vcs_info
 
-# ── Background jobs ───────────────────────────────────────────────────────────
+# ── Git dirty state ───────────────────────────────────────────────────────────
+function _precmd_git_dirty() {
+  if git rev-parse --git-dir &>/dev/null; then
+    [[ -n $(git status --porcelain 2>/dev/null) ]] \
+      && _git_dirty=" %F{yellow}✗%f" \
+      || _git_dirty=""
+  else
+    _git_dirty=""
+  fi
+}
+
+add-zsh-hook precmd _precmd_git_dirty
+
+# ── Background / paused jobs ──────────────────────────────────────────────────
 # $jobtexts is a zsh builtin associative array: job_id -> command string
-# Displays grouped counts per program, e.g.: ⚙ 2[nvim], 1[ruby]
+# Displays grouped counts per program, e.g.: ⏸ 2[nvim], 1[ruby]
 function _precmd_jobs() {
   if (( ${#jobstates} == 0 )); then
     _jobs_prompt=""
@@ -33,14 +39,30 @@ function _precmd_jobs() {
     parts+=("%F{yellow}${counts[$prog]}%F{white}[${prog}]%f")
   done
 
-  _jobs_prompt="%F{yellow}⏸ ${(j:, :)parts} "
+  _jobs_prompt=" %F{yellow}⏸ ${(j:, :)parts}%f"
 }
 
 add-zsh-hook precmd _precmd_jobs
 
-# ── Prompt ────────────────────────────────────────────────────────────────────
+# ── Shell settings ────────────────────────────────────────────────────────────
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 setopt PROMPT_SUBST
 
-PROMPT='%F{green}%n%f@%F{red}%~%f${vcs_info_msg_0_} ${_jobs_prompt}'$'\n%F{yellow}~> %f'
+# ── Theme loader ──────────────────────────────────────────────────────────────
+# Override by setting ZSH_THEME in bash_custom.sh before sourcing bash_profile.
+# Example:  export ZSH_THEME="minimal"
+# To create your own theme add a file to bash-files/zsh/themes/<name>.sh
+# and define PROMPT (and optionally RPROMPT) using the shared variables:
+#   ${vcs_info_msg_0_}  – git branch info (format defined per theme)
+#   ${_git_dirty}       – yellow ✗ when working tree is dirty
+#   ${_jobs_prompt}     – yellow ⏸ N[prog] for each paused job group
+_ZSH_THEME="${ZSH_THEME:-robbyrussell}"
+_theme_file="$DOTFILES_DIR/bash-files/zsh/themes/${_ZSH_THEME}.sh"
+
+if [[ -f "$_theme_file" ]]; then
+  source "$_theme_file"
+else
+  echo "zsh prompt: theme '${_ZSH_THEME}' not found, falling back to robbyrussell" >&2
+  source "$DOTFILES_DIR/bash-files/zsh/themes/robbyrussell.sh"
+fi
