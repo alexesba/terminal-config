@@ -18,6 +18,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **zsh-autosuggestions** | History + completion suggestions as you type |
 | **tmux** | Custom status bar, vim-style panes, cross-platform clipboard |
 | **Terminal emulators** | Alacritty, Kitty, WezTerm configs |
+| **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
 ---
@@ -63,6 +64,34 @@ export ZSH_THEME="classic"        # full path + branch + timestamp RPROMPT
 ```
 
 Themes live in `bash-files/zsh/themes/`. To create your own, copy an existing theme and it will be picked up automatically.
+
+---
+
+## Colour schemes
+
+Run `colorscheme` to fuzzy-pick a terminal colour scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). As you move through the list, a preview pane renders each theme live — a mock terminal window painted in the theme's own colours, the full 16-colour palette, and the key hex values:
+
+```bash
+colorscheme
+```
+
+Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* each theme, so scrolling never repaints your terminal — only your final pick is applied.
+
+### How it's applied and persisted
+
+`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`) — see [Customisation](#customisation) to override.
+
+| Terminal | How the pick persists |
+|---|---|
+| **Kitty / Alacritty** | Gogh writes the colours into their config files, so new windows keep the theme. |
+| **WezTerm** | Gogh only themes the current session via escape sequences, so `colorscheme` also writes the palette to `~/.config/wezterm/colors.lua`. `wezterm.lua` loads that file (by absolute path, so it works through the symlinked config) and registers it for auto-reload — the pick applies to open windows and survives new ones. Delete `colors.lua` to revert to the default `color_scheme`. |
+
+### Configuration
+
+- **`GOGH_DIR`** — point `colorscheme` at your Gogh install (defaults to `~/src/gogh/installs`).
+- **`TERMINAL`** — managed by `install.sh`; set it manually in `bash_custom.sh` to override detection.
+
+Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./install.sh`).
 
 ---
 
