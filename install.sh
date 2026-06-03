@@ -157,7 +157,7 @@ echo ""
 
 echo -e "${BOLD}12. Gogh — terminal colour schemes${RESET}"
 echo -e "   ${DIM}Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh.${RESET}"
-echo    "   Run ${BOLD}colorscheme${RESET} in your shell to fuzzy-pick and apply any scheme."
+echo -e "   Run ${BOLD}colorscheme${RESET} in your shell to fuzzy-pick and apply any scheme."
 ask_yn "Install?"
 INSTALL_GOGH=$REPLY
 echo ""
@@ -188,20 +188,31 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   echo -e "${BOLD}→ Terminal emulator${RESET}"
   case "$INSTALL_TERMINAL" in
     1)
+      TERMINAL_NAME="alacritty"
       mkdir -p ~/.config/alacritty
       source "$DOTFILES_DIR/terminfo/install.sh"
       link_file "$DOTFILES_DIR/terminals/alacritty.yml" ~/.config/alacritty/alacritty.yml
       ;;
     2)
+      TERMINAL_NAME="kitty"
       mkdir -p ~/.config/kitty
       source "$DOTFILES_DIR/terminfo/install.sh"
       link_file "$DOTFILES_DIR/terminals/kitty.conf" ~/.config/kitty/kitty.conf
       ;;
     3)
+      TERMINAL_NAME="wezterm"
       mkdir -p ~/.config/wezterm
       link_file "$DOTFILES_DIR/terminals/wezterm.lua" ~/.config/wezterm/wezterm.lua
       ;;
   esac
+
+  # Persist the choice so gogh (the `colorscheme` function) applies themes to the
+  # terminal you actually picked, instead of relying on its auto-detection.
+  CUSTOM_FILE="$DOTFILES_DIR/bash-files/bash_custom.sh"
+  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$CUSTOM_FILE.example" ]; then
+    cp "$CUSTOM_FILE.example" "$CUSTOM_FILE"
+  fi
+  set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
   echo ""
 fi
 

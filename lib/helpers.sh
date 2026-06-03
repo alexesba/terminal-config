@@ -37,6 +37,25 @@ is_wsl() {
   grep -qi microsoft /proc/version 2>/dev/null
 }
 
+# Sets or updates an `export VAR="value"` line in a target file, idempotently.
+# Replaces an existing export of the same VAR — including a commented-out
+# placeholder like `# export VAR=...` left by the template — otherwise appends.
+# Usage: set_env_var <file> <VAR> <value>
+set_env_var() {
+  local file="$1" var="$2" value="$3" line match
+  line="export ${var}=\"${value}\""
+  match="^[[:space:]]*#?[[:space:]]*export[[:space:]]+${var}="
+  [ -f "$file" ] || touch "$file"
+  if grep -qE "$match" "$file"; then
+    # -i.bak keeps this portable across BSD (macOS) and GNU sed; | avoids path clashes
+    sed -i.bak -E "s|${match}.*|${line}|" "$file" && rm -f "$file.bak"
+    echo -e "  ${GREEN}✓${RESET}  ${var} set in $(basename "$file") → ${value}"
+  else
+    printf '%s\n' "$line" >> "$file"
+    echo -e "  ${GREEN}✓${RESET}  ${var} added to $(basename "$file") → ${value}"
+  fi
+}
+
 # Prompts yes/no and loops until the user enters y or n (case-insensitive).
 # Usage: ask_yn "prompt text"; result in $REPLY
 ask_yn() {

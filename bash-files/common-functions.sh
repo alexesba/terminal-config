@@ -44,7 +44,15 @@ function colorscheme() {
     echo "Or set GOGH_DIR in bash_custom.sh to point to your install."
     return 1
   fi
-  sh "$gogh_dir/$(ls "$gogh_dir" | sed -e 's/\.sh$//' | fzf).sh"
+  local preview_script="${DOTFILES_DIR:-$HOME/Projects/terminal-config}/bash-files/gogh-preview.sh"
+
+  local selection
+  selection=$(ls "$gogh_dir" | grep '\.sh$' | fzf \
+    --prompt='colorscheme> ' \
+    --preview "bash '$preview_script' '$gogh_dir'/{}" \
+    --preview-window='right:60%:wrap') || return
+
+  [ -n "$selection" ] && sh "$gogh_dir/$selection"
 }
 
 function restore_db {

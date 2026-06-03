@@ -20,5 +20,10 @@
 # ── Example: gogh colour-scheme directory (used by colorscheme() function) ────
 # export GOGH_DIR="$HOME/src/gogh/installs"
 
+# ── Terminal emulator (used by gogh / colorscheme to target the right app) ────
+# install.sh replaces the {{TERMINAL}} placeholder below with your terminal
+# choice (alacritty/kitty/wezterm) and uncomments it. Edit by hand to override.
+# export TERMINAL={{TERMINAL}}
+
 # ── Example: work aliases ─────────────────────────────────────────────────────
 # alias work='cd ~/Projects/work'
