@@ -44,7 +44,9 @@ function colorscheme() {
     echo "Or set GOGH_DIR in bash_custom.sh to point to your install."
     return 1
   fi
-  local preview_script="${DOTFILES_DIR:-$HOME/Projects/terminal-config}/bash-files/gogh-preview.sh"
+  local dotfiles="${DOTFILES_DIR:-$HOME/Projects/terminal-config}"
+  local preview_script="$dotfiles/bash-files/gogh-preview.sh"
+  local persist_script="$dotfiles/bash-files/gogh-persist.sh"
 
   local selection
   selection=$(ls "$gogh_dir" | grep '\.sh$' | fzf \
@@ -52,7 +54,11 @@ function colorscheme() {
     --preview "bash '$preview_script' '$gogh_dir'/{}" \
     --preview-window='right:65%:wrap') || return
 
-  [ -n "$selection" ] && sh "$gogh_dir/$selection"
+  [ -z "$selection" ] && return
+  sh "$gogh_dir/$selection"
+  # Persist the choice so it survives new terminal windows (e.g. WezTerm, which
+  # gogh otherwise only themes for the current session).
+  [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
 }
 
 function restore_db {

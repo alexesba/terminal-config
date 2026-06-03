@@ -1,6 +1,6 @@
 local wezterm = require('wezterm')
 
-return {
+local config = {
   color_scheme = 'Sonokai (Gogh)',
   -- default_prog is intentionally unset — WezTerm will use $SHELL as a login
   -- shell automatically, which works correctly for any shell (zsh, fish, nushell, etc.)
@@ -24,3 +24,21 @@ return {
     harfbuzz_features = {"calt=1", "clig=1", "liga=1"},
   })
 }
+
+-- Persisted gogh theme written by the `colorscheme` shell function. Loaded by
+-- absolute path (config dir) rather than require(), so it resolves correctly
+-- even though this file is symlinked from the dotfiles repo. Registered on the
+-- reload watch list so picking a scheme updates open windows too.
+local colors_path = wezterm.config_dir .. '/colors.lua'
+wezterm.add_to_config_reload_watch_list(colors_path)
+local f = io.open(colors_path, 'r')
+if f then
+  f:close()
+  local ok, colors = pcall(dofile, colors_path)
+  if ok and type(colors) == 'table' then
+    config.colors = colors
+    config.color_scheme = nil
+  end
+end
+
+return config
