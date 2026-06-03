@@ -24,14 +24,18 @@ alias pvim='nvim -u ~/performance.vim'
 alias tig='TERM=xterm-256color tig'
 
 if [[ "$OSTYPE" =~ ^linux ]]; then
-  # Add custom alias for linux like macosx if the gnome-open is installed.
-  if which xdg-open > /dev/null; then
+  # open: WSL → wslview (wslu) or explorer.exe; Linux → xdg-open or gnome-open
+  if grep -qi microsoft /proc/version 2>/dev/null; then
+    if command -v wslview &>/dev/null; then
+      alias open='wslview'
+    else
+      alias open='explorer.exe'
+    fi
+  elif command -v xdg-open &>/dev/null; then
     alias open='xdg-open'
-  fi
-  if which gnome-open > /dev/null; then
+  elif command -v gnome-open &>/dev/null; then
     alias open='gnome-open'
   fi
-  # Add a command to reload the
   alias reload='source ~/.zshrc'
 
 else

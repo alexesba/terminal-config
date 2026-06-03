@@ -41,13 +41,32 @@ fi
 echo -e "${CYAN}${BOLD}━━━  Installing tools  ━━━${RESET}"
 echo ""
 
+# ── Linux package manager helper ──────────────────────────────────────────────
+# Usage: _linux_install <pkg> [<pkg> ...]
+_linux_install() {
+  if command -v apt-get &>/dev/null; then
+    sudo apt-get install -y "$@"
+  elif command -v dnf &>/dev/null; then
+    sudo dnf install -y "$@"
+  elif command -v pacman &>/dev/null; then
+    sudo pacman -S --noconfirm "$@"
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Unknown package manager — please install ${BOLD}$*${RESET} manually."
+  fi
+}
+
 # ── tmux ──────────────────────────────────────────────────────────────────────
 if $DO_TMUX; then
   echo -e "${BOLD}→ tmux${RESET}"
   if command -v tmux &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  tmux already installed — skipping."
   elif [[ "$OSTYPE" =~ ^linux ]]; then
-    sudo apt install tmux
+    _linux_install tmux xclip
+    # On WSL, also install wslu so `wslview` is available as the `open` command
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      echo -e "  ${DIM}WSL detected — installing wslu (provides wslview)…${RESET}"
+      _linux_install wslu
+    fi
   else
     brew install tmux
   fi

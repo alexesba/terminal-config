@@ -32,6 +32,11 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
+# Returns 0 (true) when running inside WSL (Windows Subsystem for Linux).
+is_wsl() {
+  grep -qi microsoft /proc/version 2>/dev/null
+}
+
 # Prompts yes/no and loops until the user enters y or n (case-insensitive).
 # Usage: ask_yn "prompt text"; result in $REPLY
 ask_yn() {

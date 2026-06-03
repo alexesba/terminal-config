@@ -16,15 +16,12 @@ EOF
 printf "${RESET}\n"
 
 # ── Detect shell ──────────────────────────────────────────────────────────────
-if which zsh > /dev/null; then
-  TEM_SHELL=$(which zsh)
-elif which bash > /dev/null; then
-  TEM_SHELL=$(which bash)
-fi
-
-if [[ $TEM_SHELL == *'zsh' ]]; then
+# Prefer the user's configured default shell ($SHELL), fall back to PATH lookup.
+if [[ "$SHELL" =~ zsh ]] || command -v zsh &>/dev/null; then
+  TEM_SHELL="${SHELL:-$(command -v zsh)}"
   BASHFILE=".zshrc"
-elif [[ $TEM_SHELL == *'bash' ]]; then
+elif [[ "$SHELL" =~ bash ]] || command -v bash &>/dev/null; then
+  TEM_SHELL="${SHELL:-$(command -v bash)}"
   BASHFILE=".bashrc"
 fi
 
@@ -59,13 +56,19 @@ INSTALL_ALIASES=$REPLY
 echo ""
 
 echo -e "${BOLD}4. Terminal emulator config${RESET}"
-echo    "   Pick a terminal (or skip):"
-echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacritty.yml${RESET}"
-echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
-echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ ~/.config/wezterm/wezterm.lua${RESET}"
-echo -e "     ${BOLD}4)${RESET} Skip"
-ask_choice "Choice" 4
-INSTALL_TERMINAL=$REPLY
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators (Alacritty, Kitty, WezTerm) run on"
+  echo    "      the Windows side. Configure them there, not inside WSL."
+  INSTALL_TERMINAL=4
+else
+  echo    "   Pick a terminal (or skip):"
+  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacritty.yml${RESET}"
+  echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
+  echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ ~/.config/wezterm/wezterm.lua${RESET}"
+  echo -e "     ${BOLD}4)${RESET} Skip"
+  ask_choice "Choice" 4
+  INSTALL_TERMINAL=$REPLY
+fi
 echo ""
 
 echo -e "${BOLD}5. zsh-autosuggestions${RESET}"
