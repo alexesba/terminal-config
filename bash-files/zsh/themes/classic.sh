@@ -1,4 +1,5 @@
-# Classic theme
+# Classic theme — inspired by oh-my-zsh's "amuse" theme (MIT), rebuilt with
+# native zsh vcs_info. https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse
 #
 # Line 1:  ~/full/path on ⎇ branch!  🕐 HH:MM:SS  [⏸ jobs]
 # Line 2:  $

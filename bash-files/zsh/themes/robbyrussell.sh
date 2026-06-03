@@ -1,4 +1,5 @@
-# Inspired by oh-my-zsh robbyrussell theme
+# Reimplementation of Robby Russell's "robbyrussell" oh-my-zsh theme (MIT),
+# rebuilt with native zsh vcs_info. https://github.com/ohmyzsh/ohmyzsh
 #
 # Line 1:  ➜  dirname git:(branch) ✗  ⏸ jobs
 # Line 2:  ❯  (green on success, red on error)
