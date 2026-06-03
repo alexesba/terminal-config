@@ -9,7 +9,6 @@ fi
 
 # On macOS, point ruby-build to Homebrew's libffi so Ruby compiles correctly
 if [[ "$OSTYPE" =~ ^darwin ]] && command -v brew &>/dev/null; then
-  local _libffi
   _libffi="$(brew --prefix libffi 2>/dev/null)"
   if [[ -d "$_libffi" ]]; then
     export LDFLAGS="-L${_libffi}/lib ${LDFLAGS}"

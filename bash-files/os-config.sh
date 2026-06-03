@@ -1,6 +1,6 @@
 #Load custom methods by OS type
 
-if which zsh > /dev/null; then
+if [ -n "$ZSH_VERSION" ]; then
   export SHELL=$(which zsh)
   source "$DOTFILES_DIR/bash-files/zsh.sh"
 else

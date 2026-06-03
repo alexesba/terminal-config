@@ -7,10 +7,8 @@ add-zsh-hook precmd vcs_info
 
 # ── Git dirty state ───────────────────────────────────────────────────────────
 function _precmd_git_dirty() {
-  if git rev-parse --git-dir &>/dev/null; then
-    [[ -n $(git status --porcelain 2>/dev/null) ]] \
-      && _git_dirty=" %F{yellow}✗%f" \
-      || _git_dirty=""
+  if [[ -n $(git status --porcelain 2>/dev/null) ]]; then
+    _git_dirty=" %F{yellow}✗%f"
   else
     _git_dirty=""
   fi
