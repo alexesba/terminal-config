@@ -50,7 +50,7 @@ function colorscheme() {
   selection=$(ls "$gogh_dir" | grep '\.sh$' | fzf \
     --prompt='colorscheme> ' \
     --preview "bash '$preview_script' '$gogh_dir'/{}" \
-    --preview-window='right:60%:wrap') || return
+    --preview-window='right:65%:wrap') || return
 
   [ -n "$selection" ] && sh "$gogh_dir/$selection"
 }

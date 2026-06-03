@@ -40,7 +40,11 @@ fgseq=$(rgb "$fg")
 on=$'\e['"48;2;${bgseq}m"$'\e['"38;2;${fgseq}m"   # paint theme bg + theme fg
 fgc() { printf '\e[38;2;%sm' "$(rgb "$1")"; }     # raw escape: switch fg to a palette color
 
-W=44 # interior width of the mock terminal window
+# Interior width of the mock terminal window — scales to fill the fzf preview
+# pane (FZF_PREVIEW_COLUMNS is set by fzf), clamped to a sensible range.
+W=$((${FZF_PREVIEW_COLUMNS:-46} - 2))
+((W < 40)) && W=40
+((W > 90)) && W=90
 
 # Print one body row of the window: side borders + theme bg, content padded to W.
 # $1 may contain raw color-escape bytes; padding is measured from the visible text.
@@ -84,12 +88,14 @@ printf '%s\xe2\x95\xb0%s\xe2\x95\xaf%s\n' "$on" "$hr" "$reset"
 
 # ── Palette grid ─────────────────────────────────────────────────────────────
 swatch_row() {
-  local label="$1" start="$2" end="$3" i hex
-  printf '  %-7s' "$label"
+  local label="$1" start="$2" end="$3" i hex cellw
+  cellw=$(((W - 8) / 8)) # 8 swatches spanning the window width
+  ((cellw < 3)) && cellw=3
+  printf '  %-8s' "$label"
   for i in $(seq "$start" "$end"); do
     hex=${COLORS[$i]:-}
     [ -z "$hex" ] && hex="$bg"
-    printf '\e[48;2;%sm   %s ' "$(rgb "$hex")" "$reset"
+    printf '\e[48;2;%sm%*s%s' "$(rgb "$hex")" "$cellw" "" "$reset"
   done
   printf '\n'
 }
