@@ -3,7 +3,7 @@ alias be='bundle exec'
 # Vim aliases
 alias vim=nvim
 alias vi='nvim --noplugin'
-alias git=hub
+command -v hub &>/dev/null && alias git=hub
 alias ls-hidden="ls -la | grep ' \.'"
 
 # User commands
