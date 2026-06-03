@@ -16,27 +16,62 @@ EOF
 printf "${RESET}\n"
 
 # ── Detect shell ──────────────────────────────────────────────────────────────
-# Prefer the user's configured default shell ($SHELL), fall back to PATH lookup.
-if [[ "$SHELL" =~ zsh ]] || command -v zsh &>/dev/null; then
-  TEM_SHELL="${SHELL:-$(command -v zsh)}"
-  BASHFILE=".zshrc"
-elif [[ "$SHELL" =~ bash ]] || command -v bash &>/dev/null; then
-  TEM_SHELL="${SHELL:-$(command -v bash)}"
-  BASHFILE=".bashrc"
+_detected_shell_name=""
+if [[ "$SHELL" =~ zsh ]];  then _detected_shell_name="zsh"
+elif [[ "$SHELL" =~ bash ]]; then _detected_shell_name="bash"
 fi
 
 echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
-echo -e "${DIM}Detected shell:  $TEM_SHELL → will configure ~/$BASHFILE${RESET}"
 echo ""
 
 # ── Gather input ──────────────────────────────────────────────────────────────
 echo -e "${CYAN}${BOLD}Let's set up your environment. Answer a few questions first:${RESET}"
 echo ""
 
-echo -e "${BOLD}1. Shell RC ($BASHFILE)${RESET}"
+# ── 1. Shell ──────────────────────────────────────────────────────────────────
+echo -e "${BOLD}1. Shell${RESET}"
+
+_pick_shell() {
+  echo    "   Which shell would you like to configure?"
+  echo -e "     ${BOLD}1)${RESET} zsh   ${DIM}→ ~/.zshrc${RESET}"
+  echo -e "     ${BOLD}2)${RESET} bash  ${DIM}→ ~/.bashrc${RESET}"
+  ask_choice "Shell" 2
+  if [[ $REPLY == "1" ]]; then
+    TEM_SHELL=$(command -v zsh); BASHFILE=".zshrc"
+  else
+    TEM_SHELL=$(command -v bash); BASHFILE=".bashrc"
+  fi
+}
+
+if [[ -n "$_detected_shell_name" ]]; then
+  echo -e "   ${DIM}Default shell detected:${RESET} ${BOLD}${_detected_shell_name}${RESET} ${DIM}(${SHELL})${RESET}"
+  ask_yn "Configure for ${_detected_shell_name}?"
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    TEM_SHELL="$SHELL"
+    BASHFILE="$([[ "$_detected_shell_name" == "zsh" ]] && echo ".zshrc" || echo ".bashrc")"
+  else
+    _pick_shell
+  fi
+else
+  echo -e "   ${YELLOW}⚠${RESET}  Could not detect default shell from \$SHELL."
+  _pick_shell
+fi
+
+# Offer chsh if the chosen shell differs from the current default
+if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
+  echo ""
+  echo -e "   ${DIM}Current default login shell: $SHELL${RESET}"
+  ask_yn "Set $(basename "$TEM_SHELL") as your default login shell? (runs chsh)"
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    chsh -s "$TEM_SHELL"
+    echo -e "  ${GREEN}✓${RESET}  Default login shell set to $TEM_SHELL — re-login to take effect."
+  fi
+fi
+echo ""
+
 echo -e "   ${DIM}Links bash_profile.sh → ~/$BASHFILE${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
-ask_yn "Install?"
+ask_yn "Link ~/$BASHFILE?"
 INSTALL_SHELL=$REPLY
 echo ""
 
