@@ -40,16 +40,25 @@ link_file() {
 #   2. Remove the symlink and write a real file at <dest>
 #   3. Never touch an existing regular file at <dest> (already migrated)
 #
-# Usage: install_config_from_template <dotfiles_dir> <example_rel> <dest_path>
+# Usage: install_config_from_template <dotfiles_dir> <example_rel> <dest_path> [font_family]
 install_config_from_template() {
   local dotfiles="$1"
   local example_rel="$2"
   local dest="$3"
+  local font_family="${4:-}"
   local example="$dotfiles/$example_rel"
   local legacy_src
 
   [ -f "$example" ] || return 1
   mkdir -p "$(dirname "$dest")"
+
+  _apply_font_if_needed() {
+    if [[ -n "$font_family" ]] && [[ -f "$dest" ]]; then
+      # shellcheck source=fonts.sh
+      source "$dotfiles/lib/fonts.sh"
+      substitute_font_placeholder "$dest" "$font_family"
+    fi
+  }
 
   if [ -f "$dest" ] && [ ! -L "$dest" ]; then
     echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
@@ -69,6 +78,7 @@ install_config_from_template() {
       echo -e "  ${YELLOW}⚠${RESET}  Symlink target missing (${legacy_src}) — using template."
       rm "$dest"
       cp "$example" "$dest"
+      _apply_font_if_needed
     fi
     echo -e "  ${GREEN}✓${RESET}  Replaced dotfiles symlink with local copy at $dest"
     return 0
@@ -76,6 +86,7 @@ install_config_from_template() {
 
   if [ ! -e "$dest" ]; then
     cp "$example" "$dest"
+    _apply_font_if_needed
     echo -e "  ${GREEN}✓${RESET}  Created $dest from template."
     return 0
   fi
@@ -201,12 +212,21 @@ ask_yn() {
 }
 
 # Prompts a numbered choice and loops until a valid number is entered.
-# Usage: ask_choice "prompt text" <max>; result in $REPLY
+# Optional third argument is the default when the user presses Enter.
+# Usage: ask_choice "prompt text" <max> [default]; result in $REPLY
 ask_choice() {
   local prompt="$1"
   local max="$2"
+  local default="${3:-}"
+  local hint="[1-${max}]"
   while true; do
-    read -p "   ${prompt} $(printf '\033[2m')[1-${max}]$(printf '\033[0m'): " -n 1 -r; echo
+    if [[ -n "$default" ]]; then
+      hint="[1-${max}, default ${default}]"
+    fi
+    read -p "   ${prompt} $(printf '\033[2m')${hint}$(printf '\033[0m'): " -n 1 -r; echo
+    if [[ -z "$REPLY" && -n "$default" ]]; then
+      REPLY="$default"
+    fi
     if [[ "$REPLY" =~ ^[1-9]$ ]] && (( REPLY >= 1 && REPLY <= max )); then
       return
     fi

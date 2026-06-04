@@ -105,6 +105,24 @@ else
   INSTALL_TERMINAL=$REPLY
 fi
 echo ""
+if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  echo    "   Nerd Font for your terminal config (install.sh sets the font in the copied config):"
+  echo -e "     ${BOLD}1)${RESET} Caskaydia Cove Nerd Font Propo  ${DIM}(default)${RESET}"
+  echo -e "     ${BOLD}2)${RESET} JetBrains Mono Nerd Font"
+  echo -e "     ${BOLD}3)${RESET} FiraCode Nerd Font"
+  echo -e "     ${BOLD}4)${RESET} Hack Nerd Font Mono"
+  echo -e "     ${BOLD}5)${RESET} Skip font install (config still uses Caskaydia Cove)"
+  ask_choice "Font" 5 1
+  INSTALL_FONT=true
+  case "$REPLY" in
+    2) TERMINAL_FONT_ID="jetbrains" ;;
+    3) TERMINAL_FONT_ID="fira" ;;
+    4) TERMINAL_FONT_ID="hack" ;;
+    5) TERMINAL_FONT_ID="caskaydia"; INSTALL_FONT=false ;;
+    *) TERMINAL_FONT_ID="caskaydia" ;;
+  esac
+fi
+echo ""
 
 echo -e "${BOLD}5. zsh-autosuggestions${RESET}"
 echo -e "   ${DIM}Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions).${RESET}"
@@ -191,6 +209,15 @@ if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
 fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  source "$DOTFILES_DIR/lib/fonts.sh"
+  TERMINAL_FONT_FAMILY=$(nerd_font_family "$TERMINAL_FONT_ID")
+
+  if [[ "${INSTALL_FONT:-true}" == true ]]; then
+    echo -e "${BOLD}→ Nerd Font${RESET}"
+    install_nerd_font "$TERMINAL_FONT_ID"
+    echo ""
+  fi
+
   echo -e "${BOLD}→ Terminal emulator${RESET}"
   case "$INSTALL_TERMINAL" in
     1)
@@ -198,20 +225,23 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
       source "$DOTFILES_DIR/terminfo/install.sh"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/alacritty.yml.example" \
-        "${HOME}/.config/alacritty/alacritty.yml"
+        "${HOME}/.config/alacritty/alacritty.yml" \
+        "$TERMINAL_FONT_FAMILY"
       ;;
     2)
       TERMINAL_NAME="kitty"
       source "$DOTFILES_DIR/terminfo/install.sh"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/kitty.conf.example" \
-        "${HOME}/.config/kitty/kitty.conf"
+        "${HOME}/.config/kitty/kitty.conf" \
+        "$TERMINAL_FONT_FAMILY"
       ;;
     3)
       TERMINAL_NAME="wezterm"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/wezterm.lua.example" \
-        "${HOME}/.config/wezterm/wezterm.lua"
+        "${HOME}/.config/wezterm/wezterm.lua" \
+        "$TERMINAL_FONT_FAMILY"
       ;;
   esac
 
@@ -222,6 +252,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
   fi
   set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
+  set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
   echo ""
 fi
 

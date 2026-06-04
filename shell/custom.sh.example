@@ -26,5 +26,8 @@
 # choice (alacritty/kitty/wezterm) and uncomments it. Edit by hand to override.
 # export TERMINAL={{TERMINAL}}
 
+# ── Terminal font (written into emulator config by install.sh) ────────────────
+# export TERMINAL_FONT={{TERMINAL_FONT}}
+
 # ── Example: work aliases ─────────────────────────────────────────────────────
 # alias work='cd ~/Projects/work'

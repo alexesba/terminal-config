@@ -19,6 +19,7 @@ DO_RIPGREP=false
 DO_BAT=false
 DO_HUB=false
 DO_GOGH=false
+DO_FONT=""
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
 for arg in "$@"; do
@@ -32,8 +33,17 @@ for arg in "$@"; do
     --bat)             DO_BAT=true ;;
     --hub)             DO_HUB=true ;;
     --gogh)            DO_GOGH=true ;;
+    --font=*)
+      DO_FONT="${arg#*=}"
+      ;;
+    --font)
+      echo -e "  ${YELLOW}⚠${RESET}  --font requires a value: caskaydia, jetbrains, fira, or hack"
+      exit 1
+      ;;
     --help)
-      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh]"
+      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh] [--font=ID]"
+      echo ""
+      echo "Font IDs for --font=: caskaydia (default), jetbrains, fira, hack"
       exit 0
       ;;
     *)
@@ -43,7 +53,7 @@ for arg in "$@"; do
 done
 
 if ! $DO_TMUX && ! $DO_AUTOSUGG && ! $DO_RBENV && ! $DO_NVM && ! $DO_FZF && \
-   ! $DO_RIPGREP && ! $DO_BAT && ! $DO_HUB && ! $DO_GOGH; then
+   ! $DO_RIPGREP && ! $DO_BAT && ! $DO_HUB && ! $DO_GOGH && [[ -z "$DO_FONT" ]]; then
   echo -e "${YELLOW}No tools selected. Run with --help to see available flags.${RESET}"
   exit 0
 fi
@@ -204,6 +214,20 @@ if $DO_GOGH; then
     echo -e "  Cloning Gogh into $local_gogh_dir…"
     git clone --depth 1 https://github.com/Gogh-Co/Gogh "$local_gogh_dir"
     echo -e "  ${GREEN}✓${RESET}  Gogh installed. Run ${BOLD}colorscheme${RESET} in your shell to pick a theme."
+  fi
+  echo ""
+fi
+
+# ── Nerd Font ─────────────────────────────────────────────────────────────────
+if [[ -n "$DO_FONT" ]]; then
+  source "$DOTFILES_DIR/lib/fonts.sh"
+  echo -e "${BOLD}→ Nerd Font${RESET}"
+  if nerd_font_family "$DO_FONT" &>/dev/null; then
+    install_nerd_font "$DO_FONT"
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Unknown font ID: ${BOLD}${DO_FONT}${RESET}"
+    echo -e "      Valid IDs: caskaydia, jetbrains, fira, hack"
+    exit 1
   fi
   echo ""
 fi

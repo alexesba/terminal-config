@@ -172,7 +172,21 @@ Run standalone:
 
 ## Fonts
 
-The repo includes patched fonts for use with the terminal configs:
+When you pick a terminal emulator during `./install.sh`, you also choose a **Nerd Font** (default: **Caskaydia Cove Nerd Font Propo**). The installer:
+
+1. Installs the font via Homebrew (`brew install --cask font-…`) on macOS, or downloads from [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) on Linux
+2. Substitutes `{{FONT_FAMILY}}` in the copied terminal config with your choice
+3. Records `TERMINAL_FONT` in `shell/custom.sh`
+
+Reinstall a font standalone:
+
+```bash
+./bootstrap.sh --font=caskaydia
+```
+
+Available IDs: `caskaydia`, `jetbrains`, `fira`, `hack`.
+
+The repo also includes legacy patched font archives for manual install:
 
 | File | Font |
 |---|---|
@@ -182,7 +196,7 @@ The repo includes patched fonts for use with the terminal configs:
 | `patched-font-windows.zip` | Windows-compatible variants |
 
 **macOS**: unzip and double-click to install, or drag to `~/Library/Fonts/`.  
-**Linux/WSL**: unzip to `~/.local/share/fonts/` then run `fc-cache -fv`.
+**Linux/WSL**: unzip to `~/.local/share/fonts/` then run `fc-cache -fv`. On WSL, install fonts on the Windows side for GUI terminals.
 
 ---
 

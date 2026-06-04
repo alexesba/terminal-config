@@ -4,6 +4,10 @@ Tracked templates for terminal emulator configs. `install.sh` copies the chosen
 `.example` file into `~/.config/` (real file, not a symlink) so Gogh and other
 tools can write theme data alongside your config.
 
+Templates use a `{{FONT_FAMILY}}` placeholder; `install.sh` replaces it with
+your Nerd Font choice (default: Caskaydia Cove Nerd Font Propo) when the config
+is first created.
+
 | Template | Installed to |
 |---|---|
 | `alacritty.yml.example` | `~/.config/alacritty/alacritty.yml` |
