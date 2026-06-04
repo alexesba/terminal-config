@@ -1,0 +1,16 @@
+source "$DOTFILES_DIR/shell/common/functions.sh"
+source "$DOTFILES_DIR/shell/common/gogh/colorscheme.sh"
+source "$DOTFILES_DIR/shell/bash/functions.sh"
+source "$DOTFILES_DIR/shell/bash/bindings.sh"
+source "$DOTFILES_DIR/shell/common/fzf.sh"
+source "$DOTFILES_DIR/shell/bash/nvm.sh"
+source "$DOTFILES_DIR/shell/bash/nvmrc.sh"
+source "$DOTFILES_DIR/shell/bash/history.sh"
+source "$DOTFILES_DIR/shell/bash/autocomplete.sh"
+source "$DOTFILES_DIR/shell/bash/pyenv.sh"
+# Sourced last among PROMPT_COMMAND contributors so its $? capture runs first.
+source "$DOTFILES_DIR/shell/bash/ps1.sh"
+
+source "$DOTFILES_DIR/shell/aliases.sh"
+source "$DOTFILES_DIR/shell/common/dircolors.sh"
+source "$DOTFILES_DIR/shell/common/rbenv.sh"

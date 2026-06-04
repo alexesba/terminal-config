@@ -1,5 +1,5 @@
 # Classic theme — inspired by oh-my-zsh's "amuse" theme (MIT), rebuilt for bash
-# to match bash-files/zsh/themes/classic.sh.
+# to match shell/zsh/themes/classic.sh.
 # https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse
 #
 # Line 1:  ~/full/path on ⎇ branch!  🕐 HH:MM:SS  [⏸ jobs]

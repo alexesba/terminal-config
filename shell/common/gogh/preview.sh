@@ -3,7 +3,7 @@
 # It only *reads* the hex values from the theme file; it never sources/applies
 # the theme, so scrolling the list will not repaint your real terminal.
 #
-# Usage: gogh-preview.sh /path/to/theme.sh
+# Usage: preview.sh /path/to/theme.sh
 set -u
 
 file="${1:-}"

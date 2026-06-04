@@ -69,7 +69,7 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
 fi
 echo ""
 
-echo -e "   ${DIM}Links bash_profile.sh → ~/$BASHFILE${RESET}"
+echo -e "   ${DIM}Links rc.sh → ~/$BASHFILE${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
 ask_yn "Link ~/$BASHFILE?"
 INSTALL_SHELL=$REPLY
@@ -83,10 +83,10 @@ ask_yn "Install?"
 INSTALL_TMUX=$REPLY
 echo ""
 
-echo -e "${BOLD}3. Bash aliases (.bash_aliases)${RESET}"
-echo -e "   ${DIM}Links bash-files/bash_aliases.sh → ~/.bash_aliases${RESET}"
-echo    "   Shorthand commands and convenience functions."
-ask_yn "Install?"
+echo -e "${BOLD}3. Local alias overrides (~/.bash_aliases)${RESET}"
+echo -e "   ${DIM}Built-in aliases load automatically from the repo (shell/aliases/).${RESET}"
+echo    "   Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
+ask_yn "Create empty ~/.bash_aliases?"
 INSTALL_ALIASES=$REPLY
 echo ""
 
@@ -168,7 +168,7 @@ echo ""
 
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ Shell RC${RESET}"
-  link_file "$DOTFILES_DIR/bash_profile.sh" ~/$BASHFILE
+  link_file "$DOTFILES_DIR/rc.sh" ~/$BASHFILE
   echo ""
 fi
 
@@ -179,8 +179,13 @@ if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
 fi
 
 if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ Bash aliases${RESET}"
-  link_file "$DOTFILES_DIR/bash-files/bash_aliases.sh" ~/.bash_aliases
+  echo -e "${BOLD}→ Local alias overrides${RESET}"
+  if [ -e ~/.bash_aliases ]; then
+    echo -e "  ${GREEN}✓${RESET}  ~/.bash_aliases already exists — skipping."
+  else
+    touch ~/.bash_aliases
+    echo -e "  ${GREEN}✓${RESET}  Created empty ~/.bash_aliases (add personal aliases here)."
+  fi
   echo ""
 fi
 
@@ -208,9 +213,9 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
 
   # Persist the choice so gogh (the `colorscheme` function) applies themes to the
   # terminal you actually picked, instead of relying on its auto-detection.
-  CUSTOM_FILE="$DOTFILES_DIR/bash-files/bash_custom.sh"
-  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$CUSTOM_FILE.example" ]; then
-    cp "$CUSTOM_FILE.example" "$CUSTOM_FILE"
+  CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
+  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
   fi
   set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
   echo ""

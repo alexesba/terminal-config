@@ -47,19 +47,19 @@ add-zsh-hook precmd _precmd_jobs
 setopt PROMPT_SUBST
 
 # ── Theme loader ──────────────────────────────────────────────────────────────
-# Override by setting ZSH_THEME in bash_custom.sh before sourcing bash_profile.
+# Override by setting ZSH_THEME in shell/custom.sh before sourcing rc.sh.
 # Example:  export ZSH_THEME="minimal"
-# To create your own theme add a file to bash-files/zsh/themes/<name>.sh
+# To create your own theme add a file to shell/zsh/themes/<name>.sh
 # and define PROMPT (and optionally RPROMPT) using the shared variables:
 #   ${vcs_info_msg_0_}  – git branch info (format defined per theme)
 #   ${_git_dirty}       – yellow ✗ when working tree is dirty
 #   ${_jobs_prompt}     – yellow ⏸ N[prog] for each paused job group
 _ZSH_THEME="${ZSH_THEME:-robbyrussell}"
-_theme_file="$DOTFILES_DIR/bash-files/zsh/themes/${_ZSH_THEME}.sh"
+_theme_file="$DOTFILES_DIR/shell/zsh/themes/${_ZSH_THEME}.sh"
 
 if [[ -f "$_theme_file" ]]; then
   source "$_theme_file"
 else
   echo "zsh prompt: theme '${_ZSH_THEME}' not found, falling back to robbyrussell" >&2
-  source "$DOTFILES_DIR/bash-files/zsh/themes/robbyrussell.sh"
+  source "$DOTFILES_DIR/shell/zsh/themes/robbyrussell.sh"
 fi

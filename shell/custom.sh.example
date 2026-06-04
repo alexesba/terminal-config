@@ -1,7 +1,7 @@
-# bash_custom.sh — personal overrides loaded by bash_profile.sh
+# custom.sh — personal overrides loaded by rc.sh (both bash and zsh)
 #
 # This file is NOT tracked by git (see .gitignore).
-# Copy bash_custom.sh.example → bash_custom.sh and customise freely.
+# Copy custom.sh.example → custom.sh and customise freely.
 #
 # Good things to put here:
 #   • Private API keys / tokens (export GITHUB_TOKEN="...")

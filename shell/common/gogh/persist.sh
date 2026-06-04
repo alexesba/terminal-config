@@ -5,7 +5,7 @@
 # This writes the theme's colours to a machine-local file that wezterm.lua
 # loads, so the scheme sticks. WezTerm auto-reloads when this file changes.
 #
-# Usage: gogh-persist.sh /path/to/theme.sh <terminal>
+# Usage: persist.sh /path/to/theme.sh <terminal>
 set -u
 
 file="${1:-}"

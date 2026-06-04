@@ -1,5 +1,5 @@
 # Reimplementation of Robby Russell's "robbyrussell" oh-my-zsh theme (MIT),
-# rebuilt for bash to match bash-files/zsh/themes/robbyrussell.sh.
+# rebuilt for bash to match shell/zsh/themes/robbyrussell.sh.
 # https://github.com/ohmyzsh/ohmyzsh
 #
 # Line 1:  ➜  dirname git:(branch) ✗  ⏸ jobs

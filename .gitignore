@@ -1,5 +1,6 @@
-# Personal overrides — copy bash_custom.sh.example → bash_custom.sh to customise
-bash_custom.sh
+# Personal overrides — copy shell/custom.sh.example → shell/custom.sh to customise
+shell/custom.sh
+shell/bash_custom.sh
 
 # Backup files created by install.sh link_file helper
 *.old

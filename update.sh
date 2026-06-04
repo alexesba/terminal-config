@@ -29,10 +29,22 @@ _relink_if_mine() {
   fi
 }
 
-_relink_if_mine ~/".zshrc"              "$DOTFILES_DIR/bash_profile.sh"
-_relink_if_mine ~/".bashrc"             "$DOTFILES_DIR/bash_profile.sh"
-_relink_if_mine ~/".tmux.conf"          "$DOTFILES_DIR/tmux.conf"
-_relink_if_mine ~/".bash_aliases"       "$DOTFILES_DIR/bash-files/bash_aliases.sh"
+# Shell RC — rc.sh (upgrade legacy bash_profile.sh symlinks too)
+for _rc in ~/.zshrc ~/.bashrc; do
+  if [ -L "$_rc" ]; then
+    _target="$(readlink "$_rc")"
+    if [[ "$_target" == "$DOTFILES_DIR"* ]]; then
+      if [[ "$_target" == *bash_profile.sh ]]; then
+        echo -e "  ${YELLOW}⚠${RESET}  Upgrading $_rc: bash_profile.sh → rc.sh"
+        link_file "$DOTFILES_DIR/rc.sh" "$_rc"
+      else
+        _relink_if_mine "$_rc" "$DOTFILES_DIR/rc.sh"
+      fi
+    fi
+  fi
+done
+
+_relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
 _relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminals/alacritty.yml"
 _relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminals/kitty.conf"
 _relink_if_mine ~/.config/wezterm/wezterm.lua      "$DOTFILES_DIR/terminals/wezterm.lua"

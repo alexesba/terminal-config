@@ -8,8 +8,8 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 
 | Area | Files |
 |---|---|
-| **Shell prompt** | `bash-files/{zsh,bash}/ps1.sh` — theme loaders; `bash-files/{zsh,bash}/themes/` |
-| **Aliases** | `bash-files/bash_aliases.sh` — git, vim, open, navigation |
+| **Shell prompt** | `shell/{zsh,bash}/ps1.sh` — theme loaders; `shell/{zsh,bash}/themes/` |
+| **Aliases** | `shell/aliases/default.sh` — git, vim, open, navigation (always loaded) |
 | **History** | 1 million entries, timestamps, deduplication |
 | **NVM** | Auto-switches Node version on `cd` via `.nvmrc` |
 | **rbenv** | Ruby version management |
@@ -56,14 +56,14 @@ Pulls the latest changes and re-links any symlinks that are already pointing int
 
 ## Themes
 
-Set `ZSH_THEME` in `bash-files/bash_custom.sh` (the variable is honored by both shells):
+Set `ZSH_THEME` in `shell/custom.sh` (the variable is honored by both shells):
 
 ```bash
 export ZSH_THEME="robbyrussell"   # ➜  project git:(main) ✗
 export ZSH_THEME="classic"        # full path + branch + timestamp RPROMPT
 ```
 
-Themes live in `bash-files/zsh/themes/` (zsh, via native `vcs_info`) and `bash-files/bash/themes/` (bash, via `PROMPT_COMMAND`), and the two are kept visually in sync. To create your own, copy an existing theme for your shell and it will be picked up automatically.
+Themes live in `shell/zsh/themes/` (zsh, via native `vcs_info`) and `shell/bash/themes/` (bash, via `PROMPT_COMMAND`), and the two are kept visually in sync. To create your own, copy an existing theme for your shell and it will be picked up automatically. See `shell/README.md` for the full layout.
 
 ---
 
@@ -88,8 +88,8 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 ### Configuration
 
-- **`GOGH_DIR`** — point `colorscheme` at your Gogh install (defaults to `~/src/gogh/installs`).
-- **`TERMINAL`** — managed by `install.sh`; set it manually in `bash_custom.sh` to override detection.
+- **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
+- **`TERMINAL`** — managed by `install.sh`; set it manually in `shell/custom.sh` to override detection.
 
 Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./install.sh`).
 
@@ -100,10 +100,10 @@ Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./inst
 Copy the example and edit freely — this file is gitignored:
 
 ```bash
-cp bash-files/bash_custom.sh.example bash-files/bash_custom.sh
+cp shell/custom.sh.example shell/custom.sh
 ```
 
-Good things to put there: private tokens, extra PATH entries, machine-specific aliases, `GOGH_DIR` for the `colorscheme()` function.
+Good things to put there: private tokens, extra PATH entries, machine-specific aliases, `GOGH_DIR` for the `colorscheme()` function. For extra aliases only, you can also use a local `~/.bash_aliases` file (not symlinked into the repo).
 
 ---
 
@@ -158,7 +158,7 @@ The repo includes patched fonts for use with the terminal configs:
 
 This config builds on the work of others:
 
-- **[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** (MIT) — the prompt themes in `bash-files/zsh/themes/` and `bash-files/bash/themes/` are reimplementations of oh-my-zsh originals (zsh via native `vcs_info`, bash via `PROMPT_COMMAND`): `robbyrussell.sh` after Robby Russell's [`robbyrussell`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#robbyrussell), and `classic.sh` inspired by [`amuse`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse).
+- **[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** (MIT) — the prompt themes in `shell/zsh/themes/` and `shell/bash/themes/` are reimplementations of oh-my-zsh originals (zsh via native `vcs_info`, bash via `PROMPT_COMMAND`): `robbyrussell.sh` after Robby Russell's [`robbyrussell`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#robbyrussell), and `classic.sh` inspired by [`amuse`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse).
 - **[Gogh](https://github.com/Gogh-Co/Gogh)** (MIT) — the 250+ terminal colour schemes used by the `colorscheme` command.
 - **[TPM](https://github.com/tmux-plugins/tpm)** and the **[tmux-plugins](https://github.com/tmux-plugins)** suite (`tmux-sensible`, `tmux-resurrect`, `tmux-continuum`) — tmux plugin management and session persistence.
 - **Fonts** — JetBrains Mono, Operator Mono, and other patched [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) bundled for use with the terminal configs; trademarks and licenses belong to their respective authors.

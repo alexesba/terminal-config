@@ -1,4 +1,9 @@
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# FZF integration shared by bash and zsh.
+if [ -n "$ZSH_VERSION" ]; then
+  [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+else
+  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+fi
 
 # ── File search command: prefer rg > ag > built-in ────────────────────────────
 if command -v rg &>/dev/null; then

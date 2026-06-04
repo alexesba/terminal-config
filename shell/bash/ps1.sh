@@ -47,16 +47,16 @@ _prompt_precompute() {
 }
 
 # ── Theme loader ──────────────────────────────────────────────────────────────
-# Override by setting ZSH_THEME in bash_custom.sh (shared with zsh). To create a
-# theme, add bash-files/bash/themes/<name>.sh defining _prompt_render.
+# Override by setting ZSH_THEME in shell/custom.sh (shared with zsh). To create a
+# theme, add shell/bash/themes/<name>.sh defining _prompt_render.
 _BASH_THEME="${ZSH_THEME:-robbyrussell}"
-_theme_file="$DOTFILES_DIR/bash-files/bash/themes/${_BASH_THEME}.sh"
+_theme_file="$DOTFILES_DIR/shell/bash/themes/${_BASH_THEME}.sh"
 
 if [ -f "$_theme_file" ]; then
   source "$_theme_file"
 else
   echo "bash prompt: theme '${_BASH_THEME}' not found, falling back to robbyrussell" >&2
-  source "$DOTFILES_DIR/bash-files/bash/themes/robbyrussell.sh"
+  source "$DOTFILES_DIR/shell/bash/themes/robbyrussell.sh"
 fi
 
 # Runs before every prompt. Capturing $? must be the very first thing, so this

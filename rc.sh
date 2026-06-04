@@ -1,4 +1,4 @@
-# ~/.bashrc: executed by bash(1) for non-login shells.
+# ~/.zshrc / ~/.bashrc entry point (symlinked from this repo as rc.sh).
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
@@ -25,16 +25,22 @@ else
   unset _src _dir
 fi
 
-# Auto-create bash_custom.sh from the example template on first run
-if [ ! -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ] && \
-   [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh.example" ]; then
-  cp "$DOTFILES_DIR/bash-files/bash_custom.sh.example" "$DOTFILES_DIR/bash-files/bash_custom.sh"
+# Personal overrides — migrate from pre-rename paths on first run
+_custom="$DOTFILES_DIR/shell/custom.sh"
+if [ ! -f "$_custom" ]; then
+  if [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ]; then
+    cp "$DOTFILES_DIR/bash-files/bash_custom.sh" "$_custom"
+  elif [ -f "$DOTFILES_DIR/shell/bash_custom.sh" ]; then
+    cp "$DOTFILES_DIR/shell/bash_custom.sh" "$_custom"
+  elif [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/custom.sh.example" "$_custom"
+  fi
 fi
 
-if [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ]; then
-  source "$DOTFILES_DIR/bash-files/bash_custom.sh"
+if [ -f "$_custom" ]; then
+  source "$_custom"
 fi
 
 export PATH="/usr/local/bin:$PATH"
 
-source "$DOTFILES_DIR/bash-files/os-config.sh"
+source "$DOTFILES_DIR/shell/os-config.sh"
