@@ -2,6 +2,11 @@
 shell/custom.sh
 shell/bash_custom.sh
 
+# CI workflows (negate a global ~/.gitignore that ignores .github)
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
+
 # Backup files created by install.sh link_file helper
 *.old
 

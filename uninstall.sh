@@ -8,6 +8,7 @@
 # shell/custom.sh), ~/.nvm, ~/.fzf, Gogh clones, TPM, etc.
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/helpers.sh
 source "$DOTFILES_DIR/lib/helpers.sh"
 
 CONFIRM_INTERACTIVE=false
@@ -71,6 +72,7 @@ fi
 CUSTOM_FILE="${DOTFILES_DIR}/shell/custom.sh"
 if confirm_yes "Remove the Nerd Font installed for terminal configs (from shell/custom.sh)?"; then
   echo -e "${BOLD}→ Nerd Font${RESET}"
+  # shellcheck source=lib/fonts.sh
   source "$DOTFILES_DIR/lib/fonts.sh"
   uninstall_recorded_nerd_font "$CUSTOM_FILE"
   echo ""

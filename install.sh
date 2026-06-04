@@ -3,6 +3,7 @@
 # Resolve the directory where this script lives, regardless of where it's called from
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source=lib/helpers.sh
 source "$DOTFILES_DIR/lib/helpers.sh"
 
 printf "${CYAN}${BOLD}"
@@ -216,6 +217,7 @@ if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
 fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  # shellcheck source=lib/fonts.sh
   source "$DOTFILES_DIR/lib/fonts.sh"
   TERMINAL_FONT_FAMILY=$(nerd_font_family "$TERMINAL_FONT_ID")
 

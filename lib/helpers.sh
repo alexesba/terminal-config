@@ -2,6 +2,7 @@
 
 RESET="\033[0m"
 BOLD="\033[1m"
+# shellcheck disable=SC2034
 CYAN="\033[1;36m"
 GREEN="\033[1;32m"
 YELLOW="\033[1;33m"

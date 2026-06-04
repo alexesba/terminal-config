@@ -8,6 +8,7 @@
 # Can be called by install.sh or run standalone to (re)install individual tools.
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/helpers.sh
 source "$DOTFILES_DIR/lib/helpers.sh"
 
 DO_TMUX=false
@@ -222,6 +223,7 @@ fi
 
 # ── Nerd Font ─────────────────────────────────────────────────────────────────
 if [[ -n "$DO_FONT" ]]; then
+  # shellcheck source=lib/fonts.sh
   source "$DOTFILES_DIR/lib/fonts.sh"
   echo -e "${BOLD}→ Nerd Font${RESET}"
   if nerd_font_family "$DO_FONT" &>/dev/null; then
