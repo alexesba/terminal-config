@@ -32,16 +32,17 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
-# Copy a terminal-emulator config from a repo template into the user's config
-# directory (real file, not a symlink). Gogh and other tools may write into the
-# same directory, so a local copy fits better than linking back into the repo.
-# Migrates legacy dotfiles symlinks. Never overwrites an existing regular file.
-# Usage: install_terminal_emulator_config <dotfiles_dir> <example_rel> <dest_path>
-install_terminal_emulator_config() {
+# Copy a config from a repo template into the user's home or config directory
+# (real file, not a symlink). Keeps personal edits out of the dotfiles repo.
+# Migrates legacy dotfiles symlinks, preserving the symlink target when it was
+# a local file. Never overwrites an existing regular file at the destination.
+# Usage: install_config_from_template <dotfiles_dir> <example_rel> <dest_path>
+install_config_from_template() {
   local dotfiles="$1"
   local example_rel="$2"
   local dest="$3"
   local example="$dotfiles/$example_rel"
+  local legacy_src
 
   [ -f "$example" ] || return 1
   mkdir -p "$(dirname "$dest")"
@@ -52,7 +53,13 @@ install_terminal_emulator_config() {
   fi
 
   if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$dotfiles"* ]]; then
-    cp "$example" "$dest"
+    legacy_src="$(readlink "$dest")"
+    rm "$dest"
+    if [ -f "$legacy_src" ]; then
+      cp "$legacy_src" "$dest"
+    else
+      cp "$example" "$dest"
+    fi
     echo -e "  ${GREEN}✓${RESET}  Migrated $dest from dotfiles symlink to local copy."
     return 0
   fi

@@ -16,7 +16,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **pyenv** | Python version management |
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
-| **tmux** | `tmux.conf` (from `tmux.conf.example`) — status bar, vim panes, TPM plugins |
+| **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` |
 | **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
 | **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
@@ -105,15 +105,10 @@ cp shell/custom.sh.example shell/custom.sh
 
 Good things to put there: private tokens, extra PATH entries, machine-specific aliases, `GOGH_DIR` for the `colorscheme()` function. For extra aliases only, you can also use a local `~/.bash_aliases` file (not symlinked into the repo).
 
-**tmux** uses the same pattern — copy the example, then edit your local file (symlinked to `~/.tmux.conf`):
+**tmux** and **terminal emulators** use the same copy-from-template pattern (local files only, nothing symlinked into the repo):
 
 ```bash
-cp tmux.conf.example tmux.conf
-```
-
-**Terminal emulators** use the same copy-from-template pattern (into `~/.config/`, not symlinked into the repo):
-
-```bash
+cp tmux.conf.example ~/.tmux.conf
 cp terminal-emulators/alacritty.yml.example ~/.config/alacritty/alacritty.yml
 cp terminal-emulators/kitty.conf.example     ~/.config/kitty/kitty.conf
 cp terminal-emulators/wezterm.lua.example      ~/.config/wezterm/wezterm.lua

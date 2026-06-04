@@ -1,7 +1,6 @@
 # Personal overrides — copy *.example → local file to customise
 shell/custom.sh
 shell/bash_custom.sh
-tmux.conf
 
 # Backup files created by install.sh link_file helper
 *.old

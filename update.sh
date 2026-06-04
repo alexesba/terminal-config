@@ -44,24 +44,19 @@ for _rc in ~/.zshrc ~/.bashrc; do
   fi
 done
 
-# tmux — ensure local tmux.conf exists, then re-link (upgrade legacy symlink to example)
-if [ ! -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "$DOTFILES_DIR/tmux.conf.example" ]; then
-  if [ -L ~/.tmux.conf ] && [[ "$(readlink ~/.tmux.conf)" == "$DOTFILES_DIR/tmux.conf.example" ]]; then
-    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
-    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template (was linked to example only)."
-  elif [ -L ~/.tmux.conf ] && [[ "$(readlink ~/.tmux.conf)" == "$DOTFILES_DIR"* ]]; then
-    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
-    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template."
-  fi
+# tmux + terminal emulators — copy from templates (migrate legacy symlinks)
+install_config_from_template "$DOTFILES_DIR" \
+  "tmux.conf.example" "${HOME}/.tmux.conf"
+if [ -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "${HOME}/.tmux.conf" ] && [ ! -L "${HOME}/.tmux.conf" ]; then
+  rm -f "$DOTFILES_DIR/tmux.conf"
+  echo -e "  ${GREEN}✓${RESET}  Removed legacy $DOTFILES_DIR/tmux.conf (now at ~/.tmux.conf)."
 fi
-_relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
 
-# Terminal emulators — copy from templates (migrate legacy symlinks)
-install_terminal_emulator_config "$DOTFILES_DIR" \
+install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/alacritty.yml.example" "${HOME}/.config/alacritty/alacritty.yml"
-install_terminal_emulator_config "$DOTFILES_DIR" \
+install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/kitty.conf.example" "${HOME}/.config/kitty/kitty.conf"
-install_terminal_emulator_config "$DOTFILES_DIR" \
+install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/wezterm.lua.example" "${HOME}/.config/wezterm/wezterm.lua"
 
 echo ""

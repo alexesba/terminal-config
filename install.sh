@@ -76,7 +76,7 @@ INSTALL_SHELL=$REPLY
 echo ""
 
 echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
-echo -e "   ${DIM}Copies tmux.conf.example → tmux.conf, then links ~/.tmux.conf${RESET}"
+echo -e "   ${DIM}Copies tmux.conf.example → ~/.tmux.conf${RESET}"
 echo    "   Custom keybindings, status bar, and plugin settings."
 echo    "   tmux binary will be installed if not already present."
 ask_yn "Install?"
@@ -174,11 +174,8 @@ fi
 
 if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ tmux${RESET}"
-  if [ ! -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "$DOTFILES_DIR/tmux.conf.example" ]; then
-    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
-    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template."
-  fi
-  link_file "$DOTFILES_DIR/tmux.conf" ~/.tmux.conf
+  install_config_from_template "$DOTFILES_DIR" \
+    "tmux.conf.example" "${HOME}/.tmux.conf"
   echo ""
 fi
 
@@ -199,20 +196,20 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     1)
       TERMINAL_NAME="alacritty"
       source "$DOTFILES_DIR/terminfo/install.sh"
-      install_terminal_emulator_config "$DOTFILES_DIR" \
+      install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/alacritty.yml.example" \
         "${HOME}/.config/alacritty/alacritty.yml"
       ;;
     2)
       TERMINAL_NAME="kitty"
       source "$DOTFILES_DIR/terminfo/install.sh"
-      install_terminal_emulator_config "$DOTFILES_DIR" \
+      install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/kitty.conf.example" \
         "${HOME}/.config/kitty/kitty.conf"
       ;;
     3)
       TERMINAL_NAME="wezterm"
-      install_terminal_emulator_config "$DOTFILES_DIR" \
+      install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/wezterm.lua.example" \
         "${HOME}/.config/wezterm/wezterm.lua"
       ;;
