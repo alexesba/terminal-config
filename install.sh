@@ -99,7 +99,7 @@ else
   echo    "   Pick a terminal (or skip):"
   echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacritty.yml${RESET}"
   echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
-  echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ ~/.config/wezterm/wezterm.lua${RESET}"
+  echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
   ask_choice "Choice" 4
   INSTALL_TERMINAL=$REPLY
@@ -210,8 +210,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
       ;;
     3)
       TERMINAL_NAME="wezterm"
-      mkdir -p ~/.config/wezterm
-      link_file "$DOTFILES_DIR/terminal-emulators/wezterm.lua" ~/.config/wezterm/wezterm.lua
+      install_wezterm_config "$DOTFILES_DIR"
       ;;
   esac
 

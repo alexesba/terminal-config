@@ -32,6 +32,39 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
+# Install wezterm.lua from the repo template into ~/.config/wezterm/ (real file, not
+# a symlink). WezTerm keeps colors.lua in the same directory, so a local copy fits
+# better than linking back into the dotfiles repo. Migrates legacy repo symlinks.
+# Never overwrites an existing regular file. Usage: install_wezterm_config <dotfiles_dir>
+install_wezterm_config() {
+  local dotfiles="$1"
+  local example="$dotfiles/terminal-emulators/wezterm.lua.example"
+  local dest="${HOME}/.config/wezterm/wezterm.lua"
+
+  [ -f "$example" ] || return 1
+  mkdir -p "${HOME}/.config/wezterm"
+
+  if [ -f "$dest" ] && [ ! -L "$dest" ]; then
+    echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
+    return 0
+  fi
+
+  if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$dotfiles"* ]]; then
+    cp "$example" "$dest"
+    echo -e "  ${GREEN}✓${RESET}  Migrated $dest from dotfiles symlink to local copy."
+    return 0
+  fi
+
+  if [ ! -e "$dest" ]; then
+    cp "$example" "$dest"
+    echo -e "  ${GREEN}✓${RESET}  Created $dest from template."
+    return 0
+  fi
+
+  echo -e "  ${YELLOW}⚠${RESET}  $dest exists and is not a dotfiles symlink — skipping."
+  return 0
+}
+
 # Returns 0 (true) when running inside WSL (Windows Subsystem for Linux).
 is_wsl() {
   grep -qi microsoft /proc/version 2>/dev/null

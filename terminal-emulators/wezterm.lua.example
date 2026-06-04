@@ -1,3 +1,9 @@
+-- wezterm.lua — personal WezTerm configuration
+--
+-- This file is NOT tracked in your home directory (installed from this template).
+-- Copy wezterm.lua.example → ~/.config/wezterm/wezterm.lua via install.sh.
+-- colors.lua (written by `colorscheme`) lives alongside this file in the same dir.
+
 local wezterm = require('wezterm')
 
 local config = {

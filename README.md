@@ -17,7 +17,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
 | **tmux** | `tmux.conf` (from `tmux.conf.example`) — status bar, vim panes, TPM plugins |
-| **Terminal emulators** | `terminal-emulators/` — Alacritty, Kitty, WezTerm configs |
+| **Terminal emulators** | `terminal-emulators/` — Alacritty & Kitty (symlinked); WezTerm (template → `~/.config/wezterm/`) |
 | **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
@@ -84,7 +84,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 | Terminal | How the pick persists |
 |---|---|
 | **Kitty / Alacritty** | Gogh writes the colours into their config files, so new windows keep the theme. |
-| **WezTerm** | Gogh only themes the current session via escape sequences, so `colorscheme` also writes the palette to `~/.config/wezterm/colors.lua`. `wezterm.lua` loads that file (by absolute path, so it works through the symlinked config) and registers it for auto-reload — the pick applies to open windows and survives new ones. Delete `colors.lua` to revert to the default `color_scheme`. |
+| **WezTerm** | Gogh only themes the current session via escape sequences, so `colorscheme` also writes the palette to `~/.config/wezterm/colors.lua`. Your local `~/.config/wezterm/wezterm.lua` (copied from `wezterm.lua.example`) loads that file and registers it for auto-reload — the pick applies to open windows and survives new ones. Delete `colors.lua` to revert to the default `color_scheme`. |
 
 ### Configuration
 
@@ -110,6 +110,15 @@ Good things to put there: private tokens, extra PATH entries, machine-specific a
 ```bash
 cp tmux.conf.example tmux.conf
 ```
+
+**WezTerm** is copied into your config directory (not symlinked), so it can sit next to machine-local `colors.lua`:
+
+```bash
+mkdir -p ~/.config/wezterm
+cp terminal-emulators/wezterm.lua.example ~/.config/wezterm/wezterm.lua
+```
+
+`./update.sh` migrates an old dotfiles symlink to a real file automatically.
 
 ---
 

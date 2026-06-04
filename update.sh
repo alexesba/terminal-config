@@ -57,7 +57,7 @@ fi
 _relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
 _relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminal-emulators/alacritty.yml"
 _relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminal-emulators/kitty.conf"
-_relink_if_mine ~/.config/wezterm/wezterm.lua      "$DOTFILES_DIR/terminal-emulators/wezterm.lua"
+install_wezterm_config "$DOTFILES_DIR"
 
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
