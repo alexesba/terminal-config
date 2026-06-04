@@ -32,17 +32,19 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
-# Install wezterm.lua from the repo template into ~/.config/wezterm/ (real file, not
-# a symlink). WezTerm keeps colors.lua in the same directory, so a local copy fits
-# better than linking back into the dotfiles repo. Migrates legacy repo symlinks.
-# Never overwrites an existing regular file. Usage: install_wezterm_config <dotfiles_dir>
-install_wezterm_config() {
+# Copy a terminal-emulator config from a repo template into the user's config
+# directory (real file, not a symlink). Gogh and other tools may write into the
+# same directory, so a local copy fits better than linking back into the repo.
+# Migrates legacy dotfiles symlinks. Never overwrites an existing regular file.
+# Usage: install_terminal_emulator_config <dotfiles_dir> <example_rel> <dest_path>
+install_terminal_emulator_config() {
   local dotfiles="$1"
-  local example="$dotfiles/terminal-emulators/wezterm.lua.example"
-  local dest="${HOME}/.config/wezterm/wezterm.lua"
+  local example_rel="$2"
+  local dest="$3"
+  local example="$dotfiles/$example_rel"
 
   [ -f "$example" ] || return 1
-  mkdir -p "${HOME}/.config/wezterm"
+  mkdir -p "$(dirname "$dest")"
 
   if [ -f "$dest" ] && [ ! -L "$dest" ]; then
     echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."

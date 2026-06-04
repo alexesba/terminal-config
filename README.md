@@ -17,7 +17,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
 | **tmux** | `tmux.conf` (from `tmux.conf.example`) — status bar, vim panes, TPM plugins |
-| **Terminal emulators** | `terminal-emulators/` — Alacritty & Kitty (symlinked); WezTerm (template → `~/.config/wezterm/`) |
+| **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
 | **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
@@ -111,14 +111,15 @@ Good things to put there: private tokens, extra PATH entries, machine-specific a
 cp tmux.conf.example tmux.conf
 ```
 
-**WezTerm** is copied into your config directory (not symlinked), so it can sit next to machine-local `colors.lua`:
+**Terminal emulators** use the same copy-from-template pattern (into `~/.config/`, not symlinked into the repo):
 
 ```bash
-mkdir -p ~/.config/wezterm
-cp terminal-emulators/wezterm.lua.example ~/.config/wezterm/wezterm.lua
+cp terminal-emulators/alacritty.yml.example ~/.config/alacritty/alacritty.yml
+cp terminal-emulators/kitty.conf.example     ~/.config/kitty/kitty.conf
+cp terminal-emulators/wezterm.lua.example      ~/.config/wezterm/wezterm.lua
 ```
 
-`./update.sh` migrates an old dotfiles symlink to a real file automatically.
+`./update.sh` migrates old dotfiles symlinks to local copies automatically (never overwrites files you've already edited).
 
 ---
 

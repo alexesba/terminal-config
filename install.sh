@@ -97,8 +97,8 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
   INSTALL_TERMINAL=4
 else
   echo    "   Pick a terminal (or skip):"
-  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ ~/.config/alacritty/alacritty.yml${RESET}"
-  echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ ~/.config/kitty/kitty.conf${RESET}"
+  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ copies template to ~/.config/alacritty/alacritty.yml${RESET}"
+  echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ copies template to ~/.config/kitty/kitty.conf${RESET}"
   echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
   ask_choice "Choice" 4
@@ -198,19 +198,23 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   case "$INSTALL_TERMINAL" in
     1)
       TERMINAL_NAME="alacritty"
-      mkdir -p ~/.config/alacritty
       source "$DOTFILES_DIR/terminfo/install.sh"
-      link_file "$DOTFILES_DIR/terminal-emulators/alacritty.yml" ~/.config/alacritty/alacritty.yml
+      install_terminal_emulator_config "$DOTFILES_DIR" \
+        "terminal-emulators/alacritty.yml.example" \
+        "${HOME}/.config/alacritty/alacritty.yml"
       ;;
     2)
       TERMINAL_NAME="kitty"
-      mkdir -p ~/.config/kitty
       source "$DOTFILES_DIR/terminfo/install.sh"
-      link_file "$DOTFILES_DIR/terminal-emulators/kitty.conf" ~/.config/kitty/kitty.conf
+      install_terminal_emulator_config "$DOTFILES_DIR" \
+        "terminal-emulators/kitty.conf.example" \
+        "${HOME}/.config/kitty/kitty.conf"
       ;;
     3)
       TERMINAL_NAME="wezterm"
-      install_wezterm_config "$DOTFILES_DIR"
+      install_terminal_emulator_config "$DOTFILES_DIR" \
+        "terminal-emulators/wezterm.lua.example" \
+        "${HOME}/.config/wezterm/wezterm.lua"
       ;;
   esac
 

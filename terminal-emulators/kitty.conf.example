@@ -1,3 +1,7 @@
+# kitty.conf — personal Kitty configuration
+#
+# Copy kitty.conf.example → ~/.config/kitty/kitty.conf via install.sh.
+
 # vim:fileencoding=utf-8:foldmethod=marker
 
 #: Fonts {{{

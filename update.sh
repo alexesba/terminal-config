@@ -55,9 +55,14 @@ if [ ! -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "$DOTFILES_DIR/tmux.conf.example" 
   fi
 fi
 _relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
-_relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminal-emulators/alacritty.yml"
-_relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminal-emulators/kitty.conf"
-install_wezterm_config "$DOTFILES_DIR"
+
+# Terminal emulators — copy from templates (migrate legacy symlinks)
+install_terminal_emulator_config "$DOTFILES_DIR" \
+  "terminal-emulators/alacritty.yml.example" "${HOME}/.config/alacritty/alacritty.yml"
+install_terminal_emulator_config "$DOTFILES_DIR" \
+  "terminal-emulators/kitty.conf.example" "${HOME}/.config/kitty/kitty.conf"
+install_terminal_emulator_config "$DOTFILES_DIR" \
+  "terminal-emulators/wezterm.lua.example" "${HOME}/.config/wezterm/wezterm.lua"
 
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
