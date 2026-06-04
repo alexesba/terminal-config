@@ -48,10 +48,25 @@ function colorscheme() {
   local preview_script="$dotfiles/bash-files/gogh-preview.sh"
   local persist_script="$dotfiles/bash-files/gogh-persist.sh"
 
+  # Build a "Human Name<TAB>file.sh" list (one awk pass): show each theme's
+  # PROFILE_NAME, falling back to a prettified filename. fzf displays only the
+  # name (--with-nth=1) but returns the real filename (--accept-nth=2).
   local selection
-  selection=$(ls "$gogh_dir" | grep '\.sh$' | fzf \
+  selection=$(awk -F'"' '
+    function flush() {
+      if (curfile != "") {
+        if (pname != "") disp = pname
+        else { disp = base; sub(/\.sh$/, "", disp); gsub(/-/, " ", disp) }
+        printf "%s\t%s\n", disp, base
+      }
+    }
+    FNR == 1 { flush(); curfile = FILENAME; pname = ""; n = split(FILENAME, a, "/"); base = a[n] }
+    /^export PROFILE_NAME=/ { pname = $2 }
+    END { flush() }
+  ' "$gogh_dir"/*.sh | sort -f | fzf \
+    --delimiter='\t' --with-nth=1 --accept-nth=2 \
     --prompt='colorscheme> ' \
-    --preview "bash '$preview_script' '$gogh_dir'/{}" \
+    --preview "bash '$preview_script' '$gogh_dir'/{2}" \
     --preview-window='right:65%:wrap') || return
 
   [ -z "$selection" ] && return
