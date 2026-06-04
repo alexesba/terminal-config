@@ -34,8 +34,12 @@ link_file() {
 
 # Copy a config from a repo template into the user's home or config directory
 # (real file, not a symlink). Keeps personal edits out of the dotfiles repo.
-# Migrates legacy dotfiles symlinks, preserving the symlink target when it was
-# a local file. Never overwrites an existing regular file at the destination.
+#
+# Legacy installs symlinked configs into this repo; on migrate we:
+#   1. Back up the symlink target to <dest>.old (so nothing is lost)
+#   2. Remove the symlink and write a real file at <dest>
+#   3. Never touch an existing regular file at <dest> (already migrated)
+#
 # Usage: install_config_from_template <dotfiles_dir> <example_rel> <dest_path>
 install_config_from_template() {
   local dotfiles="$1"
@@ -54,13 +58,19 @@ install_config_from_template() {
 
   if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$dotfiles"* ]]; then
     legacy_src="$(readlink "$dest")"
-    rm "$dest"
+    [[ "$legacy_src" != /* ]] && legacy_src="$(dirname "$dest")/$legacy_src"
+
     if [ -f "$legacy_src" ]; then
+      cp "$legacy_src" "${dest}.old"
+      echo -e "  ${GREEN}✓${RESET}  Backed up previous config to ${DIM}${dest}.old${RESET}"
+      rm "$dest"
       cp "$legacy_src" "$dest"
     else
+      echo -e "  ${YELLOW}⚠${RESET}  Symlink target missing (${legacy_src}) — using template."
+      rm "$dest"
       cp "$example" "$dest"
     fi
-    echo -e "  ${GREEN}✓${RESET}  Migrated $dest from dotfiles symlink to local copy."
+    echo -e "  ${GREEN}✓${RESET}  Replaced dotfiles symlink with local copy at $dest"
     return 0
   fi
 
@@ -72,6 +82,21 @@ install_config_from_template() {
 
   echo -e "  ${YELLOW}⚠${RESET}  $dest exists and is not a dotfiles symlink — skipping."
   return 0
+}
+
+# Remove a legacy config file left in the repo after migrating to a local copy.
+# Backs up the repo file to <path>.old before deleting. Usage:
+#   remove_legacy_repo_copy <repo_file> <local_dest>
+remove_legacy_repo_copy() {
+  local repo_file="$1"
+  local dest="$2"
+
+  [ -f "$repo_file" ] || return 0
+  [ -f "$dest" ] && [ ! -L "$dest" ] || return 0
+
+  cp "$repo_file" "${repo_file}.old"
+  rm -f "$repo_file"
+  echo -e "  ${GREEN}✓${RESET}  Removed legacy repo copy ${repo_file} (backed up to ${repo_file}.old)."
 }
 
 # Returns 0 (true) when running inside WSL (Windows Subsystem for Linux).

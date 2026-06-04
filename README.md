@@ -97,24 +97,27 @@ Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./inst
 
 ## Customisation
 
-Copy the example and edit freely — this file is gitignored:
+The repo ships **templates** (`*.example`). `install.sh` copies them to your home directory once; after that they are **yours** — edit fonts, keybindings, status bar, etc. without touching git.
+
+| What | Template | Your local file |
+|---|---|---|
+| Shell overrides | `shell/custom.sh.example` | `shell/custom.sh` |
+| tmux | `tmux.conf.example` | `~/.tmux.conf` |
+| Alacritty | `terminal-emulators/alacritty.yml.example` | `~/.config/alacritty/alacritty.yml` |
+| Kitty | `terminal-emulators/kitty.conf.example` | `~/.config/kitty/kitty.conf` |
+| WezTerm | `terminal-emulators/wezterm.lua.example` | `~/.config/wezterm/wezterm.lua` |
+
+`git pull` updates the templates in the repo; it does **not** change your local copies. To pick up upstream template changes, diff against the `.example` file and merge what you want by hand:
 
 ```bash
-cp shell/custom.sh.example shell/custom.sh
+cp shell/custom.sh.example shell/custom.sh   # first time only
+# later, to compare:
+diff shell/custom.sh.example shell/custom.sh
 ```
 
-Good things to put there: private tokens, extra PATH entries, machine-specific aliases, `GOGH_DIR` for the `colorscheme()` function. For extra aliases only, you can also use a local `~/.bash_aliases` file (not symlinked into the repo).
+For extra aliases only, you can also use a local `~/.bash_aliases` file (not in the repo).
 
-**tmux** and **terminal emulators** use the same copy-from-template pattern (local files only, nothing symlinked into the repo):
-
-```bash
-cp tmux.conf.example ~/.tmux.conf
-cp terminal-emulators/alacritty.yml.example ~/.config/alacritty/alacritty.yml
-cp terminal-emulators/kitty.conf.example     ~/.config/kitty/kitty.conf
-cp terminal-emulators/wezterm.lua.example      ~/.config/wezterm/wezterm.lua
-```
-
-`./update.sh` migrates old dotfiles symlinks to local copies automatically (never overwrites files you've already edited).
+`./update.sh` migrates old dotfiles symlinks automatically: it backs up your current config to `<file>.old`, replaces the symlink with a local copy (preserving your edits), and removes leftover files from the repo (also backed up as `<file>.old`). It never overwrites a config that is already a regular local file.
 
 ---
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# update.sh — pull latest dotfiles and re-link any existing symlinks.
+# update.sh — pull latest dotfiles and refresh repo-managed symlinks.
 #
-# Safe to run at any time. Only re-links files that are already symlinked
-# into this repo — it will not install anything new.
+# Safe to run at any time. Template-based configs (tmux, terminal emulators) are
+# copied once into your home directory — update.sh never overwrites those local
+# files, so your edits are preserved across git pull.
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DOTFILES_DIR/lib/helpers.sh"
@@ -17,8 +18,8 @@ git pull --ff-only
 echo ""
 
 # ── Re-link any symlinks already pointing into this repo ─────────────────────
-echo -e "${BOLD}→ Re-linking dotfiles${RESET}"
-echo -e "   ${DIM}(only files already symlinked into $DOTFILES_DIR)${RESET}"
+echo -e "${BOLD}→ Refreshing dotfiles${RESET}"
+echo -e "   ${DIM}(symlinks only — local template copies are never overwritten)${RESET}"
 echo ""
 
 _relink_if_mine() {
@@ -44,20 +45,31 @@ for _rc in ~/.zshrc ~/.bashrc; do
   fi
 done
 
-# tmux + terminal emulators — copy from templates (migrate legacy symlinks)
+# tmux + terminal emulators — migrate legacy symlinks → local copies (with backup)
 install_config_from_template "$DOTFILES_DIR" \
   "tmux.conf.example" "${HOME}/.tmux.conf"
-if [ -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "${HOME}/.tmux.conf" ] && [ ! -L "${HOME}/.tmux.conf" ]; then
-  rm -f "$DOTFILES_DIR/tmux.conf"
-  echo -e "  ${GREEN}✓${RESET}  Removed legacy $DOTFILES_DIR/tmux.conf (now at ~/.tmux.conf)."
-fi
+remove_legacy_repo_copy "$DOTFILES_DIR/tmux.conf" "${HOME}/.tmux.conf"
 
 install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/alacritty.yml.example" "${HOME}/.config/alacritty/alacritty.yml"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/alacritty.yml" \
+  "${HOME}/.config/alacritty/alacritty.yml"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminals/alacritty.yml" \
+  "${HOME}/.config/alacritty/alacritty.yml"
+
 install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/kitty.conf.example" "${HOME}/.config/kitty/kitty.conf"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/kitty.conf" \
+  "${HOME}/.config/kitty/kitty.conf"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminals/kitty.conf" \
+  "${HOME}/.config/kitty/kitty.conf"
+
 install_config_from_template "$DOTFILES_DIR" \
   "terminal-emulators/wezterm.lua.example" "${HOME}/.config/wezterm/wezterm.lua"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/wezterm.lua" \
+  "${HOME}/.config/wezterm/wezterm.lua"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminals/wezterm.lua" \
+  "${HOME}/.config/wezterm/wezterm.lua"
 
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
