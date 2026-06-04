@@ -253,6 +253,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   fi
   set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
   set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
+  set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
   echo ""
 fi
 

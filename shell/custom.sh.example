@@ -28,6 +28,7 @@
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────
 # export TERMINAL_FONT={{TERMINAL_FONT}}
+# export TERMINAL_FONT_ID={{TERMINAL_FONT_ID}}
 
 # ── Example: work aliases ─────────────────────────────────────────────────────
 # alias work='cd ~/Projects/work'

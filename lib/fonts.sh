@@ -36,6 +36,60 @@ nerd_font_release_zip() {
   esac
 }
 
+# Map a config font family back to a font id.
+# Usage: nerd_font_id_from_family <family>
+nerd_font_id_from_family() {
+  local id family
+  for id in caskaydia jetbrains fira hack; do
+    family=$(nerd_font_family "$id")
+    if [[ "$family" == "$1" ]]; then
+      echo "$id"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Filename globs (under ~/.local/share/fonts) for Linux installs. One pattern per line.
+# Usage: nerd_font_filename_patterns <id>
+nerd_font_filename_patterns() {
+  case "$1" in
+    caskaydia) printf '%s\n' 'CaskaydiaCove*' ;;
+    jetbrains) printf '%s\n' 'JetBrainsMonoNerdFont*' ;;
+    fira)      printf '%s\n' 'FiraCodeNerdFont*' ;;
+    hack)      printf '%s\n' 'HackNerdFont*' ;;
+    *)         return 1 ;;
+  esac
+}
+
+# Read export VAR="value" from shell/custom.sh without sourcing it.
+# Usage: custom_export_value <file> <VAR>
+custom_export_value() {
+  local file="$1" var="$2"
+  [[ -f "$file" ]] || return 1
+  sed -nE "s/^[[:space:]]*export[[:space:]]+${var}=['\"]([^'\"]*)['\"].*/\1/p" "$file" | head -1
+}
+
+# Resolve which Nerd Font install.sh recorded for this machine.
+# Usage: resolve_nerd_font_id [custom.sh path]
+resolve_nerd_font_id() {
+  local custom="${1:-}"
+  local id family
+
+  [[ -f "$custom" ]] || return 1
+
+  id=$(custom_export_value "$custom" TERMINAL_FONT_ID)
+  if [[ -n "$id" ]] && nerd_font_family "$id" &>/dev/null; then
+    echo "$id"
+    return 0
+  fi
+
+  family=$(custom_export_value "$custom" TERMINAL_FONT)
+  if [[ -n "$family" ]]; then
+    nerd_font_id_from_family "$family"
+  fi
+}
+
 # Replace {{FONT_FAMILY}} in a copied terminal config file.
 # Usage: substitute_font_placeholder <file> <font_family>
 substitute_font_placeholder() {
@@ -99,4 +153,63 @@ install_nerd_font() {
   echo -e "  ${YELLOW}⚠${RESET}  Install ${BOLD}$(nerd_font_family "$id")${RESET} manually:"
   echo -e "      ${DIM}brew install --cask ${cask}${RESET}"
   return 1
+}
+
+# Uninstall a Nerd Font by id (brew cask on macOS; files in ~/.local/share/fonts on Linux).
+# Usage: uninstall_nerd_font <id>
+uninstall_nerd_font() {
+  local id="$1"
+  local cask font_dir pattern file removed=0
+
+  cask=$(nerd_font_brew_cask "$id") || return 1
+
+  if command -v brew &>/dev/null && brew list --cask "$cask" &>/dev/null; then
+    echo -e "  Uninstalling ${BOLD}${cask}${RESET} via Homebrew…"
+    brew uninstall --cask "$cask"
+    echo -e "  ${GREEN}✓${RESET}  Removed ${cask}."
+    return 0
+  fi
+
+  if [[ "$OSTYPE" =~ ^linux ]] && ! is_wsl; then
+    font_dir="${HOME}/.local/share/fonts"
+    if [[ ! -d "$font_dir" ]]; then
+      echo -e "  ${DIM}—${RESET}  ${font_dir} not found — skipping."
+      return 0
+    fi
+
+    while IFS= read -r pattern; do
+      [[ -n "$pattern" ]] || continue
+      while IFS= read -r -d '' file; do
+        rm -f "$file"
+        removed=$((removed + 1))
+        echo -e "  ${GREEN}✓${RESET}  Removed $(basename "$file")"
+      done < <(find "$font_dir" -maxdepth 1 -iname "$pattern" -print0 2>/dev/null)
+    done < <(nerd_font_filename_patterns "$id")
+
+    if (( removed > 0 )) && command -v fc-cache &>/dev/null; then
+      fc-cache -fv "$font_dir" >/dev/null 2>&1
+    elif (( removed == 0 )); then
+      echo -e "  ${DIM}—${RESET}  No matching font files in ${font_dir}."
+    fi
+    return 0
+  fi
+
+  echo -e "  ${DIM}—${RESET}  ${cask} not installed via Homebrew — skipping."
+  return 0
+}
+
+# Uninstall the Nerd Font recorded in shell/custom.sh (install.sh / bootstrap --font).
+# Usage: uninstall_recorded_nerd_font [custom.sh path]
+uninstall_recorded_nerd_font() {
+  local custom="${1:-}"
+  local id family
+
+  id=$(resolve_nerd_font_id "$custom") || {
+    echo -e "  ${DIM}—${RESET}  No TERMINAL_FONT / TERMINAL_FONT_ID in shell/custom.sh — skipping."
+    return 0
+  }
+
+  family=$(nerd_font_family "$id")
+  echo -e "  ${DIM}Font recorded in custom.sh:${RESET} ${family} (${id})"
+  uninstall_nerd_font "$id"
 }

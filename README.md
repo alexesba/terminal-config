@@ -66,9 +66,10 @@ Detaches this machine from the dotfiles repo:
 
 - Removes `~/.zshrc` / `~/.bashrc` symlinks (restores `*.old` if install backed up your previous rc)
 - Removes copied configs (`~/.tmux.conf`, terminal emulator configs) — always backed up to `*.uninstall.old` first
+- Uninstalls the Nerd Font recorded in `shell/custom.sh` (Homebrew cask on macOS, font files in `~/.local/share/fonts/` on Linux)
 - Optionally removes empty `~/.bash_aliases` and `~/.config/wezterm/colors.lua`
 
-Does **not** delete the repo, `shell/custom.sh`, or tools installed by `bootstrap.sh` (nvm, fzf, Gogh, TPM, brew packages, etc.).
+Does **not** delete the repo, `shell/custom.sh`, or other tools installed by `bootstrap.sh` (nvm, fzf, Gogh, TPM, tmux, etc.).
 
 ---
 
@@ -186,17 +187,7 @@ Reinstall a font standalone:
 
 Available IDs: `caskaydia`, `jetbrains`, `fira`, `hack`.
 
-The repo also includes legacy patched font archives for manual install:
-
-| File | Font |
-|---|---|
-| `JetBrains.zip` | JetBrains Mono |
-| `OperatorMonoWithIcons.zip` | Operator Mono with Nerd Font icons |
-| `Fonts.zip` | Additional patched fonts |
-| `patched-font-windows.zip` | Windows-compatible variants |
-
-**macOS**: unzip and double-click to install, or drag to `~/Library/Fonts/`.  
-**Linux/WSL**: unzip to `~/.local/share/fonts/` then run `fc-cache -fv`. On WSL, install fonts on the Windows side for GUI terminals.
+On WSL, install fonts on the Windows side for GUI terminals.
 
 ---
 
@@ -207,6 +198,6 @@ This config builds on the work of others:
 - **[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** (MIT) — the prompt themes in `shell/zsh/themes/` and `shell/bash/themes/` are reimplementations of oh-my-zsh originals (zsh via native `vcs_info`, bash via `PROMPT_COMMAND`): `robbyrussell.sh` after Robby Russell's [`robbyrussell`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#robbyrussell), and `classic.sh` inspired by [`amuse`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse).
 - **[Gogh](https://github.com/Gogh-Co/Gogh)** (MIT) — the 250+ terminal colour schemes used by the `colorscheme` command.
 - **[TPM](https://github.com/tmux-plugins/tpm)** and the **[tmux-plugins](https://github.com/tmux-plugins)** suite (`tmux-sensible`, `tmux-resurrect`, `tmux-continuum`) — tmux plugin management and session persistence.
-- **Fonts** — JetBrains Mono, Operator Mono, and other patched [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) bundled for use with the terminal configs; trademarks and licenses belong to their respective authors.
+- **[Nerd Fonts](https://github.com/ryanoasis/nerd-fonts)** — patched fonts installed by `install.sh` / `bootstrap.sh --font=…` for terminal emulator configs.
 
 Thanks to all of the above projects and their maintainers.
