@@ -57,7 +57,7 @@ Pulls the latest changes and re-links any symlinks that are already pointing int
 
 ## Tests
 
-CI runs on every push/PR via GitHub Actions (`.github/workflows/ci.yml`):
+CI runs on every push/PR via GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 
 - `bash -n` syntax check on all `*.sh` files
 - [shellcheck](https://www.shellcheck.net/) on install/update scripts and `lib/` (sourced `shell/` fragments are syntax-checked via bats smoke tests)

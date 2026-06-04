@@ -1,22 +1,23 @@
-name: CI
+name: Specs
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  test:
+  specs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install shellcheck and bats
+      - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck
+          sudo apt-get install -y shellcheck zsh
           git clone --depth 1 https://github.com/bats-core/bats-core.git /tmp/bats-core
           sudo /tmp/bats-core/install.sh /usr/local
 
-      - name: Run tests
+      - name: Run specs
         run: ./scripts/test.sh
