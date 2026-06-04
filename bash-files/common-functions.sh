@@ -22,20 +22,6 @@ function tmux-start {
 
   tmux attach-session -t $TMUX_APP
 }
-
-# Load nvmrc if exist under the current directory
-loadnvmrc() {
-  if [[ $PWD == $PREV_PWD ]]; then
-    return
-  fi
-
-  PREV_PWD=$PWD
-
-  if [[ -f "$PWD/.nvmrc" ]]; then
-    nvm use
-  fi
-}
-
 function colorscheme() {
   local gogh_dir="${GOGH_DIR:-$HOME/src/gogh/installs}"
   if [ ! -d "$gogh_dir" ]; then
