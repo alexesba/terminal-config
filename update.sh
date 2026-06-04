@@ -45,9 +45,9 @@ for _rc in ~/.zshrc ~/.bashrc; do
 done
 
 _relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
-_relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminals/alacritty.yml"
-_relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminals/kitty.conf"
-_relink_if_mine ~/.config/wezterm/wezterm.lua      "$DOTFILES_DIR/terminals/wezterm.lua"
+_relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminal-emulators/alacritty.yml"
+_relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminal-emulators/kitty.conf"
+_relink_if_mine ~/.config/wezterm/wezterm.lua      "$DOTFILES_DIR/terminal-emulators/wezterm.lua"
 
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"

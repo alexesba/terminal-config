@@ -196,18 +196,18 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
       TERMINAL_NAME="alacritty"
       mkdir -p ~/.config/alacritty
       source "$DOTFILES_DIR/terminfo/install.sh"
-      link_file "$DOTFILES_DIR/terminals/alacritty.yml" ~/.config/alacritty/alacritty.yml
+      link_file "$DOTFILES_DIR/terminal-emulators/alacritty.yml" ~/.config/alacritty/alacritty.yml
       ;;
     2)
       TERMINAL_NAME="kitty"
       mkdir -p ~/.config/kitty
       source "$DOTFILES_DIR/terminfo/install.sh"
-      link_file "$DOTFILES_DIR/terminals/kitty.conf" ~/.config/kitty/kitty.conf
+      link_file "$DOTFILES_DIR/terminal-emulators/kitty.conf" ~/.config/kitty/kitty.conf
       ;;
     3)
       TERMINAL_NAME="wezterm"
       mkdir -p ~/.config/wezterm
-      link_file "$DOTFILES_DIR/terminals/wezterm.lua" ~/.config/wezterm/wezterm.lua
+      link_file "$DOTFILES_DIR/terminal-emulators/wezterm.lua" ~/.config/wezterm/wezterm.lua
       ;;
   esac
 

@@ -17,7 +17,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
 | **tmux** | Custom status bar, vim-style panes, cross-platform clipboard |
-| **Terminal emulators** | Alacritty, Kitty, WezTerm configs |
+| **Terminal emulators** | `terminal-emulators/` — Alacritty, Kitty, WezTerm configs |
 | **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
