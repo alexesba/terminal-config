@@ -13,7 +13,8 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **History** | 1 million entries, timestamps, deduplication |
 | **NVM** | Auto-switches Node version on `cd` via `.nvmrc` |
 | **rbenv** | Ruby version management |
-| **pyenv** | Python version management |
+| **Python venv** | Auto-activates `./venv` on `cd` |
+| **tig** | Git text-mode browser (`alias tig` in aliases) |
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
 | **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` |
@@ -153,10 +154,12 @@ For extra aliases only, you can also use a local `~/.bash_aliases` file (not in 
 | bat | `--bat` | Syntax-highlighted cat (used by FZF preview) |
 | hub | `--hub` | GitHub CLI wrapper (`alias git=hub`) |
 | Gogh | `--gogh` | 250+ terminal colour schemes, applied via `colorscheme` |
+| tig | `--tig` | Git text-mode interface (used by the `tig` alias) |
+| Nerd Font | `--font=ID` | Terminal font (`caskaydia`, `jetbrains`, `fira`, `hack`) |
 
 Run standalone:
 ```bash
-./bootstrap.sh --ripgrep --bat
+./bootstrap.sh --ripgrep --bat --tig
 ```
 
 ---

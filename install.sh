@@ -180,6 +180,13 @@ ask_yn "Install?"
 INSTALL_GOGH=$REPLY
 echo ""
 
+echo -e "${BOLD}13. tig — git text-mode interface${RESET}"
+echo -e "   ${DIM}Installed via brew (macOS) or your Linux package manager.${RESET}"
+echo    "   Browse commits, branches, and diffs from the terminal."
+ask_yn "Install?"
+INSTALL_TIG=$REPLY
+echo ""
+
 
 echo -e "${CYAN}${BOLD}━━━  Linking dotfiles  ━━━${RESET}"
 echo ""
@@ -268,6 +275,7 @@ BOOTSTRAP_FLAGS=()
 [[ $INSTALL_BAT      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--bat)
 [[ $INSTALL_HUB      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--hub)
 [[ $INSTALL_GOGH     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--gogh)
+[[ $INSTALL_TIG      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tig)
 
 if [ ${#BOOTSTRAP_FLAGS[@]} -gt 0 ]; then
   bash "$DOTFILES_DIR/bootstrap.sh" "${BOOTSTRAP_FLAGS[@]}"
