@@ -44,9 +44,8 @@ function colorscheme() {
     echo "Or set GOGH_DIR in bash_custom.sh to point to your install."
     return 1
   fi
-  local dotfiles="${DOTFILES_DIR:-$HOME/Projects/terminal-config}"
-  local preview_script="$dotfiles/bash-files/gogh-preview.sh"
-  local persist_script="$dotfiles/bash-files/gogh-persist.sh"
+  local preview_script="$DOTFILES_DIR/bash-files/gogh-preview.sh"
+  local persist_script="$DOTFILES_DIR/bash-files/gogh-persist.sh"
 
   # Build a "Human Name<TAB>file.sh" list (one awk pass): show each theme's
   # PROFILE_NAME, falling back to a prettified filename. fzf displays only the

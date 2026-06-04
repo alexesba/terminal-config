@@ -8,11 +8,21 @@ case $- in
       *) return;;
 esac
 
-# Resolve the dotfiles directory regardless of where the repo lives
+# Resolve the dotfiles directory regardless of where the repo lives. The rc file
+# is a symlink into the repo, so we must follow symlinks to find the real path.
 if [ -n "$ZSH_VERSION" ]; then
+  # zsh: %x is this file; :A resolves symlinks + makes absolute; :h is dirname
   export DOTFILES_DIR="${${(%):-%x}:A:h}"
 else
-  export DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  # bash: BASH_SOURCE is the (symlinked) rc path, so walk the symlink chain
+  _src="${BASH_SOURCE[0]}"
+  while [ -L "$_src" ]; do
+    _dir="$(cd -P "$(dirname "$_src")" && pwd)"
+    _src="$(readlink "$_src")"
+    [[ $_src != /* ]] && _src="$_dir/$_src"
+  done
+  export DOTFILES_DIR="$(cd -P "$(dirname "$_src")" && pwd)"
+  unset _src _dir
 fi
 
 # Auto-create bash_custom.sh from the example template on first run
