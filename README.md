@@ -1,5 +1,7 @@
 # terminal-config
 
+[![Specs](https://github.com/alexesba/terminal-config/actions/workflows/ci.yml/badge.svg)](https://github.com/alexesba/terminal-config/actions/workflows/ci.yml)
+
 Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sensible aliases, and one-command setup on macOS, Linux, and WSL.
 
 ---
