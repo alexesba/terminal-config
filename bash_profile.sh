@@ -38,5 +38,3 @@ fi
 export PATH="/usr/local/bin:$PATH"
 
 source "$DOTFILES_DIR/bash-files/os-config.sh"
-
-export NVM_DIR="$HOME/.nvm"

@@ -7,7 +7,3 @@ else
   export SHELL=$(which bash)
   source "$DOTFILES_DIR/bash-files/bash.sh"
 fi
-
-if [ -f ~/.bash_custom ]; then
- . ~/.bash_custom
-fi

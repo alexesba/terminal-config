@@ -43,8 +43,7 @@ function _precmd_jobs() {
 add-zsh-hook precmd _precmd_jobs
 
 # ── Shell settings ────────────────────────────────────────────────────────────
-export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
+# CLICOLOR/LSCOLORS live in dircolors.sh, which both shells source.
 setopt PROMPT_SUBST
 
 # ── Theme loader ──────────────────────────────────────────────────────────────

@@ -1,33 +1,34 @@
 function tmux-start {
-  TMUX_DIRNAME=${1:-$(pwd)}
+  local tmux_dirname tmux_app
+  tmux_dirname="${1:-$(pwd)}"
 
-  if test "$TMUX_DIRNAME" = "."; then
-    TMUX_DIRNAME=$(pwd)
+  if test "$tmux_dirname" = "."; then
+    tmux_dirname="$(pwd)"
   fi
 
-  TMUX_APP=$(basename $TMUX_DIRNAME)
+  tmux_app="$(basename "$tmux_dirname")"
 
-  tmux has-session -t $TMUX_APP 2>/dev/null
-
-  if [ "$?" -eq 1 ] ; then
+  if ! tmux has-session -t "$tmux_app" 2>/dev/null; then
     echo "No Session found.  Creating and configuring."
-    pushd $TMUX_DIRNAME
-    tmux new-session -d -s $TMUX_APP
-    popd
+    pushd "$tmux_dirname" || return
+    tmux new-session -d -s "$tmux_app"
+    popd || return
   else
     echo "Session found.  Connecting."
   fi
 
   sleep 0.5
 
-  tmux attach-session -t $TMUX_APP
+  tmux attach-session -t "$tmux_app"
 }
 function colorscheme() {
-  local gogh_dir="${GOGH_DIR:-$HOME/src/gogh/installs}"
+  # GOGH_DIR points at the Gogh repo root (matches bootstrap.sh); themes live in
+  # its installs/ subdirectory.
+  local gogh_dir="${GOGH_DIR:-$HOME/src/gogh}/installs"
   if [ ! -d "$gogh_dir" ]; then
-    echo "gogh not found at $gogh_dir"
+    echo "gogh themes not found at $gogh_dir"
     echo "Clone it: git clone https://github.com/Gogh-Co/Gogh ~/src/gogh"
-    echo "Or set GOGH_DIR in bash_custom.sh to point to your install."
+    echo "Or set GOGH_DIR in bash_custom.sh to point to your Gogh checkout."
     return 1
   fi
   local preview_script="$DOTFILES_DIR/bash-files/gogh-preview.sh"
@@ -63,8 +64,8 @@ function colorscheme() {
 
 function restore_db {
   echo "Importing filename: $2 into database: $1"
-  if [ -f $2 ]; then
-    pg_restore --verbose --clean --no-acl --no-owner  -d $1 $2
+  if [ -f "$2" ]; then
+    pg_restore --verbose --clean --no-acl --no-owner -d "$1" "$2"
   else
     echo "The file $2 doesn't exist"
   fi

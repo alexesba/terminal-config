@@ -11,9 +11,7 @@
 #   $_git_dirty_flag  – "1" when dirty (for themes that render their own marker)
 #   $_jobs_prompt     – ready-made " ⏸ N[prog], M[prog]" for paused/bg jobs
 #   _c <code>         – helper emitting a zero-width-safe colour escape
-
-export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
+# (CLICOLOR/LSCOLORS live in dircolors.sh, which both shells source.)
 
 # Non-printing colour escape: \001/\002 mark zero-width regions so readline keeps
 # line-wrapping correct. \033 (not \e) for portability with older bash/printf.

@@ -17,8 +17,9 @@
 # export EDITOR=nvim
 # export VISUAL=nvim
 
-# ── Example: gogh colour-scheme directory (used by colorscheme() function) ────
-# export GOGH_DIR="$HOME/src/gogh/installs"
+# ── Example: gogh checkout directory (used by colorscheme() function) ─────────
+# Point this at your Gogh repo root; themes are read from its installs/ subdir.
+# export GOGH_DIR="$HOME/src/gogh"
 
 # ── Terminal emulator (used by gogh / colorscheme to target the right app) ────
 # install.sh replaces the {{TERMINAL}} placeholder below with your terminal
