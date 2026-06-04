@@ -123,6 +123,70 @@ set_env_var() {
   fi
 }
 
+# Returns 0 (proceed) when the user confirms, or when CONFIRM_INTERACTIVE is not
+# set (non-interactive mode assumes yes). Set CONFIRM_INTERACTIVE=true to prompt.
+# Usage: confirm_yes "prompt text"
+confirm_yes() {
+  local prompt="$1"
+  if [[ "${CONFIRM_INTERACTIVE:-false}" == true ]]; then
+    ask_yn "$prompt"
+    [[ $REPLY =~ ^[Yy]$ ]]
+  else
+    return 0
+  fi
+}
+
+# Remove a symlink into dotfiles_dir and restore a pre-install ${dest}.old if present.
+# Usage: uninstall_symlink_if_mine <dotfiles_dir> <dest>
+uninstall_symlink_if_mine() {
+  local dotfiles="$1"
+  local dest="$2"
+
+  if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$dotfiles"* ]]; then
+    rm "$dest"
+    echo -e "  ${GREEN}✓${RESET}  Removed symlink ${dest}"
+    if [ -f "${dest}.old" ]; then
+      mv "${dest}.old" "$dest"
+      echo -e "  ${GREEN}✓${RESET}  Restored pre-install config from ${dest}.old"
+    fi
+    return 0
+  fi
+
+  if [ -e "$dest" ]; then
+    echo -e "  ${DIM}—${RESET}  ${dest} is not a dotfiles symlink — skipping."
+  else
+    echo -e "  ${DIM}—${RESET}  ${dest} not found — skipping."
+  fi
+}
+
+# Remove a copied (or legacy symlinked) config file, backing up to <dest>.uninstall.old.
+# Usage: uninstall_copied_config <dotfiles_dir> <dest>
+uninstall_copied_config() {
+  local dotfiles="$1"
+  local dest="$2"
+  local legacy_src
+
+  if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$dotfiles"* ]]; then
+    legacy_src="$(readlink "$dest")"
+    [[ "$legacy_src" != /* ]] && legacy_src="$(dirname "$dest")/$legacy_src"
+    if [ -f "$legacy_src" ]; then
+      cp "$legacy_src" "${dest}.uninstall.old"
+    fi
+    rm "$dest"
+    echo -e "  ${GREEN}✓${RESET}  Removed symlink ${dest} (backup at ${dest}.uninstall.old)"
+    return 0
+  fi
+
+  if [ -f "$dest" ]; then
+    cp "$dest" "${dest}.uninstall.old"
+    rm "$dest"
+    echo -e "  ${GREEN}✓${RESET}  Removed ${dest} (backup at ${dest}.uninstall.old)"
+    return 0
+  fi
+
+  echo -e "  ${DIM}—${RESET}  ${dest} not found — skipping."
+}
+
 # Prompts yes/no and loops until the user enters y or n (case-insensitive).
 # Usage: ask_yn "prompt text"; result in $REPLY
 ask_yn() {

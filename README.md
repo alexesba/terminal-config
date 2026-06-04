@@ -54,6 +54,24 @@ Pulls the latest changes and re-links any symlinks that are already pointing int
 
 ---
 
+## Uninstall
+
+```bash
+cd ~/Projects/terminal-config
+./uninstall.sh          # non-interactive — assumes yes to every step
+./uninstall.sh -i       # interactive — ask before each step
+```
+
+Detaches this machine from the dotfiles repo:
+
+- Removes `~/.zshrc` / `~/.bashrc` symlinks (restores `*.old` if install backed up your previous rc)
+- Removes copied configs (`~/.tmux.conf`, terminal emulator configs) — always backed up to `*.uninstall.old` first
+- Optionally removes empty `~/.bash_aliases` and `~/.config/wezterm/colors.lua`
+
+Does **not** delete the repo, `shell/custom.sh`, or tools installed by `bootstrap.sh` (nvm, fzf, Gogh, TPM, brew packages, etc.).
+
+---
+
 ## Themes
 
 Set `ZSH_THEME` in `shell/custom.sh` (the variable is honored by both shells):
