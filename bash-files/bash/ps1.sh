@@ -1,68 +1,71 @@
-COLOR_BLACk="\033[0;30m"
-COLOR_BLUE="\033[0;34m"
-COLOR_GREEN="\033[0;32m"
-COLOR_CYAN="\033[0;36m"
-COLOR_RED="\033[0;31m"
-COLOR_PURPLE="\033[0;35m"
-COLOR_BROWN="\033[0;33m"
-COLOR_YELLOW="\033[1;33m"
-COLOR_OCHRE="\033[38;5;95m"
-COLOR_WHITE="\033[0;37m"
-COLOR_RESET="\033[0m"
+# Shared bash prompt engine — mirrors zsh/ps1.sh so both shells give the same
+# experience. It recomputes git + job state before each prompt and delegates the
+# layout to a theme in bash/themes/<name>.sh, selected via $ZSH_THEME (the same
+# variable zsh uses), defaulting to robbyrussell.
+#
+# A theme file must define a `_prompt_render` function that sets PS1 using the
+# shared state below. Available to themes each prompt:
+#   $_last_exit       – exit status of the last command (0 = success)
+#   $_git_branch      – current branch/short-sha, or "" when not in a repo
+#   $_git_dirty       – ready-made " ✗" (yellow) when the tree is dirty, else ""
+#   $_git_dirty_flag  – "1" when dirty (for themes that render their own marker)
+#   $_jobs_prompt     – ready-made " ⏸ N[prog], M[prog]" for paused/bg jobs
+#   _c <code>         – helper emitting a zero-width-safe colour escape
 
-_USER=${USER_PS1:-'\u'}
-HOST=${HOST_PS1:-'\h'}
-SEPARATOR=${SEPARATOR_PS1:-'@'}
-SIMBOL=${SIMBOL_PS1:-':'}
-
-# Cache git status once per prompt to avoid two subshells
-function _git_status_cached {
-  _GIT_STATUS_CACHE="$(git status 2>/dev/null)"
-}
-
-function git_color {
-  if [[ $_GIT_STATUS_CACHE =~ "Changes to be committed" ]]; then
-    echo -e $COLOR_BLUE
-  elif [[ $_GIT_STATUS_CACHE =~ "Changes not staged for commit" ]]; then
-    echo -e $COLOR_RED
-  elif [[ $_GIT_STATUS_CACHE =~ "Untracked files" ]]; then
-    echo -e $COLOR_CYAN
-  elif [[ $_GIT_STATUS_CACHE =~ "Your branch is ahead of" ]]; then
-    echo -e $COLOR_WHITE
-  elif [[ $_GIT_STATUS_CACHE =~ "nothing to commit" ]]; then
-    echo -e $COLOR_GREEN
-  else
-    echo -e $COLOR_RESET
-  fi
-}
-
-function git_branch {
-  local on_branch="On branch ([^${IFS}]*)"
-  local on_commit="HEAD detached at ([^${IFS}]*)"
-
-  if [[ $_GIT_STATUS_CACHE =~ $on_branch ]]; then
-    echo "(${BASH_REMATCH[1]})"
-  elif [[ $_GIT_STATUS_CACHE =~ $on_commit ]]; then
-    echo "(${BASH_REMATCH[1]})"
-  fi
-}
-
-function backround_jobs {
-  jobs -l | awk '{print $5}' | sort | uniq -c | awk '{printf("%s: %s ", $2, $1)}'
-}
-
-function set_ps1 {
-  _git_status_cached
-  HAS_JOBS="$(jobs -p)"
-  if [[ -n "$HAS_JOBS" ]]; then
-    JOBS="jobs: \[$COLOR_CYAN\] ❇️  \[$COLOR_YELLOW\]$(backround_jobs)\[$COLOR_RESET\]"
-  else
-    JOBS=""
-  fi
-  export PS1="\[$COLOR_GREEN\]$_USER\[$COLOR_RESET\]\[$COLOR_WHITE\]$SEPARATOR\[$COLOR_RESET\]\[$COLOR_RED\]$HOST\[$COLOR_RESET\]\[$COLOR_WHITE\]$SIMBOL\[$COLOR_RESET\]\[$COLOR_YELLOW\] \[$COLOR_RESET\]\[$COLOR_CYAN\]\w\[$COLOR_RESET\] \[\$(git_color)\]\$(git_branch)\[$COLOR_RESET\] ${HAS_JOBS:+$JOBS} \n $ "
-}
 export CLICOLOR=1
-
 export LSCOLORS=ExFxBxDxCxegedabagacad
 
-export PROMPT_COMMAND="set_ps1; $PROMPT_COMMAND"
+# Non-printing colour escape: \001/\002 mark zero-width regions so readline keeps
+# line-wrapping correct. \033 (not \e) for portability with older bash/printf.
+_c() { printf '\001\033[%sm\002' "$1"; }
+
+# Recompute git branch + dirty state and a grouped paused/background-jobs summary.
+_prompt_precompute() {
+  _git_branch=""
+  _git_dirty=""
+  _git_dirty_flag=""
+  _jobs_prompt=""
+
+  if command -v git >/dev/null 2>&1; then
+    local branch
+    branch="$(git symbolic-ref --short -q HEAD 2>/dev/null \
+      || git rev-parse --short HEAD 2>/dev/null)"
+    if [ -n "$branch" ]; then
+      _git_branch="$branch"
+      if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+        _git_dirty_flag=1
+        _git_dirty=" $(_c '1;33')✗$(_c 0)"
+      fi
+    fi
+  fi
+
+  # Grouped counts of background/paused jobs, e.g. "2[nvim], 1[ruby]"
+  if [ -n "$(jobs -p)" ]; then
+    local summary
+    summary="$(jobs | awk '{ p=$3; sub(/.*\//, "", p); if (p != "") c[p]++ }
+      END { first=1; for (k in c) { printf "%s%d[%s]", (first ? "" : ", "), c[k], k; first=0 } }')"
+    [ -n "$summary" ] && _jobs_prompt=" $(_c '1;33')⏸ ${summary}$(_c 0)"
+  fi
+}
+
+# ── Theme loader ──────────────────────────────────────────────────────────────
+# Override by setting ZSH_THEME in bash_custom.sh (shared with zsh). To create a
+# theme, add bash-files/bash/themes/<name>.sh defining _prompt_render.
+_BASH_THEME="${ZSH_THEME:-robbyrussell}"
+_theme_file="$DOTFILES_DIR/bash-files/bash/themes/${_BASH_THEME}.sh"
+
+if [ -f "$_theme_file" ]; then
+  source "$_theme_file"
+else
+  echo "bash prompt: theme '${_BASH_THEME}' not found, falling back to robbyrussell" >&2
+  source "$DOTFILES_DIR/bash-files/bash/themes/robbyrussell.sh"
+fi
+
+# Runs before every prompt. Capturing $? must be the very first thing, so this
+# file is sourced last among PROMPT_COMMAND contributors and prepends itself.
+_prompt_precmd() {
+  _last_exit=$?
+  _prompt_precompute
+  _prompt_render
+}
+export PROMPT_COMMAND="_prompt_precmd${PROMPT_COMMAND:+; $PROMPT_COMMAND}"

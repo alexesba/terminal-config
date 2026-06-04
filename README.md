@@ -8,7 +8,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 
 | Area | Files |
 |---|---|
-| **Shell prompt** | `bash-files/zsh/ps1.sh` — theme loader; `bash-files/zsh/themes/` |
+| **Shell prompt** | `bash-files/{zsh,bash}/ps1.sh` — theme loaders; `bash-files/{zsh,bash}/themes/` |
 | **Aliases** | `bash-files/bash_aliases.sh` — git, vim, open, navigation |
 | **History** | 1 million entries, timestamps, deduplication |
 | **NVM** | Auto-switches Node version on `cd` via `.nvmrc` |
@@ -56,14 +56,14 @@ Pulls the latest changes and re-links any symlinks that are already pointing int
 
 ## Themes
 
-Set `ZSH_THEME` in `bash-files/bash_custom.sh`:
+Set `ZSH_THEME` in `bash-files/bash_custom.sh` (the variable is honored by both shells):
 
 ```bash
 export ZSH_THEME="robbyrussell"   # ➜  project git:(main) ✗
 export ZSH_THEME="classic"        # full path + branch + timestamp RPROMPT
 ```
 
-Themes live in `bash-files/zsh/themes/`. To create your own, copy an existing theme and it will be picked up automatically.
+Themes live in `bash-files/zsh/themes/` (zsh, via native `vcs_info`) and `bash-files/bash/themes/` (bash, via `PROMPT_COMMAND`), and the two are kept visually in sync. To create your own, copy an existing theme for your shell and it will be picked up automatically.
 
 ---
 
@@ -158,7 +158,7 @@ The repo includes patched fonts for use with the terminal configs:
 
 This config builds on the work of others:
 
-- **[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** (MIT) — the prompt themes in `bash-files/zsh/themes/` are reimplementations (using native zsh `vcs_info`) of oh-my-zsh originals: `robbyrussell.sh` after Robby Russell's [`robbyrussell`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#robbyrussell), and `classic.sh` inspired by [`amuse`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse).
+- **[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** (MIT) — the prompt themes in `bash-files/zsh/themes/` and `bash-files/bash/themes/` are reimplementations of oh-my-zsh originals (zsh via native `vcs_info`, bash via `PROMPT_COMMAND`): `robbyrussell.sh` after Robby Russell's [`robbyrussell`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#robbyrussell), and `classic.sh` inspired by [`amuse`](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes#amuse).
 - **[Gogh](https://github.com/Gogh-Co/Gogh)** (MIT) — the 250+ terminal colour schemes used by the `colorscheme` command.
 - **[TPM](https://github.com/tmux-plugins/tpm)** and the **[tmux-plugins](https://github.com/tmux-plugins)** suite (`tmux-sensible`, `tmux-resurrect`, `tmux-continuum`) — tmux plugin management and session persistence.
 - **Fonts** — JetBrains Mono, Operator Mono, and other patched [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) bundled for use with the terminal configs; trademarks and licenses belong to their respective authors.
