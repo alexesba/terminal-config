@@ -43,4 +43,4 @@ fi
 
 export PATH="/usr/local/bin:$PATH"
 
-source "$DOTFILES_DIR/shell/os-config.sh"
+source "$DOTFILES_DIR/shell/loader.sh"

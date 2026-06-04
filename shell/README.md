@@ -6,7 +6,7 @@ Configuration shared by **bash** and **zsh**. Entry point is `../rc.sh` (symlink
 
 ```
 shell/
-├── os-config.sh          # Dispatches to bash.sh or zsh.sh
+├── loader.sh             # Dispatches to bash.sh or zsh.sh
 ├── aliases.sh            # Loads built-in aliases + optional ~/.bash_aliases
 ├── aliases/default.sh    # Git, vim, open, reload, etc.
 ├── custom.sh.example     # Template for personal overrides (→ custom.sh, gitignored)
