@@ -44,6 +44,16 @@ for _rc in ~/.zshrc ~/.bashrc; do
   fi
 done
 
+# tmux — ensure local tmux.conf exists, then re-link (upgrade legacy symlink to example)
+if [ ! -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "$DOTFILES_DIR/tmux.conf.example" ]; then
+  if [ -L ~/.tmux.conf ] && [[ "$(readlink ~/.tmux.conf)" == "$DOTFILES_DIR/tmux.conf.example" ]]; then
+    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
+    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template (was linked to example only)."
+  elif [ -L ~/.tmux.conf ] && [[ "$(readlink ~/.tmux.conf)" == "$DOTFILES_DIR"* ]]; then
+    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
+    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template."
+  fi
+fi
 _relink_if_mine ~/.tmux.conf "$DOTFILES_DIR/tmux.conf"
 _relink_if_mine ~/.config/alacritty/alacritty.yml "$DOTFILES_DIR/terminal-emulators/alacritty.yml"
 _relink_if_mine ~/.config/kitty/kitty.conf        "$DOTFILES_DIR/terminal-emulators/kitty.conf"

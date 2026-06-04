@@ -76,7 +76,7 @@ INSTALL_SHELL=$REPLY
 echo ""
 
 echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
-echo -e "   ${DIM}Links tmux.conf → ~/.tmux.conf${RESET}"
+echo -e "   ${DIM}Copies tmux.conf.example → tmux.conf, then links ~/.tmux.conf${RESET}"
 echo    "   Custom keybindings, status bar, and plugin settings."
 echo    "   tmux binary will be installed if not already present."
 ask_yn "Install?"
@@ -174,6 +174,10 @@ fi
 
 if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
   echo -e "${BOLD}→ tmux${RESET}"
+  if [ ! -f "$DOTFILES_DIR/tmux.conf" ] && [ -f "$DOTFILES_DIR/tmux.conf.example" ]; then
+    cp "$DOTFILES_DIR/tmux.conf.example" "$DOTFILES_DIR/tmux.conf"
+    echo -e "  ${GREEN}✓${RESET}  Created tmux.conf from template."
+  fi
   link_file "$DOTFILES_DIR/tmux.conf" ~/.tmux.conf
   echo ""
 fi

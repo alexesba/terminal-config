@@ -16,7 +16,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **pyenv** | Python version management |
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
-| **tmux** | Custom status bar, vim-style panes, cross-platform clipboard |
+| **tmux** | `tmux.conf` (from `tmux.conf.example`) — status bar, vim panes, TPM plugins |
 | **Terminal emulators** | `terminal-emulators/` — Alacritty, Kitty, WezTerm configs |
 | **Colour schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
@@ -104,6 +104,12 @@ cp shell/custom.sh.example shell/custom.sh
 ```
 
 Good things to put there: private tokens, extra PATH entries, machine-specific aliases, `GOGH_DIR` for the `colorscheme()` function. For extra aliases only, you can also use a local `~/.bash_aliases` file (not symlinked into the repo).
+
+**tmux** uses the same pattern — copy the example, then edit your local file (symlinked to `~/.tmux.conf`):
+
+```bash
+cp tmux.conf.example tmux.conf
+```
 
 ---
 

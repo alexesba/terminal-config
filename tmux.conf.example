@@ -1,3 +1,9 @@
+# tmux.conf — personal tmux configuration
+#
+# This file is NOT tracked by git (see .gitignore).
+# Copy tmux.conf.example → tmux.conf and customise freely.
+# install.sh symlinks ~/.tmux.conf → tmux.conf in this repo.
+
 set -sg escape-time 0
 
 # set-window-option -g mode-keys vi
