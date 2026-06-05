@@ -42,7 +42,13 @@ cd ~/Projects/terminal-config
 ./install.sh
 ```
 
-`install.sh` is fully interactive — it asks before doing anything and never overwrites files without backing them up (creates `.old` alongside the original).
+`install.sh` is fully interactive:
+
+1. **Questions** — each prompt collapses to a single `✓` line after you answer (shell, tmux, terminal + Nerd Font, tools, etc.). Re-running defaults to your saved terminal/font from `shell/custom.sh`.
+2. **Summary** — shows everything that will be installed and asks `Proceed?` before changing anything.
+3. **Progress** — runs each step with a progress bar; completed steps become `✓ i/total` lines with detail output kept underneath.
+
+It never overwrites files without backing them up (creates `.old` alongside the original). Say no at the summary step to abort with zero changes.
 
 ---
 
@@ -76,15 +82,16 @@ What is covered:
 
 | Suite | Focus |
 |---|---|
-| `tests/helpers.bats` | `link_file`, template copy/migrate, `set_env_var`, uninstall helpers |
+| `tests/helpers.bats` | `link_file`, template copy/migrate, `set_env_var`, uninstall helpers, `is_colorscheme_terminal` |
 | `tests/fonts.bats` | Font substitution, `custom.sh` parsing, font id resolution |
-| `tests/smoke.bats` | Syntax of install/update scripts; bash/zsh load `colorscheme` and `reload` |
+| `tests/tui.bats` | Progress bar geometry, step begin/end collapse helpers |
+| `tests/smoke.bats` | Syntax of install/update scripts; bash/zsh load `colorscheme` and `reload`; bootstrap quiet mode |
 
 Full interactive `install.sh` / `bootstrap.sh` flows are not automated — use the manual checklist below before releases.
 
 **Manual smoke checklist**
 
-1. Fresh `./install.sh` on a test machine (or VM): shell RC linked, chosen terminal config copied, font substituted
+1. Fresh `./install.sh` on a test machine (or VM): questions collapse cleanly, summary shows correct choices, progress steps complete; shell RC linked, terminal config copied, font substituted
 2. `./update.sh`: git pull succeeds; existing local configs not overwritten
 3. `./uninstall.sh`: symlinks removed, configs backed up to `*.uninstall.old`, Nerd Font removed if recorded
 
@@ -134,7 +141,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 ### How it's applied and persisted
 
-`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`) — see [Customisation](#customisation) to override.
+`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`). You can override it in `shell/custom.sh` — the value must be a name [Gogh recognizes](https://github.com/Gogh-Co/Gogh) (e.g. `gnome-terminal`, `konsole`, `foot`), not just the three emulators this repo ships config templates for.
 
 | Terminal | How the pick persists |
 |---|---|
@@ -164,10 +171,11 @@ The repo ships **templates** (`*.example`). `install.sh` copies them to your hom
 
 `git pull` updates the templates in the repo; it does **not** change your local copies. To pick up upstream template changes, diff against the `.example` file and merge what you want by hand:
 
+`install.sh` seeds `shell/custom.sh` from `custom.sh.example` on first run. To create or compare by hand:
+
 ```bash
-cp shell/custom.sh.example shell/custom.sh   # first time only
-# later, to compare:
-diff shell/custom.sh.example shell/custom.sh
+cp shell/custom.sh.example shell/custom.sh   # first time only (install.sh does this too)
+diff shell/custom.sh.example shell/custom.sh # see new example keys
 ```
 
 For extra aliases only, you can also use a local `~/.bash_aliases` file (not in the repo).
@@ -215,7 +223,7 @@ When you pick a terminal emulator during `./install.sh`, you also choose a **Ner
 
 1. Installs the font via Homebrew (`brew install --cask font-…`) on macOS, or downloads from [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) on Linux
 2. Substitutes `{{FONT_FAMILY}}` in the copied terminal config with your choice
-3. Records `TERMINAL_FONT` in `shell/custom.sh`
+3. Records `TERMINAL_FONT` and `TERMINAL_FONT_ID` in `shell/custom.sh` (used on re-run and by `uninstall.sh`)
 
 Reinstall a font standalone:
 
