@@ -84,7 +84,12 @@ install_config_from_template() {
   }
 
   if [ -f "$dest" ] && [ ! -L "$dest" ]; then
-    echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
+    if grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
+      _apply_font_if_needed
+      echo -e "  ${GREEN}✓${RESET}  $dest already exists — applied missing font substitution."
+    else
+      echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
+    fi
     return 0
   fi
 

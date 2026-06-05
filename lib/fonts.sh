@@ -3,11 +3,13 @@
 
 # Usage: nerd_font_family <id>
 # Prints the font family name used in terminal config templates.
+# Must match name ID 1 (Family) in the Nerd Font v3+ binaries — e.g. Kitty on
+# macOS will not resolve the longer typographic name (name ID 16).
 nerd_font_family() {
   case "$1" in
-    caskaydia) echo "CaskaydiaCove Nerd Font Propo" ;;
-    jetbrains) echo "JetBrainsMono Nerd Font" ;;
-    fira)      echo "FiraCode Nerd Font" ;;
+    caskaydia) echo "CaskaydiaCove NFP" ;;
+    jetbrains) echo "JetBrainsMono NFM" ;;
+    fira)      echo "FiraCode Nerd Font Mono" ;;
     hack)      echo "Hack Nerd Font Mono" ;;
     *)         return 1 ;;
   esac
@@ -39,15 +41,13 @@ nerd_font_release_zip() {
 # Map a config font family back to a font id.
 # Usage: nerd_font_id_from_family <family>
 nerd_font_id_from_family() {
-  local id family
-  for id in caskaydia jetbrains fira hack; do
-    family=$(nerd_font_family "$id")
-    if [[ "$family" == "$1" ]]; then
-      echo "$id"
-      return 0
-    fi
-  done
-  return 1
+  case "$1" in
+    "CaskaydiaCove NFP"|"CaskaydiaCove Nerd Font Propo") echo "caskaydia" ;;
+    "JetBrainsMono NFM"|"JetBrainsMono Nerd Font")       echo "jetbrains" ;;
+    "FiraCode Nerd Font Mono"|"FiraCode Nerd Font")       echo "fira" ;;
+    "Hack Nerd Font Mono")                                 echo "hack" ;;
+    *)                                                     return 1 ;;
+  esac
 }
 
 # Filename globs (under ~/.local/share/fonts) for Linux installs. One pattern per line.

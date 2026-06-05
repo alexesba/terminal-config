@@ -63,6 +63,19 @@ load test_helper
   grep -q "personal" "$dest"
 }
 
+@test "install_config_from_template substitutes font placeholder in existing file" {
+  local dotfiles="$REPO_ROOT"
+  local dest="$TEST_HOME/.config/kitty.conf"
+  mkdir -p "$(dirname "$dest")"
+  echo "font_family {{FONT_FAMILY}}" >"$dest"
+
+  install_config_from_template "$dotfiles" "terminal-emulators/kitty.conf.example" "$dest" \
+    "JetBrainsMono Nerd Font" >/dev/null
+
+  grep -q "font_family JetBrainsMono Nerd Font" "$dest"
+  ! grep -q '{{FONT_FAMILY}}' "$dest"
+}
+
 @test "install_config_from_template migrates a legacy dotfiles symlink" {
   local dotfiles="$TEST_HOME/dotfiles"
   mkdir -p "$dotfiles/legacy"

@@ -1,8 +1,10 @@
 # terminal-emulators/
 
-Tracked templates for terminal emulator configs. `install.sh` copies the chosen
-`.example` file into `~/.config/` (real file, not a symlink) so Gogh and other
-tools can write theme data alongside your config.
+Tracked templates for terminal emulator configs. When you pick Alacritty, Kitty,
+or WezTerm in `install.sh`, it installs the app via Homebrew or your Linux
+package manager if missing, then copies the chosen `.example` file into
+`~/.config/` (real file, not a symlink) so Gogh and other tools can write theme
+data alongside your config.
 
 Templates use a `{{FONT_FAMILY}}` placeholder; `install.sh` replaces it with
 your Nerd Font choice (default: Caskaydia Cove Nerd Font Propo) when the config

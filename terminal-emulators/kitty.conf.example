@@ -665,9 +665,9 @@ enable_audio_bell no
 
 #: Window layout {{{
 
-# remember_window_size  yes
-initial_window_width  148
-initial_window_height 50
+remember_window_size yes
+initial_window_width  148c
+initial_window_height 50c
 
 #: If enabled, the window size will be remembered so that new
 #: instances of kitty will have the same size as the previous

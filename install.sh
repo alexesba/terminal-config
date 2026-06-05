@@ -122,9 +122,9 @@ else
   esac
 
   echo    "   Pick a terminal (or skip):"
-  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ copies template to ~/.config/alacritty/alacritty.yml${RESET}"
-  echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ copies template to ~/.config/kitty/kitty.conf${RESET}"
-  echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ copies template to ~/.config/wezterm/wezterm.lua${RESET}"
+  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ installs if missing + copies template to ~/.config/alacritty/alacritty.yml${RESET}"
+  echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ installs if missing + copies template to ~/.config/kitty/kitty.conf${RESET}"
+  echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ installs if missing + copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
   if [[ -n "$_saved_terminal" && -n "$_terminal_default" ]]; then
     echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET} ${DIM}(Enter keeps it; 4 also preserves it)${RESET}"
@@ -252,6 +252,7 @@ bootstrap_label() {
     --hub)             echo "hub" ;;
     --gogh)            echo "gogh" ;;
     --tig)             echo "tig" ;;
+    --terminal=*)      echo "terminal (${1#--terminal=})" ;;
     *)                 echo "${1#--}" ;;
   esac
 }
@@ -272,9 +273,9 @@ fi
 _sum "Aliases" "$(_yn "$INSTALL_ALIASES")"
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   if [[ "$INSTALL_FONT" == true ]]; then
-    _sum "Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY} (font install)"
+    _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config + ${TERMINAL_FONT_FAMILY}"
   else
-    _sum "Terminal" "${TERMINAL_NAME} (font: skip)"
+    _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config (font: skip)"
   fi
 else
   _sum "Terminal" "${DIM}skip${RESET}"
@@ -339,6 +340,7 @@ add_step() { STEP_LABELS+=("$1"); STEP_FUNCS+=("$2"); STEP_ARGS+=("${3:-}"); }
 [[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && add_step "tmux config" step_tmux_cfg
 [[ $INSTALL_ALIASES =~ ^[Yy]$ ]] && add_step "Local aliases" step_aliases
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  add_step "Terminal app (${TERMINAL_NAME})" run_bootstrap_flag "--terminal=${TERMINAL_NAME}"
   [[ "$INSTALL_FONT" == true ]] && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
   add_step "Terminal config (${TERMINAL_NAME})" step_terminal
 fi

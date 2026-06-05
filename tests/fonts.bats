@@ -2,14 +2,15 @@
 
 load test_helper
 
-@test "nerd_font_family returns display name for each id" {
-  [ "$(nerd_font_family caskaydia)" = "CaskaydiaCove Nerd Font Propo" ]
-  [ "$(nerd_font_family jetbrains)" = "JetBrainsMono Nerd Font" ]
-  [ "$(nerd_font_family fira)" = "FiraCode Nerd Font" ]
+@test "nerd_font_family returns terminal family name for each id" {
+  [ "$(nerd_font_family caskaydia)" = "CaskaydiaCove NFP" ]
+  [ "$(nerd_font_family jetbrains)" = "JetBrainsMono NFM" ]
+  [ "$(nerd_font_family fira)" = "FiraCode Nerd Font Mono" ]
   [ "$(nerd_font_family hack)" = "Hack Nerd Font Mono" ]
 }
 
 @test "nerd_font_id_from_family reverses family to id" {
+  [ "$(nerd_font_id_from_family 'CaskaydiaCove NFP')" = "caskaydia" ]
   [ "$(nerd_font_id_from_family 'CaskaydiaCove Nerd Font Propo')" = "caskaydia" ]
   [ "$(nerd_font_id_from_family 'FiraCode Nerd Font')" = "fira" ]
 }
@@ -18,9 +19,9 @@ load test_helper
   local file="$TEST_HOME/wezterm.lua"
   printf '%s\n' "family = '{{FONT_FAMILY}}'," >"$file"
 
-  substitute_font_placeholder "$file" "CaskaydiaCove Nerd Font Propo"
+  substitute_font_placeholder "$file" "CaskaydiaCove NFP"
 
-  grep -q "family = 'CaskaydiaCove Nerd Font Propo'," "$file"
+  grep -q "family = 'CaskaydiaCove NFP'," "$file"
   ! grep -q '{{FONT_FAMILY}}' "$file"
 }
 
@@ -39,7 +40,7 @@ load test_helper
   local file="$TEST_HOME/custom.sh"
   cat >"$file" <<'EOF'
 export TERMINAL="wezterm"
-export TERMINAL_FONT="CaskaydiaCove Nerd Font Propo"
+export TERMINAL_FONT="CaskaydiaCove NFP"
 export TERMINAL_FONT_ID="caskaydia"
 EOF
 

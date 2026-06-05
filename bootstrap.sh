@@ -4,6 +4,7 @@
 # Usage:
 #   ./bootstrap.sh [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf]
 #                  [--ripgrep] [--bat] [--hub] [--gogh] [--font=ID] [--tig]
+#                  [--terminal=NAME]
 #
 # Can be called by install.sh or run standalone to (re)install individual tools.
 
@@ -22,6 +23,7 @@ DO_HUB=false
 DO_GOGH=false
 DO_FONT=""
 DO_TIG=false
+DO_TERMINAL=""
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
 for arg in "$@"; do
@@ -43,10 +45,18 @@ for arg in "$@"; do
       echo -e "  ${YELLOW}⚠${RESET}  --font requires a value: caskaydia, jetbrains, fira, or hack"
       exit 1
       ;;
+    --terminal=*)
+      DO_TERMINAL="${arg#*=}"
+      ;;
+    --terminal)
+      echo -e "  ${YELLOW}⚠${RESET}  --terminal requires a value: alacritty, kitty, or wezterm"
+      exit 1
+      ;;
     --help)
-      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh] [--font=ID] [--tig]"
+      echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh] [--font=ID] [--tig] [--terminal=NAME]"
       _bootstrap_spacer
       echo "Font IDs for --font=: caskaydia (default), jetbrains, fira, hack"
+      echo "Terminal names for --terminal=: alacritty, kitty, wezterm"
       exit 0
       ;;
     *)
@@ -56,7 +66,8 @@ for arg in "$@"; do
 done
 
 if ! $DO_TMUX && ! $DO_AUTOSUGG && ! $DO_RBENV && ! $DO_NVM && ! $DO_FZF && \
-   ! $DO_RIPGREP && ! $DO_BAT && ! $DO_HUB && ! $DO_GOGH && ! $DO_TIG && [[ -z "$DO_FONT" ]]; then
+   ! $DO_RIPGREP && ! $DO_BAT && ! $DO_HUB && ! $DO_GOGH && ! $DO_TIG && \
+   [[ -z "$DO_FONT" ]] && [[ -z "$DO_TERMINAL" ]]; then
   echo -e "${YELLOW}No tools selected. Run with --help to see available flags.${RESET}"
   exit 0
 fi
@@ -76,6 +87,57 @@ if [[ -z "${BOOTSTRAP_QUIET:-}" ]]; then
   echo -e "${CYAN}${BOLD}━━━  Installing tools  ━━━${RESET}"
   _bootstrap_spacer
 fi
+
+# ── macOS cask helpers (Gatekeeper / quarantine) ─────────────────────────────
+# Homebrew tags downloaded .app bundles with com.apple.quarantine, which triggers
+# "Apple could not verify …" on first launch. --no-quarantine avoids the tag;
+# clearing it afterward covers older installs and brew versions without the flag.
+
+# Usage: _macos_clear_app_quarantine </path/to/App.app>
+_macos_clear_app_quarantine() {
+  local app="$1"
+  [[ "$OSTYPE" =~ ^darwin ]] || return 0
+  [[ -d "$app" ]] || return 0
+  if xattr -p com.apple.quarantine "$app" &>/dev/null; then
+    xattr -dr com.apple.quarantine "$app"
+    echo -e "  ${GREEN}✓${RESET}  Cleared Gatekeeper quarantine on ${BOLD}$(basename "$app")${RESET}"
+  fi
+}
+
+# Usage: _macos_brew_cask_app_path <cask> [AppName.app]
+_macos_brew_cask_app_path() {
+  local cask="$1" app_name="${2:-}" path=""
+
+  if [[ -n "$app_name" && -d "/Applications/${app_name}" ]]; then
+    echo "/Applications/${app_name}"
+    return 0
+  fi
+
+  path=$(brew list --cask "$cask" 2>/dev/null | grep '\.app$' | head -1)
+  if [[ -n "$path" && -d "$path" ]]; then
+    echo "$path"
+  fi
+}
+
+# Usage: _brew_install_cask <cask> [AppName.app]
+_brew_install_cask() {
+  local cask="$1" app_name="${2:-}" app=""
+
+  echo -e "  Installing ${BOLD}${cask}${RESET} via Homebrew…"
+  if ! brew install --cask --no-quarantine "$cask" 2>/dev/null; then
+    brew install --cask "$cask"
+  fi
+
+  app=$(_macos_brew_cask_app_path "$cask" "$app_name")
+  [[ -n "$app" ]] && _macos_clear_app_quarantine "$app"
+}
+
+# Usage: _macos_clear_brew_cask_quarantine <cask> [AppName.app]
+_macos_clear_brew_cask_quarantine() {
+  local cask="$1" app_name="${2:-}" app=""
+  app=$(_macos_brew_cask_app_path "$cask" "$app_name")
+  [[ -n "$app" ]] && _macos_clear_app_quarantine "$app"
+}
 
 # ── Linux package manager helper ──────────────────────────────────────────────
 # Usage: _linux_install <pkg> [<pkg> ...]
@@ -222,6 +284,44 @@ if $DO_HUB; then
     brew install hub
   else
     _linux_install hub
+  fi
+  _bootstrap_spacer
+fi
+
+# ── Terminal emulator (install binary if missing) ─────────────────────────────
+if [[ -n "$DO_TERMINAL" ]]; then
+  case "$DO_TERMINAL" in
+    alacritty|kitty|wezterm) ;;
+    *)
+      echo -e "  ${YELLOW}⚠${RESET}  Unknown terminal: ${BOLD}${DO_TERMINAL}${RESET}"
+      echo -e "      Valid names: alacritty, kitty, wezterm"
+      exit 1
+      ;;
+  esac
+
+  _bootstrap_heading "$DO_TERMINAL"
+  if command -v "$DO_TERMINAL" &>/dev/null; then
+    if [[ "$OSTYPE" =~ ^darwin ]]; then
+      case "$DO_TERMINAL" in
+        alacritty) _macos_clear_brew_cask_quarantine alacritty "Alacritty.app" ;;
+        wezterm)   _macos_clear_brew_cask_quarantine wezterm "WezTerm.app" ;;
+      esac
+    fi
+    echo -e "  ${GREEN}✓${RESET}  ${DO_TERMINAL} already installed — skipping."
+  elif [[ "$OSTYPE" =~ ^darwin ]]; then
+    case "$DO_TERMINAL" in
+      alacritty) _brew_install_cask alacritty "Alacritty.app" ;;
+      kitty)     brew install kitty ;;
+      wezterm)   _brew_install_cask wezterm "WezTerm.app" ;;
+    esac
+  elif [[ "$OSTYPE" =~ ^linux ]]; then
+    case "$DO_TERMINAL" in
+      alacritty) _linux_install alacritty ;;
+      kitty)     _linux_install kitty ;;
+      wezterm)   _linux_install wezterm ;;
+    esac
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Unknown OS — please install ${BOLD}${DO_TERMINAL}${RESET} manually."
   fi
   _bootstrap_spacer
 fi

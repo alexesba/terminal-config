@@ -8,6 +8,22 @@ load test_helper
   [ "$status" -eq 0 ]
 }
 
+@test "bootstrap skips terminal install when binary is already present" {
+  mkdir -p "$TEST_HOME/bin"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$TEST_HOME/bin/kitty"
+  chmod +x "$TEST_HOME/bin/kitty"
+  run env BOOTSTRAP_QUIET=1 HOME="$TEST_HOME" PATH="$TEST_HOME/bin:$PATH" \
+    bash "$REPO_ROOT/bootstrap.sh" --terminal=kitty
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"already installed"* ]]
+}
+
+@test "bootstrap rejects unknown terminal name" {
+  run env BOOTSTRAP_QUIET=1 HOME="$TEST_HOME" bash "$REPO_ROOT/bootstrap.sh" --terminal=iterm
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown terminal"* ]]
+}
+
 @test "main shell scripts pass bash syntax check" {
   local script
   for script in install.sh update.sh uninstall.sh bootstrap.sh rc.sh; do
