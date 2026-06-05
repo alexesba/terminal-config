@@ -5,6 +5,8 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=lib/helpers.sh
 source "$DOTFILES_DIR/lib/helpers.sh"
+# shellcheck source=lib/fonts.sh
+source "$DOTFILES_DIR/lib/fonts.sh"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"
@@ -97,23 +99,48 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
   echo    "      the Windows side. Configure them there, not inside WSL."
   INSTALL_TERMINAL=4
 else
+  # Returning users: default to whatever was saved in custom.sh so pressing Enter
+  # keeps the previous terminal. Choosing 4 (Skip) also preserves it untouched.
+  CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
+  _saved_terminal=""
+  [ -f "$CUSTOM_FILE" ] && _saved_terminal=$(custom_export_value "$CUSTOM_FILE" TERMINAL)
+  _terminal_default=""
+  case "$_saved_terminal" in
+    alacritty) _terminal_default=1 ;;
+    kitty)     _terminal_default=2 ;;
+    wezterm)   _terminal_default=3 ;;
+  esac
+
   echo    "   Pick a terminal (or skip):"
   echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ copies template to ~/.config/alacritty/alacritty.yml${RESET}"
   echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ copies template to ~/.config/kitty/kitty.conf${RESET}"
   echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
-  ask_choice "Choice" 4
+  if [[ -n "$_saved_terminal" ]]; then
+    echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET} ${DIM}(Enter keeps it; 4 also preserves it)${RESET}"
+  fi
+  ask_choice "Choice" 4 "$_terminal_default"
   INSTALL_TERMINAL=$REPLY
 fi
 echo ""
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  # Default to the previously recorded font when re-running, else Caskaydia.
+  _saved_font_id=""
+  [ -f "$CUSTOM_FILE" ] && _saved_font_id=$(resolve_nerd_font_id "$CUSTOM_FILE")
+  case "$_saved_font_id" in
+    jetbrains) _font_default=2 ;;
+    fira)      _font_default=3 ;;
+    hack)      _font_default=4 ;;
+    *)         _font_default=1 ;;
+  esac
+
   echo    "   Nerd Font for your terminal config (install.sh sets the font in the copied config):"
-  echo -e "     ${BOLD}1)${RESET} Caskaydia Cove Nerd Font Propo  ${DIM}(default)${RESET}"
+  echo -e "     ${BOLD}1)${RESET} Caskaydia Cove Nerd Font Propo"
   echo -e "     ${BOLD}2)${RESET} JetBrains Mono Nerd Font"
   echo -e "     ${BOLD}3)${RESET} FiraCode Nerd Font"
   echo -e "     ${BOLD}4)${RESET} Hack Nerd Font Mono"
-  echo -e "     ${BOLD}5)${RESET} Skip font install (config still uses Caskaydia Cove)"
-  ask_choice "Font" 5 1
+  echo -e "     ${BOLD}5)${RESET} Skip font install (config still uses the default font)"
+  ask_choice "Font" 5 "$_font_default"
   INSTALL_FONT=true
   case "$REPLY" in
     2) TERMINAL_FONT_ID="jetbrains" ;;
@@ -217,8 +244,6 @@ if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
 fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
-  # shellcheck source=lib/fonts.sh
-  source "$DOTFILES_DIR/lib/fonts.sh"
   TERMINAL_FONT_FAMILY=$(nerd_font_family "$TERMINAL_FONT_ID")
 
   if [[ "${INSTALL_FONT:-true}" == true ]]; then
