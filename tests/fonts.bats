@@ -9,6 +9,12 @@ load test_helper
   [ "$(nerd_font_family hack)" = "Hack Nerd Font Mono" ]
 }
 
+@test "nerd_font_family_for_terminal picks ui name for alacritty and wezterm" {
+  [ "$(nerd_font_family_for_terminal caskaydia alacritty)" = "CaskaydiaCove Nerd Font Propo" ]
+  [ "$(nerd_font_family_for_terminal caskaydia wezterm)" = "CaskaydiaCove Nerd Font Propo" ]
+  [ "$(nerd_font_family_for_terminal caskaydia kitty)" = "CaskaydiaCove NFP" ]
+}
+
 @test "nerd_font_id_from_family reverses family to id" {
   [ "$(nerd_font_id_from_family 'CaskaydiaCove NFP')" = "caskaydia" ]
   [ "$(nerd_font_id_from_family 'CaskaydiaCove Nerd Font Propo')" = "caskaydia" ]

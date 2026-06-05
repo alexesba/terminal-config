@@ -55,6 +55,23 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
+# Strip config keys removed in Alacritty 0.13+ that `alacritty migrate` may leave behind.
+# Usage: _sanitize_alacritty_toml <path>
+_sanitize_alacritty_toml() {
+  local toml="$1" tmp
+
+  [[ -f "$toml" ]] || return 0
+  tmp=$(mktemp)
+  awk '
+    /^\[(mouse\.double_click|mouse\.triple_click|mouse\.hints|window\.dpi)\]/ { skip = 1; next }
+    /^\[/ { skip = 0 }
+    skip { next }
+    /^"window\.(dynamic_title|opacity)"[[:space:]]*=/ { next }
+    /^[[:space:]]*(alt_send_esc|enable_experimental_conpty_backend|ref_test|use_thin_strokes)[[:space:]]*=/ { next }
+    { print }
+  ' "$toml" >"$tmp" && mv "$tmp" "$toml"
+}
+
 # Migrate deprecated alacritty.yml to alacritty.toml (Alacritty 0.13+).
 # Renames the YAML to alacritty.yml.old once TOML exists so launch warnings stop.
 # Usage: migrate_alacritty_yaml_config [font_family]
@@ -65,25 +82,29 @@ migrate_alacritty_yaml_config() {
   dir="${HOME}/.config/alacritty"
   yml="${dir}/alacritty.yml"
   toml="${dir}/alacritty.toml"
-
-  [[ -f "$yml" ]] || return 0
   mkdir -p "$dir"
 
-  if [[ ! -f "$toml" ]] && command -v alacritty &>/dev/null; then
-    echo -e "  ${DIM}Migrating deprecated alacritty.yml to alacritty.toml…${RESET}"
-    alacritty migrate --config-file "$yml"
+  if [[ -f "$yml" ]]; then
+    if [[ ! -f "$toml" ]] && command -v alacritty &>/dev/null; then
+      echo -e "  ${DIM}Migrating deprecated alacritty.yml to alacritty.toml…${RESET}"
+      alacritty migrate --config-file "$yml"
+    fi
+
+    if [[ -f "$toml" && -f "$yml" ]]; then
+      mv "$yml" "${yml}.old"
+      echo -e "  ${GREEN}✓${RESET}  Renamed deprecated ${DIM}alacritty.yml${RESET} → ${DIM}alacritty.yml.old${RESET}"
+    fi
   fi
 
-  if [[ -f "$toml" && -f "$yml" ]]; then
-    mv "$yml" "${yml}.old"
-    echo -e "  ${GREEN}✓${RESET}  Renamed deprecated ${DIM}alacritty.yml${RESET} → ${DIM}alacritty.yml.old${RESET}"
-  fi
+  if [[ -f "$toml" ]]; then
+    _sanitize_alacritty_toml "$toml"
 
-  if [[ -n "$font_family" && -f "$toml" ]] && grep -q '{{FONT_FAMILY}}' "$toml" 2>/dev/null; then
-    dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    # shellcheck source=fonts.sh
-    source "$dotfiles/lib/fonts.sh"
-    substitute_font_placeholder "$toml" "$font_family"
+    if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$toml" 2>/dev/null; then
+      dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+      # shellcheck source=fonts.sh
+      source "$dotfiles/lib/fonts.sh"
+      substitute_font_placeholder "$toml" "$font_family"
+    fi
   fi
 }
 

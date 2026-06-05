@@ -3,11 +3,6 @@
 # Copy alacritty.toml.example → ~/.config/alacritty/alacritty.toml via install.sh.
 # Alacritty 0.13+ uses TOML; YAML configs are deprecated.
 
-alt_send_esc = true
-enable_experimental_conpty_backend = false
-"window.dynamic_title" = true
-"window.opacity" = 1.0
-
 [bell]
 animation = "EaseOutExpo"
 color = "0xffffff"
@@ -48,7 +43,6 @@ unfocused_hollow = true
 log_level = "Warn"
 persistent_logging = false
 print_events = false
-ref_test = false
 render_timer = false
 
 [env]
@@ -56,27 +50,18 @@ TERM = "xterm-256color"
 
 [font]
 size = 14
-use_thin_strokes = true
-
-[font.bold]
-family = "{{FONT_FAMILY}}"
-style = "Bold"
-
-[font.glyph_offset]
-x = 0
-y = 0
-
-[font.italic]
-family = "{{FONT_FAMILY}}"
-style = "Italic"
 
 [font.normal]
 family = "{{FONT_FAMILY}}"
-style = "Regular"
 
-[font.offset]
-x = 0
-y = 0
+[font.bold]
+family = "{{FONT_FAMILY}}"
+
+[font.italic]
+family = "{{FONT_FAMILY}}"
+
+[font.bold_italic]
+family = "{{FONT_FAMILY}}"
 
 [[keyboard.bindings]]
 chars = "\u001Bj"
@@ -115,15 +100,6 @@ working_directory = "None"
 [mouse]
 hide_when_typing = false
 
-[mouse.double_click]
-threshold = 300
-
-[mouse.hints]
-modifiers = "None"
-
-[mouse.triple_click]
-threshold = 300
-
 [[mouse.bindings]]
 action = "PasteSelection"
 mouse = "Middle"
@@ -139,15 +115,13 @@ semantic_escape_chars = """,│`|:"' ()[]{}<>"""
 [window]
 decorations = "none"
 dynamic_padding = false
+dynamic_title = true
+opacity = 1.0
 startup_mode = "Maximized"
 
 [window.dimensions]
 columns = 148
 lines = 50
-
-[window.dpi]
-x = 96.0
-y = 96.0
 
 [window.padding]
 x = 0

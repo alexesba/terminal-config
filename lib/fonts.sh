@@ -2,9 +2,7 @@
 # Nerd Font catalog and installation for terminal emulator configs.
 
 # Usage: nerd_font_family <id>
-# Prints the font family name used in terminal config templates.
-# Must match name ID 1 (Family) in the Nerd Font v3+ binaries — e.g. Kitty on
-# macOS will not resolve the longer typographic name (name ID 16).
+# Short family name (name ID 1) — required by Kitty on macOS.
 nerd_font_family() {
   case "$1" in
     caskaydia) echo "CaskaydiaCove NFP" ;;
@@ -12,6 +10,29 @@ nerd_font_family() {
     fira)      echo "FiraCode Nerd Font Mono" ;;
     hack)      echo "Hack Nerd Font Mono" ;;
     *)         return 1 ;;
+  esac
+}
+
+# Usage: nerd_font_family_ui <id>
+# Typographic family name — Alacritty and WezTerm on macOS resolve glyphs correctly
+# with this name; the short nerd_font_family name can miss icon codepoints.
+nerd_font_family_ui() {
+  case "$1" in
+    caskaydia) echo "CaskaydiaCove Nerd Font Propo" ;;
+    jetbrains) echo "JetBrainsMono Nerd Font" ;;
+    fira)      echo "FiraCode Nerd Font Mono" ;;
+    hack)      echo "Hack Nerd Font Mono" ;;
+    *)         return 1 ;;
+  esac
+}
+
+# Usage: nerd_font_family_for_terminal <id> <terminal>
+nerd_font_family_for_terminal() {
+  local id="$1" terminal="$2"
+  case "$terminal" in
+    kitty) nerd_font_family "$id" ;;
+    alacritty|wezterm) nerd_font_family_ui "$id" ;;
+    *) nerd_font_family "$id" ;;
   esac
 }
 

@@ -312,18 +312,21 @@ step_font()      { install_nerd_font "$TERMINAL_FONT_ID"; }
 step_terminal()  {
   case "$INSTALL_TERMINAL" in
     1)
-      migrate_alacritty_yaml_config "$TERMINAL_FONT_FAMILY"
+      migrate_alacritty_yaml_config "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" alacritty)"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/alacritty.toml.example" \
-        "${HOME}/.config/alacritty/alacritty.toml" "$TERMINAL_FONT_FAMILY" ;;
+        "${HOME}/.config/alacritty/alacritty.toml" \
+        "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" alacritty)" ;;
     2)
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/kitty.conf.example" \
-        "${HOME}/.config/kitty/kitty.conf" "$TERMINAL_FONT_FAMILY" ;;
+        "${HOME}/.config/kitty/kitty.conf" \
+        "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" kitty)" ;;
     3)
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/wezterm.lua.example" \
-        "${HOME}/.config/wezterm/wezterm.lua" "$TERMINAL_FONT_FAMILY" ;;
+        "${HOME}/.config/wezterm/wezterm.lua" \
+        "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" wezterm)" ;;
   esac
   if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
     cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"

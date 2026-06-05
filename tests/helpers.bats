@@ -63,6 +63,51 @@ load test_helper
   grep -q "personal" "$dest"
 }
 
+@test "sanitize_alacritty_toml removes deprecated mouse click sections" {
+  local toml="$TEST_HOME/alacritty.toml"
+  cat >"$toml" <<'EOF'
+alt_send_esc = true
+enable_experimental_conpty_backend = false
+"window.dynamic_title" = true
+"window.opacity" = 1.0
+
+[mouse]
+hide_when_typing = false
+
+[mouse.double_click]
+threshold = 300
+
+[mouse.hints]
+modifiers = "None"
+
+[mouse.triple_click]
+threshold = 300
+
+[window.dpi]
+x = 96.0
+y = 96.0
+
+[font]
+size = 14
+use_thin_strokes = true
+ref_test = false
+EOF
+
+  _sanitize_alacritty_toml "$toml"
+
+  ! grep -q 'double_click' "$toml"
+  ! grep -q 'mouse.hints' "$toml"
+  ! grep -q 'window.dpi' "$toml"
+  ! grep -q 'triple_click' "$toml"
+  ! grep -q 'alt_send_esc' "$toml"
+  ! grep -q 'enable_experimental_conpty_backend' "$toml"
+  ! grep -q 'window.dynamic_title' "$toml"
+  ! grep -q 'window.opacity' "$toml"
+  ! grep -q 'use_thin_strokes' "$toml"
+  ! grep -q 'ref_test' "$toml"
+  grep -q 'hide_when_typing' "$toml"
+}
+
 @test "migrate_alacritty_yaml_config renames yaml when toml already exists" {
   local dir="$TEST_HOME/.config/alacritty"
   mkdir -p "$dir"
