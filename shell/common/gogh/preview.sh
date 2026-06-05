@@ -45,9 +45,15 @@ pane_cols=${FZF_PREVIEW_COLUMNS:-80}
 pane_lines=${FZF_PREVIEW_LINES:-24}
 
 # Scale the mock terminal to the preview pane (top half of a fullscreen fzf).
-W=$((pane_cols * 72 / 100 - 2))
-((W < 52)) && W=52
-((W > 110)) && W=110
+W=$((pane_cols * 82 / 100 - 2))
+((W < 56)) && W=56
+((W > 120)) && W=120
+
+# Palette swatch geometry (width × height in terminal cells).
+SWATCH_W=$(((pane_cols * 62 / 100 - 10) / 8))
+((SWATCH_W < 5)) && SWATCH_W=5
+((SWATCH_W > 11)) && SWATCH_W=11
+SWATCH_H=2
 
 # Visible width of a rendered line (strip ANSI escapes).
 visible_len() {
@@ -56,9 +62,19 @@ visible_len() {
   printf '%s' "${#plain}"
 }
 
+# Print one centered line in the preview pane.
+print_centered() {
+  local line="$1" lpad
+  lpad=$(((pane_cols - $(visible_len "$line")) / 2))
+  ((lpad < 0)) && lpad=0
+  printf '%*s%s\n' "$lpad" "" "$line"
+}
+
 _render_preview() {
-  local hr dot arr
+  local hr dot arr bold
   local c_red c_grn c_yel c_blu c_mag c_cyn
+
+  bold=$'\e[1m'
 
   row() {
     local s="$1" plain pad
@@ -80,53 +96,76 @@ _render_preview() {
   c_cyn=$(fgc "${COLORS[7]:-#8abeb7}")
 
   printf '%s\xe2\x95\xad%s\xe2\x95\xae%s\n' "$on" "$hr" "$reset"
-  row " ${c_red}${dot} ${c_yel}${dot} ${c_grn}${dot}${on}   ${name}"
+  row " ${c_red}${dot} ${c_yel}${dot} ${c_grn}${dot}${on}   ${bold}${name}${reset}${on}"
   printf '%s\xe2\x94\x9c%s\xe2\x94\xa4%s\n' "$on" "$hr" "$reset"
-  row "  ${c_grn}you${on}@${c_blu}mac ${c_mag}~/code${on}"
-  row "  ${c_cyn}${arr}${on} git status"
-  row "  On branch ${c_grn}main${on}"
-  row "  ${c_red}modified:${on}  preview.sh"
-  row "  ${c_grn}new file:${on}  theme.rb"
-  row "  ${c_yel}untracked:${on}  notes.md"
+  row ""
+  row "  ${bold}${c_grn}you${on}@${c_blu}mac ${c_mag}~/code${reset}${on}"
+  row "  ${bold}${c_cyn}${arr}${on} git status${reset}${on}"
+  row "  On branch ${bold}${c_grn}main${reset}${on}"
+  row "  ${c_red}modified:${on}  ${bold}preview.sh${reset}${on}"
+  row "  ${c_grn}new file:${on}  ${bold}theme.rb${reset}${on}"
+  row "  ${c_yel}untracked:${on}  ${bold}notes.md${reset}${on}"
+  row ""
   printf '%s\xe2\x95\xb0%s\xe2\x95\xaf%s\n' "$on" "$hr" "$reset"
 
   swatch_row() {
-    local label="$1" start="$2" end="$3" i hex cellw
-    cellw=$(((W - 8) / 8))
-    ((cellw < 4)) && cellw=4
-    ((cellw > 10)) && cellw=10
-    printf '  %-8s' "$label"
-    for i in $(seq "$start" "$end"); do
-      hex=${COLORS[$i]:-}
-      [ -z "$hex" ] && hex="$bg"
-      printf '\e[48;2;%sm%*s%s' "$(rgb "$hex")" "$cellw" "" "$reset"
+    local label="$1" start="$2" end="$3" i hex row c
+    for ((row = 0; row < SWATCH_H; row++)); do
+      if ((row == 0)); then
+        printf '  %-8s' "$label"
+      else
+        printf '  %8s' ''
+      fi
+      for i in $(seq "$start" "$end"); do
+        hex=${COLORS[$i]:-}
+        [ -z "$hex" ] && hex="$bg"
+        printf '\e[48;2;%sm' "$(rgb "$hex")"
+        for ((c = 0; c < SWATCH_W; c++)); do
+          printf ' '
+        done
+        printf '%s' "$reset"
+      done
+      printf '\n'
     done
-    printf '\n'
   }
 
   printf '\n'
   swatch_row "normal" 1 8
   swatch_row "bright" 9 16
   printf '\n  '
-  printf '\e[48;2;%sm \e[0m bg %s   ' "$bgseq" "$bg"
-  printf '\e[48;2;%sm \e[0m fg %s' "$fgseq" "$fg"
-  [ -n "$cursor" ] && printf '   \e[48;2;%sm \e[0m cursor %s' "$(rgb "$cursor")" "$cursor"
+  printf '\e[48;2;%sm   \e[0m bg %s   ' "$bgseq" "$bg"
+  printf '\e[48;2;%sm   \e[0m fg %s' "$fgseq" "$fg"
+  [ -n "$cursor" ] && printf '   \e[48;2;%sm   \e[0m cursor %s' "$(rgb "$cursor")" "$cursor"
   printf '\n'
 }
+
+dim=$'\e[2m'
+bold=$'\e[1m'
+desc_header="${bold}Colorscheme${reset}${dim}"
+desc_lines=(
+  "${desc_header} browse Gogh terminal colour themes with a live preview"
+  "Scroll the list below to explore · Enter to apply · Esc to cancel"
+  "Your terminal is not repainted until you confirm a selection"
+)
+
+for line in "${desc_lines[@]}"; do
+  print_centered "${dim}${line}${reset}"
+done
+printf '\n'
 
 lines=()
 while IFS= read -r line || [[ -n "$line" ]]; do
   lines+=("$line")
 done < <(_render_preview)
 
-top=$(((pane_lines - ${#lines[@]}) / 2))
+desc_rows=$((${#desc_lines[@]} + 1))
+remaining=$((pane_lines - desc_rows))
+top=$(((remaining - ${#lines[@]}) / 2))
 ((top < 0)) && top=0
 for ((i = 0; i < top; i++)); do
   printf '\n'
 done
 
 for line in "${lines[@]}"; do
-  lpad=$(((pane_cols - $(visible_len "$line")) / 2))
-  ((lpad < 0)) && lpad=0
-  printf '%*s%s\n' "$lpad" "" "$line"
+  print_centered "$line"
 done
