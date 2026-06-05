@@ -116,8 +116,19 @@ else
   echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ copies template to ~/.config/kitty/kitty.conf${RESET}"
   echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
-  if [[ -n "$_saved_terminal" ]]; then
+  if [[ -n "$_saved_terminal" && -n "$_terminal_default" ]]; then
     echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET} ${DIM}(Enter keeps it; 4 also preserves it)${RESET}"
+  elif [[ -n "$_saved_terminal" ]]; then
+    # Saved TERMINAL is one we ship no template for. Warn if it is also outside
+    # the set the colorscheme/gogh helper can theme; either way 4 (Skip) keeps it.
+    echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET}"
+    if is_colorscheme_terminal "$_saved_terminal"; then
+      echo -e "   ${DIM}No template shipped for it, but colorscheme can theme it — pick 4 to keep it.${RESET}"
+    else
+      echo -e "   ${YELLOW}⚠${RESET}  ${BOLD}${_saved_terminal}${RESET} is not compatible with the ${BOLD}colorscheme${RESET} function"
+      echo -e "      ${DIM}(gogh supports alacritty, kitty, wezterm, gnome-terminal, konsole, foot, …).${RESET}"
+      echo -e "      ${DIM}Pick 1-3 to switch, or 4 to keep it.${RESET}"
+    fi
   fi
   ask_choice "Choice" 4 "$_terminal_default"
   INSTALL_TERMINAL=$REPLY

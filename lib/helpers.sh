@@ -8,6 +8,28 @@ GREEN="\033[1;32m"
 YELLOW="\033[1;33m"
 DIM="\033[2m"
 
+# Terminal values gogh accepts (the colorscheme function passes TERMINAL straight
+# to gogh's apply-colors.sh). Mirror of that script's dispatch — keep in sync if
+# gogh adds terminals. install.sh only ships config templates for the first three.
+COLORSCHEME_TERMINALS="alacritty kitty wezterm konsole gnome-terminal mate-terminal \
+xfce4-terminal tilix guake foot terminator mintty iTerm.app pantheon-terminal \
+io.elementary.terminal kmscon linux termux"
+
+# Returns 0 when $1 is a terminal gogh/colorscheme can theme. Matches gogh's
+# prefix cases for gnome-terminal* and io.elementary.t* as well.
+# Usage: is_colorscheme_terminal <name>
+is_colorscheme_terminal() {
+  local term="${1:-}"
+  [[ -z "$term" ]] && return 1
+  case "$term" in
+    gnome-terminal*|io.elementary.t*) return 0 ;;
+  esac
+  case " ${COLORSCHEME_TERMINALS} " in
+    *" ${term} "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # Links $1 (source) to $2 (destination), idempotently:
 #   • already correct symlink  → skips
 #   • symlink to wrong target  → removes and relinks

@@ -155,3 +155,24 @@ load test_helper
   [ -f "${repo_file}.old" ]
   grep -q "stale in repo" "${repo_file}.old"
 }
+
+@test "is_colorscheme_terminal accepts gogh-supported terminals and rejects others" {
+  for term in alacritty kitty wezterm konsole foot tilix terminator; do
+    run is_colorscheme_terminal "$term"
+    [ "$status" -eq 0 ]
+  done
+  # gogh prefix cases
+  run is_colorscheme_terminal gnome-terminal
+  [ "$status" -eq 0 ]
+  run is_colorscheme_terminal gnome-terminal-server
+  [ "$status" -eq 0 ]
+  run is_colorscheme_terminal io.elementary.terminal
+  [ "$status" -eq 0 ]
+  # unsupported / empty
+  run is_colorscheme_terminal iterm
+  [ "$status" -ne 0 ]
+  run is_colorscheme_terminal foobar
+  [ "$status" -ne 0 ]
+  run is_colorscheme_terminal ""
+  [ "$status" -ne 0 ]
+}
