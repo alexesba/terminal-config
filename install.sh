@@ -14,17 +14,19 @@ CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"
-       _       _    __ _ _             _           _        _ _
-    __| | ___ | |_ / _(_) | ___  ___  (_)_ __  ___| |_ __ _| | | ___ _ __
-   / _` |/ _ \| __| |_| | |/ _ \/ __| | | '_ \/ __| __/ _` | | |/ _ \ '__|
-  | (_| | (_) | |_|  _| | |  __/\__ \ | | | | \__ \ || (_| | | |  __/ |
-   \__,_|\___/ \__|_| |_|_|\___||___/ |_|_| |_|___/\__\__,_|_|_|\___|_|
+  _                      _             _                    __ _
+ | |_ ___ _ __ _ __ ___ (_)_ __   __ _| |   ___ ___  _ __  / _(_) __ _
+ | __/ _ \ '__| '_ ` _ \| | '_ \ / _` | |  / __/ _ \| '_ \| |_| |/ _` |
+ | ||  __/ |  | | | | | | | | | | (_| | | | (_| (_) | | | |  _| | (_| |
+  \__\___|_|  |_| |_| |_|_|_| |_|\__,_|_|  \___\___/|_| |_|_| |_|\__, |
+                                                                 |___/
 EOF
 printf "${RESET}\n"
+echo -e "${DIM}        shell · terminal emulators · tools${RESET}"
 
 echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
 echo ""
-echo -e "${CYAN}${BOLD}Let's set up your environment. Answer a few questions first:${RESET}"
+echo -e "${CYAN}${BOLD}Let's set up your shell, terminal, and tools. Answer a few questions first:${RESET}"
 echo ""
 
 # Ask a yes/no question that collapses to a one-line summary once answered.
