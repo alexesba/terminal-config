@@ -48,5 +48,3 @@ fi
 
 alias gcoft='git branch -a| fzf | xargs git checkout -t'
 alias gcof='git branch -a| fzf | xargs git checkout'
-
-alias marp="marp -c $HOME/Projects/marp-diagrams/marp.config.js --allow-local-files "

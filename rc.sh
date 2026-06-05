@@ -25,18 +25,9 @@ else
   unset _src _dir
 fi
 
-# Personal overrides — migrate from pre-rename paths on first run
+# Personal overrides (optional). Seeded by install.sh from custom.sh.example;
+# rc.sh just sources it when present — no side effects on shell startup.
 _custom="$DOTFILES_DIR/shell/custom.sh"
-if [ ! -f "$_custom" ]; then
-  if [ -f "$DOTFILES_DIR/bash-files/bash_custom.sh" ]; then
-    cp "$DOTFILES_DIR/bash-files/bash_custom.sh" "$_custom"
-  elif [ -f "$DOTFILES_DIR/shell/bash_custom.sh" ]; then
-    cp "$DOTFILES_DIR/shell/bash_custom.sh" "$_custom"
-  elif [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
-    cp "$DOTFILES_DIR/shell/custom.sh.example" "$_custom"
-  fi
-fi
-
 if [ -f "$_custom" ]; then
   source "$_custom"
 fi

@@ -32,3 +32,4 @@
 
 # ── Example: work aliases ─────────────────────────────────────────────────────
 # alias work='cd ~/Projects/work'
+# alias marp="marp -c $HOME/Projects/marp-diagrams/marp.config.js --allow-local-files "

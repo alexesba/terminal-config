@@ -31,19 +31,9 @@ _relink_if_mine() {
   fi
 }
 
-# Shell RC — rc.sh (upgrade legacy bash_profile.sh symlinks too)
+# Shell RC — rc.sh
 for _rc in ~/.zshrc ~/.bashrc; do
-  if [ -L "$_rc" ]; then
-    _target="$(readlink "$_rc")"
-    if [[ "$_target" == "$DOTFILES_DIR"* ]]; then
-      if [[ "$_target" == *bash_profile.sh ]]; then
-        echo -e "  ${YELLOW}⚠${RESET}  Upgrading $_rc: bash_profile.sh → rc.sh"
-        link_file "$DOTFILES_DIR/rc.sh" "$_rc"
-      else
-        _relink_if_mine "$_rc" "$DOTFILES_DIR/rc.sh"
-      fi
-    fi
-  fi
+  _relink_if_mine "$_rc" "$DOTFILES_DIR/rc.sh"
 done
 
 # tmux + terminal emulators — migrate legacy symlinks → local copies (with backup)
