@@ -311,12 +311,10 @@ step_font()      { install_nerd_font "$TERMINAL_FONT_ID"; }
 step_terminal()  {
   case "$INSTALL_TERMINAL" in
     1)
-      source "$DOTFILES_DIR/terminfo/install.sh"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/alacritty.yml.example" \
         "${HOME}/.config/alacritty/alacritty.yml" "$TERMINAL_FONT_FAMILY" ;;
     2)
-      source "$DOTFILES_DIR/terminfo/install.sh"
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/kitty.conf.example" \
         "${HOME}/.config/kitty/kitty.conf" "$TERMINAL_FONT_FAMILY" ;;
