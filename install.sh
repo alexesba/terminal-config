@@ -7,6 +7,10 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DOTFILES_DIR/lib/helpers.sh"
 # shellcheck source=lib/fonts.sh
 source "$DOTFILES_DIR/lib/fonts.sh"
+# shellcheck source=lib/tui.sh
+source "$DOTFILES_DIR/lib/tui.sh"
+
+CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"
@@ -18,21 +22,30 @@ cat << "EOF"
 EOF
 printf "${RESET}\n"
 
-# ── Detect shell ──────────────────────────────────────────────────────────────
+echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
+echo ""
+echo -e "${CYAN}${BOLD}Let's set up your environment. Answer a few questions first:${RESET}"
+echo ""
+
+# Ask a yes/no question that collapses to a one-line summary once answered.
+# Usage: q_yn <result_var> <number> <title> <prompt> [desc line...]
+q_yn() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  local line val
+  tui_begin
+  echo -e "${BOLD}${num}. ${title}${RESET}"
+  for line in "$@"; do echo -e "   ${DIM}${line}${RESET}"; done
+  ask_yn "$prompt"
+  printf -v "$__var" '%s' "$REPLY"
+  [[ $REPLY =~ ^[Yy]$ ]] && val="yes" || val="${DIM}skip${RESET}"
+  tui_collapse "$num. $title" "$val"
+}
+
+# ── 1. Shell ──────────────────────────────────────────────────────────────────
 _detected_shell_name=""
 if [[ "$SHELL" =~ zsh ]];  then _detected_shell_name="zsh"
 elif [[ "$SHELL" =~ bash ]]; then _detected_shell_name="bash"
 fi
-
-echo -e "${DIM}Installing from: $DOTFILES_DIR${RESET}"
-echo ""
-
-# ── Gather input ──────────────────────────────────────────────────────────────
-echo -e "${CYAN}${BOLD}Let's set up your environment. Answer a few questions first:${RESET}"
-echo ""
-
-# ── 1. Shell ──────────────────────────────────────────────────────────────────
-echo -e "${BOLD}1. Shell${RESET}"
 
 _pick_shell() {
   echo    "   Which shell would you like to configure?"
@@ -46,6 +59,8 @@ _pick_shell() {
   fi
 }
 
+tui_begin
+echo -e "${BOLD}1. Shell${RESET}"
 if [[ -n "$_detected_shell_name" ]]; then
   echo -e "   ${DIM}Default shell detected:${RESET} ${BOLD}${_detected_shell_name}${RESET} ${DIM}(${SHELL})${RESET}"
   ask_yn "Configure for ${_detected_shell_name}?"
@@ -62,7 +77,6 @@ fi
 
 # Offer chsh if the chosen shell differs from the current default
 if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
-  echo ""
   echo -e "   ${DIM}Current default login shell: $SHELL${RESET}"
   ask_yn "Set $(basename "$TEM_SHELL") as your default login shell? (runs chsh)"
   if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -70,38 +84,34 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
     echo -e "  ${GREEN}✓${RESET}  Default login shell set to $TEM_SHELL — re-login to take effect."
   fi
 fi
-echo ""
 
 echo -e "   ${DIM}Links rc.sh → ~/$BASHFILE${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
 ask_yn "Link ~/$BASHFILE?"
 INSTALL_SHELL=$REPLY
-echo ""
+if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+  tui_collapse "1. Shell" "${BASHFILE#.} → link ~/$BASHFILE"
+else
+  tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(link: skip)${RESET}"
+fi
 
-echo -e "${BOLD}2. tmux (.tmux.conf)${RESET}"
-echo -e "   ${DIM}Copies tmux.conf.example → ~/.tmux.conf${RESET}"
-echo    "   Custom keybindings, status bar, and plugin settings."
-echo    "   tmux binary will be installed if not already present."
-ask_yn "Install?"
-INSTALL_TMUX=$REPLY
-echo ""
+# ── 2-3. Simple yes/no steps ──────────────────────────────────────────────────
+q_yn INSTALL_TMUX 2 "tmux (.tmux.conf)" "Install?" \
+  "Copies tmux.conf.example → ~/.tmux.conf" \
+  "Custom keybindings, status bar, and plugin settings." \
+  "tmux binary will be installed if not already present."
 
-echo -e "${BOLD}3. Local alias overrides (~/.bash_aliases)${RESET}"
-echo -e "   ${DIM}Built-in aliases load automatically from the repo (shell/aliases/).${RESET}"
-echo    "   Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
-ask_yn "Create empty ~/.bash_aliases?"
-INSTALL_ALIASES=$REPLY
-echo ""
+q_yn INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Create empty ~/.bash_aliases?" \
+  "Built-in aliases load automatically from the repo (shell/aliases/)." \
+  "Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
 
+# ── 4. Terminal emulator + font ───────────────────────────────────────────────
+tui_begin
 echo -e "${BOLD}4. Terminal emulator config${RESET}"
 if grep -qi microsoft /proc/version 2>/dev/null; then
-  echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators (Alacritty, Kitty, WezTerm) run on"
-  echo    "      the Windows side. Configure them there, not inside WSL."
+  echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators run on the Windows side."
   INSTALL_TERMINAL=4
 else
-  # Returning users: default to whatever was saved in custom.sh so pressing Enter
-  # keeps the previous terminal. Choosing 4 (Skip) also preserves it untouched.
-  CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
   _saved_terminal=""
   [ -f "$CUSTOM_FILE" ] && _saved_terminal=$(custom_export_value "$CUSTOM_FILE" TERMINAL)
   _terminal_default=""
@@ -119,8 +129,6 @@ else
   if [[ -n "$_saved_terminal" && -n "$_terminal_default" ]]; then
     echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET} ${DIM}(Enter keeps it; 4 also preserves it)${RESET}"
   elif [[ -n "$_saved_terminal" ]]; then
-    # Saved TERMINAL is one we ship no template for. Warn if it is also outside
-    # the set the colorscheme/gogh helper can theme; either way 4 (Skip) keeps it.
     echo -e "   ${DIM}Current selection:${RESET} ${BOLD}${_saved_terminal}${RESET}"
     if is_colorscheme_terminal "$_saved_terminal"; then
       echo -e "   ${DIM}No template shipped for it, but colorscheme can theme it — pick 4 to keep it.${RESET}"
@@ -133,9 +141,18 @@ else
   ask_choice "Choice" 4 "$_terminal_default"
   INSTALL_TERMINAL=$REPLY
 fi
-echo ""
+
+TERMINAL_NAME=""
+TERMINAL_FONT_ID=""
+TERMINAL_FONT_FAMILY=""
+INSTALL_FONT=false
+case "$INSTALL_TERMINAL" in
+  1) TERMINAL_NAME="alacritty" ;;
+  2) TERMINAL_NAME="kitty" ;;
+  3) TERMINAL_NAME="wezterm" ;;
+esac
+
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
-  # Default to the previously recorded font when re-running, else Caskaydia.
   _saved_font_id=""
   [ -f "$CUSTOM_FILE" ] && _saved_font_id=$(resolve_nerd_font_id "$CUSTOM_FILE")
   case "$_saved_font_id" in
@@ -145,7 +162,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     *)         _font_default=1 ;;
   esac
 
-  echo    "   Nerd Font for your terminal config (install.sh sets the font in the copied config):"
+  echo    "   Nerd Font for your terminal config:"
   echo -e "     ${BOLD}1)${RESET} Caskaydia Cove Nerd Font Propo"
   echo -e "     ${BOLD}2)${RESET} JetBrains Mono Nerd Font"
   echo -e "     ${BOLD}3)${RESET} FiraCode Nerd Font"
@@ -160,149 +177,57 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     5) TERMINAL_FONT_ID="caskaydia"; INSTALL_FONT=false ;;
     *) TERMINAL_FONT_ID="caskaydia" ;;
   esac
-fi
-echo ""
-
-echo -e "${BOLD}5. zsh-autosuggestions${RESET}"
-echo -e "   ${DIM}Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions).${RESET}"
-echo    "   Suggests commands as you type based on your history."
-ask_yn "Install?"
-INSTALL_AUTOSUGG=$REPLY
-echo ""
-
-echo -e "${BOLD}6. rbenv — Ruby version manager${RESET}"
-echo -e "   ${DIM}Installed via brew (macOS) or git clone on Linux.${RESET}"
-echo    "   Manages multiple Ruby versions per project via .ruby-version."
-ask_yn "Install?"
-INSTALL_RBENV=$REPLY
-echo ""
-
-echo -e "${BOLD}7. nvm — Node version manager${RESET}"
-echo -e "   ${DIM}Installed via the official nvm install script (latest version).${RESET}"
-echo    "   Switches Node versions automatically based on .nvmrc files."
-ask_yn "Install?"
-INSTALL_NVM=$REPLY
-echo ""
-
-echo -e "${BOLD}8. FZF — fuzzy finder${RESET}"
-echo -e "   ${DIM}Clones FZF into ~/.fzf and runs its installer.${RESET}"
-echo    "   Fuzzy search for files, command history, and more."
-ask_yn "Install?"
-INSTALL_FZF=$REPLY
-echo ""
-
-echo -e "${BOLD}9. ripgrep — fast file search${RESET}"
-echo -e "   ${DIM}Used by FZF for file finding (faster than ag/find).${RESET}"
-echo    "   Also available as 'rg' for quick searches from the terminal."
-ask_yn "Install?"
-INSTALL_RIPGREP=$REPLY
-echo ""
-
-echo -e "${BOLD}10. bat — better cat${RESET}"
-echo -e "   ${DIM}Used by FZF for syntax-highlighted file previews.${RESET}"
-echo    "   Also replaces cat for reading files with line numbers and colour."
-ask_yn "Install?"
-INSTALL_BAT=$REPLY
-echo ""
-
-echo -e "${BOLD}11. hub — GitHub CLI wrapper${RESET}"
-echo -e "   ${DIM}Wraps git with GitHub-aware commands (alias git=hub).${RESET}"
-echo    "   Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
-ask_yn "Install?"
-INSTALL_HUB=$REPLY
-echo ""
-
-echo -e "${BOLD}12. Gogh — terminal colour schemes${RESET}"
-echo -e "   ${DIM}Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh.${RESET}"
-echo -e "   Run ${BOLD}colorscheme${RESET} in your shell to fuzzy-pick and apply any scheme."
-ask_yn "Install?"
-INSTALL_GOGH=$REPLY
-echo ""
-
-echo -e "${BOLD}13. tig — git text-mode interface${RESET}"
-echo -e "   ${DIM}Installed via brew (macOS) or your Linux package manager.${RESET}"
-echo    "   Browse commits, branches, and diffs from the terminal."
-ask_yn "Install?"
-INSTALL_TIG=$REPLY
-echo ""
-
-
-echo -e "${CYAN}${BOLD}━━━  Linking dotfiles  ━━━${RESET}"
-echo ""
-
-if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ Shell RC${RESET}"
-  link_file "$DOTFILES_DIR/rc.sh" ~/$BASHFILE
-  echo ""
-fi
-
-if [[ $INSTALL_TMUX =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ tmux${RESET}"
-  install_config_from_template "$DOTFILES_DIR" \
-    "tmux.conf.example" "${HOME}/.tmux.conf"
-  echo ""
-fi
-
-if [[ $INSTALL_ALIASES =~ ^[Yy]$ ]]; then
-  echo -e "${BOLD}→ Local alias overrides${RESET}"
-  if [ -e ~/.bash_aliases ]; then
-    echo -e "  ${GREEN}✓${RESET}  ~/.bash_aliases already exists — skipping."
-  else
-    touch ~/.bash_aliases
-    echo -e "  ${GREEN}✓${RESET}  Created empty ~/.bash_aliases (add personal aliases here)."
-  fi
-  echo ""
+  TERMINAL_FONT_FAMILY=$(nerd_font_family "$TERMINAL_FONT_ID")
 fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
-  TERMINAL_FONT_FAMILY=$(nerd_font_family "$TERMINAL_FONT_ID")
-
-  if [[ "${INSTALL_FONT:-true}" == true ]]; then
-    echo -e "${BOLD}→ Nerd Font${RESET}"
-    install_nerd_font "$TERMINAL_FONT_ID"
-    echo ""
+  if [[ "$INSTALL_FONT" == true ]]; then
+    tui_collapse "4. Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY}"
+  else
+    tui_collapse "4. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
-
-  echo -e "${BOLD}→ Terminal emulator${RESET}"
-  case "$INSTALL_TERMINAL" in
-    1)
-      TERMINAL_NAME="alacritty"
-      source "$DOTFILES_DIR/terminfo/install.sh"
-      install_config_from_template "$DOTFILES_DIR" \
-        "terminal-emulators/alacritty.yml.example" \
-        "${HOME}/.config/alacritty/alacritty.yml" \
-        "$TERMINAL_FONT_FAMILY"
-      ;;
-    2)
-      TERMINAL_NAME="kitty"
-      source "$DOTFILES_DIR/terminfo/install.sh"
-      install_config_from_template "$DOTFILES_DIR" \
-        "terminal-emulators/kitty.conf.example" \
-        "${HOME}/.config/kitty/kitty.conf" \
-        "$TERMINAL_FONT_FAMILY"
-      ;;
-    3)
-      TERMINAL_NAME="wezterm"
-      install_config_from_template "$DOTFILES_DIR" \
-        "terminal-emulators/wezterm.lua.example" \
-        "${HOME}/.config/wezterm/wezterm.lua" \
-        "$TERMINAL_FONT_FAMILY"
-      ;;
-  esac
-
-  # Persist the choice so gogh (the `colorscheme` function) applies themes to the
-  # terminal you actually picked, instead of relying on its auto-detection.
-  CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
-  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
-    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
-  fi
-  set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
-  set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
-  set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
-  echo ""
+else
+  tui_collapse "4. Terminal" "${DIM}skip${RESET}"
 fi
 
-# ── Delegate tool installation to bootstrap.sh ────────────────────────────────
+# ── 5-13. Tool steps ──────────────────────────────────────────────────────────
+q_yn INSTALL_AUTOSUGG 5 "zsh-autosuggestions" "Install?" \
+  "Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions)." \
+  "Suggests commands as you type based on your history."
+
+q_yn INSTALL_RBENV 6 "rbenv — Ruby version manager" "Install?" \
+  "Installed via brew (macOS) or git clone on Linux." \
+  "Manages multiple Ruby versions per project via .ruby-version."
+
+q_yn INSTALL_NVM 7 "nvm — Node version manager" "Install?" \
+  "Installed via the official nvm install script (latest version)." \
+  "Switches Node versions automatically based on .nvmrc files."
+
+q_yn INSTALL_FZF 8 "FZF — fuzzy finder" "Install?" \
+  "Clones FZF into ~/.fzf and runs its installer." \
+  "Fuzzy search for files, command history, and more."
+
+q_yn INSTALL_RIPGREP 9 "ripgrep — fast file search" "Install?" \
+  "Used by FZF for file finding (faster than ag/find)." \
+  "Also available as 'rg' for quick searches from the terminal."
+
+q_yn INSTALL_BAT 10 "bat — better cat" "Install?" \
+  "Used by FZF for syntax-highlighted file previews." \
+  "Also replaces cat for reading files with line numbers and colour."
+
+q_yn INSTALL_HUB 11 "hub — GitHub CLI wrapper" "Install?" \
+  "Wraps git with GitHub-aware commands (alias git=hub)." \
+  "Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
+
+q_yn INSTALL_GOGH 12 "Gogh — terminal colour schemes" "Install?" \
+  "Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh." \
+  "Run colorscheme in your shell to fuzzy-pick and apply any scheme."
+
+q_yn INSTALL_TIG 13 "tig — git text-mode interface" "Install?" \
+  "Installed via brew (macOS) or your Linux package manager." \
+  "Browse commits, branches, and diffs from the terminal."
+
+# ── Bootstrap flags (tool binaries handled by bootstrap.sh) ────────────────────
 BOOTSTRAP_FLAGS=()
 [[ $INSTALL_TMUX     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tmux)
 [[ $INSTALL_AUTOSUGG =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--autosuggestions)
@@ -315,12 +240,146 @@ BOOTSTRAP_FLAGS=()
 [[ $INSTALL_GOGH     =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--gogh)
 [[ $INSTALL_TIG      =~ ^[Yy]$ ]] && BOOTSTRAP_FLAGS+=(--tig)
 
+bootstrap_label() {
+  case "$1" in
+    --tmux)            echo "tmux" ;;
+    --autosuggestions) echo "zsh-autosuggestions" ;;
+    --rbenv)           echo "rbenv" ;;
+    --nvm)             echo "nvm" ;;
+    --fzf)             echo "fzf" ;;
+    --ripgrep)         echo "ripgrep" ;;
+    --bat)             echo "bat" ;;
+    --hub)             echo "hub" ;;
+    --gogh)            echo "gogh" ;;
+    --tig)             echo "tig" ;;
+    *)                 echo "${1#--}" ;;
+  esac
+}
+
+# ── Pre-flight summary ────────────────────────────────────────────────────────
+echo ""
+echo -e "${CYAN}${BOLD}━━━  Summary — here's what will happen  ━━━${RESET}"
+echo ""
+
+_sum() { echo -e "  ${BOLD}$(printf '%-12s' "$1")${RESET} ${2}"; }
+_yn()  { [[ $1 =~ ^[Yy]$ ]] && echo "yes" || echo -e "${DIM}skip${RESET}"; }
+
+if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+  _sum "Shell" "link rc.sh → ~/$BASHFILE"
+else
+  _sum "Shell" "${DIM}skip${RESET}"
+fi
+_sum "Aliases" "$(_yn "$INSTALL_ALIASES")"
+if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  if [[ "$INSTALL_FONT" == true ]]; then
+    _sum "Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY} (font install)"
+  else
+    _sum "Terminal" "${TERMINAL_NAME} (font: skip)"
+  fi
+else
+  _sum "Terminal" "${DIM}skip${RESET}"
+fi
+
 if [ ${#BOOTSTRAP_FLAGS[@]} -gt 0 ]; then
-  bash "$DOTFILES_DIR/bootstrap.sh" "${BOOTSTRAP_FLAGS[@]}"
+  _tools=""
+  for flag in "${BOOTSTRAP_FLAGS[@]}"; do _tools+="$(bootstrap_label "$flag"), "; done
+  _sum "Tools" "${_tools%, }"
+else
+  _sum "Tools" "${DIM}none${RESET}"
+fi
+echo ""
+
+ask_yn "Proceed with installation?"
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  echo -e "  ${YELLOW}Aborted — nothing was changed.${RESET}"
+  exit 0
+fi
+echo ""
+
+# ── Execution steps ───────────────────────────────────────────────────────────
+step_shell_rc()  { link_file "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
+step_tmux_cfg()  { install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"; }
+step_aliases()   {
+  if [ -e "$HOME/.bash_aliases" ]; then
+    echo -e "  ${GREEN}✓${RESET}  ~/.bash_aliases already exists — skipping."
+  else
+    touch "$HOME/.bash_aliases"
+    echo -e "  ${GREEN}✓${RESET}  Created empty ~/.bash_aliases."
+  fi
+}
+step_font()      { install_nerd_font "$TERMINAL_FONT_ID"; }
+step_terminal()  {
+  case "$INSTALL_TERMINAL" in
+    1)
+      source "$DOTFILES_DIR/terminfo/install.sh"
+      install_config_from_template "$DOTFILES_DIR" \
+        "terminal-emulators/alacritty.yml.example" \
+        "${HOME}/.config/alacritty/alacritty.yml" "$TERMINAL_FONT_FAMILY" ;;
+    2)
+      source "$DOTFILES_DIR/terminfo/install.sh"
+      install_config_from_template "$DOTFILES_DIR" \
+        "terminal-emulators/kitty.conf.example" \
+        "${HOME}/.config/kitty/kitty.conf" "$TERMINAL_FONT_FAMILY" ;;
+    3)
+      install_config_from_template "$DOTFILES_DIR" \
+        "terminal-emulators/wezterm.lua.example" \
+        "${HOME}/.config/wezterm/wezterm.lua" "$TERMINAL_FONT_FAMILY" ;;
+  esac
+  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
+  fi
+  set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
+  set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
+  set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
+}
+run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1"; }
+
+STEP_LABELS=(); STEP_FUNCS=(); STEP_ARGS=()
+add_step() { STEP_LABELS+=("$1"); STEP_FUNCS+=("$2"); STEP_ARGS+=("${3:-}"); }
+
+[[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (~/$BASHFILE)" step_shell_rc
+[[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && add_step "tmux config" step_tmux_cfg
+[[ $INSTALL_ALIASES =~ ^[Yy]$ ]] && add_step "Local aliases" step_aliases
+if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+  [[ "$INSTALL_FONT" == true ]] && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
+  add_step "Terminal config (${TERMINAL_NAME})" step_terminal
+fi
+for flag in "${BOOTSTRAP_FLAGS[@]}"; do
+  add_step "$(bootstrap_label "$flag")" run_bootstrap_flag "$flag"
+done
+
+echo -e "${CYAN}${BOLD}━━━  Installing  ━━━${RESET}"
+echo ""
+
+TOTAL_STEPS=${#STEP_FUNCS[@]}
+if (( TOTAL_STEPS == 0 )); then
+  echo -e "  ${DIM}Nothing selected to install.${RESET}"
+else
+  FAILED=()
+  for i in "${!STEP_FUNCS[@]}"; do
+    _step_log="$(mktemp "${TMPDIR:-/tmp}/install-step.XXXXXX")"
+    _step_lines=0
+    _step_status=0
+
+    tui_step_begin "$((i + 1))" "$TOTAL_STEPS" "${STEP_LABELS[$i]}"
+    "${STEP_FUNCS[$i]}" "${STEP_ARGS[$i]}" 2>&1 | tee "$_step_log"
+    _step_status=${PIPESTATUS[0]}
+    _step_lines=$(wc -l < "$_step_log" | tr -d ' ')
+    rm -f "$_step_log"
+
+    if (( _step_status != 0 )); then
+      FAILED+=("${STEP_LABELS[$i]}")
+    fi
+    tui_step_end "$((i + 1))" "$TOTAL_STEPS" "${STEP_LABELS[$i]}" "$_step_lines" "$_step_status"
+  done
+  if (( ${#FAILED[@]} > 0 )); then
+    echo ""
+    echo -e "  ${YELLOW}⚠${RESET}  Some steps reported errors: ${BOLD}${FAILED[*]}${RESET}"
+  fi
 fi
 
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
 echo ""
 echo -e "  Reloading shell…"
-exec $SHELL -l
+exec "$SHELL" -l

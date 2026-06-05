@@ -9,4 +9,6 @@ setup() {
   source "$REPO_ROOT/lib/helpers.sh"
   # shellcheck source=../lib/fonts.sh disable=SC1091
   source "$REPO_ROOT/lib/fonts.sh"
+  # shellcheck source=../lib/tui.sh disable=SC1091
+  source "$REPO_ROOT/lib/tui.sh"
 }

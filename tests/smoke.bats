@@ -2,6 +2,12 @@
 
 load test_helper
 
+@test "bootstrap exits 0 in quiet mode when gogh is already present" {
+  mkdir -p "$TEST_HOME/src/gogh"
+  run env BOOTSTRAP_QUIET=1 HOME="$TEST_HOME" bash "$REPO_ROOT/bootstrap.sh" --gogh
+  [ "$status" -eq 0 ]
+}
+
 @test "main shell scripts pass bash syntax check" {
   local script
   for script in install.sh update.sh uninstall.sh bootstrap.sh rc.sh; do

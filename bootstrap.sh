@@ -45,7 +45,7 @@ for arg in "$@"; do
       ;;
     --help)
       echo "Usage: $0 [--tmux] [--autosuggestions] [--rbenv] [--nvm] [--fzf] [--ripgrep] [--bat] [--hub] [--gogh] [--font=ID] [--tig]"
-      echo ""
+      _bootstrap_spacer
       echo "Font IDs for --font=: caskaydia (default), jetbrains, fira, hack"
       exit 0
       ;;
@@ -61,8 +61,21 @@ if ! $DO_TMUX && ! $DO_AUTOSUGG && ! $DO_RBENV && ! $DO_NVM && ! $DO_FZF && \
   exit 0
 fi
 
-echo -e "${CYAN}${BOLD}━━━  Installing tools  ━━━${RESET}"
-echo ""
+# install.sh drives this per-tool and renders its own progress bar/header, so it
+# sets BOOTSTRAP_QUIET=1 to suppress standalone banners, section headings, and
+# the footer (must not use `[[ ]] && echo` for the footer — a failed [[ ]]
+# would make the script exit 1 and mark every quiet step as failed).
+_bootstrap_heading() {
+  [[ -z "${BOOTSTRAP_QUIET:-}" ]] && echo -e "${BOLD}→ $1${RESET}"
+}
+_bootstrap_spacer() {
+  [[ -z "${BOOTSTRAP_QUIET:-}" ]] && echo ""
+}
+
+if [[ -z "${BOOTSTRAP_QUIET:-}" ]]; then
+  echo -e "${CYAN}${BOLD}━━━  Installing tools  ━━━${RESET}"
+  _bootstrap_spacer
+fi
 
 # ── Linux package manager helper ──────────────────────────────────────────────
 # Usage: _linux_install <pkg> [<pkg> ...]
@@ -80,7 +93,7 @@ _linux_install() {
 
 # ── tmux ──────────────────────────────────────────────────────────────────────
 if $DO_TMUX; then
-  echo -e "${BOLD}→ tmux${RESET}"
+  _bootstrap_heading "tmux"
   if command -v tmux &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  tmux already installed — skipping."
   elif [[ "$OSTYPE" =~ ^linux ]]; then
@@ -101,14 +114,18 @@ if $DO_TMUX; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
     echo -e "  ${GREEN}✓${RESET}  TPM installed. Open tmux and press ${BOLD}prefix + I${RESET} to install plugins."
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── zsh-autosuggestions ───────────────────────────────────────────────────────
 if $DO_AUTOSUGG; then
-  echo -e "${BOLD}→ zsh-autosuggestions${RESET}"
+  _bootstrap_heading "zsh-autosuggestions"
   if [[ "$OSTYPE" =~ ^darwin ]]; then
-    brew install zsh-autosuggestions
+    if brew list zsh-autosuggestions &>/dev/null; then
+      echo -e "  ${GREEN}✓${RESET}  zsh-autosuggestions already installed — skipping."
+    else
+      brew install zsh-autosuggestions
+    fi
   else
     if [ -d ~/.zsh/zsh-autosuggestions ]; then
       echo -e "  ${GREEN}✓${RESET}  ~/.zsh/zsh-autosuggestions already exists — skipping."
@@ -117,12 +134,12 @@ if $DO_AUTOSUGG; then
       git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
     fi
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── rbenv ─────────────────────────────────────────────────────────────────────
 if $DO_RBENV; then
-  echo -e "${BOLD}→ rbenv${RESET}"
+  _bootstrap_heading "rbenv"
   if command -v rbenv &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  rbenv already installed — skipping."
   elif [[ "$OSTYPE" =~ ^darwin ]]; then
@@ -137,12 +154,12 @@ if $DO_RBENV; then
       git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
     fi
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── nvm ───────────────────────────────────────────────────────────────────────
 if $DO_NVM; then
-  echo -e "${BOLD}→ nvm${RESET}"
+  _bootstrap_heading "nvm"
   if [ -d "$HOME/.nvm" ]; then
     echo -e "  ${GREEN}✓${RESET}  ~/.nvm already exists — skipping."
   else
@@ -153,24 +170,26 @@ if $DO_NVM; then
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
     echo -e "  ${GREEN}✓${RESET}  nvm ${NVM_VERSION} installed."
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── FZF ───────────────────────────────────────────────────────────────────────
 if $DO_FZF; then
-  echo -e "${BOLD}→ FZF${RESET}"
+  _bootstrap_heading "FZF"
   if [ -d ~/.fzf ]; then
     echo -e "  ${GREEN}✓${RESET}  ~/.fzf already exists — skipping clone."
   else
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install
+    # Non-interactive: enable key-bindings + completion, but don't touch rc files
+    # (this repo's shell/common/fzf.sh already sources ~/.fzf.{bash,zsh}).
+    ~/.fzf/install --key-bindings --completion --no-update-rc
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── ripgrep ───────────────────────────────────────────────────────────────────
 if $DO_RIPGREP; then
-  echo -e "${BOLD}→ ripgrep (rg)${RESET}"
+  _bootstrap_heading "ripgrep (rg)"
   if command -v rg &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  ripgrep already installed — skipping."
   elif [[ "$OSTYPE" =~ ^darwin ]]; then
@@ -178,12 +197,12 @@ if $DO_RIPGREP; then
   else
     _linux_install ripgrep
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── bat ───────────────────────────────────────────────────────────────────────
 if $DO_BAT; then
-  echo -e "${BOLD}→ bat${RESET}"
+  _bootstrap_heading "bat"
   if command -v bat &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  bat already installed — skipping."
   elif [[ "$OSTYPE" =~ ^darwin ]]; then
@@ -191,12 +210,12 @@ if $DO_BAT; then
   else
     _linux_install bat
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── hub ───────────────────────────────────────────────────────────────────────
 if $DO_HUB; then
-  echo -e "${BOLD}→ hub${RESET}"
+  _bootstrap_heading "hub"
   if command -v hub &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  hub already installed — skipping."
   elif [[ "$OSTYPE" =~ ^darwin ]]; then
@@ -204,12 +223,12 @@ if $DO_HUB; then
   else
     _linux_install hub
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── Gogh — terminal colour schemes ───────────────────────────────────────────
 if $DO_GOGH; then
-  echo -e "${BOLD}→ Gogh${RESET}"
+  _bootstrap_heading "Gogh"
   local_gogh_dir="${GOGH_DIR:-$HOME/src/gogh}"
   if [ -d "$local_gogh_dir" ]; then
     echo -e "  ${GREEN}✓${RESET}  Gogh already cloned at $local_gogh_dir — skipping."
@@ -218,14 +237,14 @@ if $DO_GOGH; then
     git clone --depth 1 https://github.com/Gogh-Co/Gogh "$local_gogh_dir"
     echo -e "  ${GREEN}✓${RESET}  Gogh installed. Run ${BOLD}colorscheme${RESET} in your shell to pick a theme."
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── Nerd Font ─────────────────────────────────────────────────────────────────
 if [[ -n "$DO_FONT" ]]; then
   # shellcheck source=lib/fonts.sh
   source "$DOTFILES_DIR/lib/fonts.sh"
-  echo -e "${BOLD}→ Nerd Font${RESET}"
+  _bootstrap_heading "Nerd Font"
   if nerd_font_family "$DO_FONT" &>/dev/null; then
     install_nerd_font "$DO_FONT"
   else
@@ -233,12 +252,12 @@ if [[ -n "$DO_FONT" ]]; then
     echo -e "      Valid IDs: caskaydia, jetbrains, fira, hack"
     exit 1
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
 # ── tig — git text-mode interface ─────────────────────────────────────────────
 if $DO_TIG; then
-  echo -e "${BOLD}→ tig${RESET}"
+  _bootstrap_heading "tig"
   if command -v tig &>/dev/null; then
     echo -e "  ${GREEN}✓${RESET}  tig already installed — skipping."
   elif [[ "$OSTYPE" =~ ^darwin ]]; then
@@ -246,7 +265,10 @@ if $DO_TIG; then
   else
     _linux_install tig
   fi
-  echo ""
+  _bootstrap_spacer
 fi
 
-echo -e "${GREEN}${BOLD}Done!${RESET}"
+if [[ -z "${BOOTSTRAP_QUIET:-}" ]]; then
+  echo -e "${GREEN}${BOLD}Done!${RESET}"
+fi
+exit 0
