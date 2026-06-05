@@ -34,4 +34,6 @@ EOF
   local first_nonempty
   first_nonempty=$(printf '%s\n' "$output" | sed -n '/./p' | head -1)
   [[ "$first_nonempty" =~ ^[[:space:]]+ ]]
+  [[ "$output" == *"Colorscheme"* ]]
+  [[ "$output" == *"Enter to apply"* ]]
 }
