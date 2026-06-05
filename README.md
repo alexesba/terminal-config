@@ -50,6 +50,8 @@ cd ~/Projects/terminal-config
 
 It never overwrites files without backing them up (creates `.old` alongside the original). Say no at the summary step to abort with zero changes.
 
+![install.sh summary screen](doc/screenshots/install-summary.png)
+
 ---
 
 ## Update
@@ -131,11 +133,13 @@ Themes live in `shell/zsh/themes/` (zsh, via native `vcs_info`) and `shell/bash/
 
 ## Colour schemes
 
-Run `colorscheme` to fuzzy-pick a terminal colour scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). The preview fills the top half of the window; the theme list and prompt sit below. Each preview is a mock terminal window painted in the theme's own colours, with the 16-colour palette and key hex values beside it:
+Run `colorscheme` to fuzzy-pick a terminal colour scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). The preview fills the top half of the window; the theme list and prompt sit below. Each preview is a mock terminal window painted in the theme's own colours, with the 16-colour palette and key hex values underneath:
 
 ```bash
 colorscheme
 ```
+
+![colorscheme picker with live preview](doc/screenshots/colorscheme.png)
 
 Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* each theme, so scrolling never repaints your terminal — only your final pick is applied.
 
