@@ -27,7 +27,7 @@ function colorscheme() {
     /^export PROFILE_NAME=/ { pname = $2 }
     END { flush() }
   ' "$gogh_dir"/*.sh | sort -f | fzf \
-    --height=100% --width=100% \
+    --height=100% \
     --delimiter='\t' --with-nth=1 --accept-nth=2 \
     --prompt='colorscheme> ' \
     --preview "bash '$preview_script' '$gogh_dir'/{2}" \
