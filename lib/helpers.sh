@@ -55,6 +55,38 @@ link_file() {
   echo -e "  ${GREEN}✓${RESET}  $dest linked."
 }
 
+# Migrate deprecated alacritty.yml to alacritty.toml (Alacritty 0.13+).
+# Renames the YAML to alacritty.yml.old once TOML exists so launch warnings stop.
+# Usage: migrate_alacritty_yaml_config [font_family]
+migrate_alacritty_yaml_config() {
+  local font_family="${1:-}"
+  local dotfiles dir yml toml
+
+  dir="${HOME}/.config/alacritty"
+  yml="${dir}/alacritty.yml"
+  toml="${dir}/alacritty.toml"
+
+  [[ -f "$yml" ]] || return 0
+  mkdir -p "$dir"
+
+  if [[ ! -f "$toml" ]] && command -v alacritty &>/dev/null; then
+    echo -e "  ${DIM}Migrating deprecated alacritty.yml to alacritty.toml…${RESET}"
+    alacritty migrate --config-file "$yml"
+  fi
+
+  if [[ -f "$toml" && -f "$yml" ]]; then
+    mv "$yml" "${yml}.old"
+    echo -e "  ${GREEN}✓${RESET}  Renamed deprecated ${DIM}alacritty.yml${RESET} → ${DIM}alacritty.yml.old${RESET}"
+  fi
+
+  if [[ -n "$font_family" && -f "$toml" ]] && grep -q '{{FONT_FAMILY}}' "$toml" 2>/dev/null; then
+    dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    # shellcheck source=fonts.sh
+    source "$dotfiles/lib/fonts.sh"
+    substitute_font_placeholder "$toml" "$font_family"
+  fi
+}
+
 # Copy a config from a repo template into the user's home or config directory
 # (real file, not a symlink). Keeps personal edits out of the dotfiles repo.
 #

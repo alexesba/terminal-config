@@ -12,7 +12,7 @@ is first created.
 
 | Template | Installed to |
 |---|---|
-| `alacritty.yml.example` | `~/.config/alacritty/alacritty.yml` |
+| `alacritty.toml.example` | `~/.config/alacritty/alacritty.toml` |
 | `kitty.conf.example` | `~/.config/kitty/kitty.conf` |
 | `wezterm.lua.example` | `~/.config/wezterm/wezterm.lua` |
 

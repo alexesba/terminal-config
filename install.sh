@@ -122,7 +122,7 @@ else
   esac
 
   echo    "   Pick a terminal (or skip):"
-  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ installs if missing + copies template to ~/.config/alacritty/alacritty.yml${RESET}"
+  echo -e "     ${BOLD}1)${RESET} Alacritty  ${DIM}→ installs if missing + copies template to ~/.config/alacritty/alacritty.toml${RESET}"
   echo -e "     ${BOLD}2)${RESET} Kitty      ${DIM}→ installs if missing + copies template to ~/.config/kitty/kitty.conf${RESET}"
   echo -e "     ${BOLD}3)${RESET} WezTerm    ${DIM}→ installs if missing + copies template to ~/.config/wezterm/wezterm.lua${RESET}"
   echo -e "     ${BOLD}4)${RESET} Skip"
@@ -312,9 +312,10 @@ step_font()      { install_nerd_font "$TERMINAL_FONT_ID"; }
 step_terminal()  {
   case "$INSTALL_TERMINAL" in
     1)
+      migrate_alacritty_yaml_config "$TERMINAL_FONT_FAMILY"
       install_config_from_template "$DOTFILES_DIR" \
-        "terminal-emulators/alacritty.yml.example" \
-        "${HOME}/.config/alacritty/alacritty.yml" "$TERMINAL_FONT_FAMILY" ;;
+        "terminal-emulators/alacritty.toml.example" \
+        "${HOME}/.config/alacritty/alacritty.toml" "$TERMINAL_FONT_FAMILY" ;;
     2)
       install_config_from_template "$DOTFILES_DIR" \
         "terminal-emulators/kitty.conf.example" \

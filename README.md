@@ -165,7 +165,7 @@ The repo ships **templates** (`*.example`). `install.sh` copies them to your hom
 |---|---|---|
 | Shell overrides | `shell/custom.sh.example` | `shell/custom.sh` |
 | tmux | `tmux.conf.example` | `~/.tmux.conf` |
-| Alacritty | `terminal-emulators/alacritty.yml.example` | `~/.config/alacritty/alacritty.yml` |
+| Alacritty | `terminal-emulators/alacritty.toml.example` | `~/.config/alacritty/alacritty.toml` |
 | Kitty | `terminal-emulators/kitty.conf.example` | `~/.config/kitty/kitty.conf` |
 | WezTerm | `terminal-emulators/wezterm.lua.example` | `~/.config/wezterm/wezterm.lua` |
 

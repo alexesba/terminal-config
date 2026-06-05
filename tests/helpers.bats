@@ -63,6 +63,19 @@ load test_helper
   grep -q "personal" "$dest"
 }
 
+@test "migrate_alacritty_yaml_config renames yaml when toml already exists" {
+  local dir="$TEST_HOME/.config/alacritty"
+  mkdir -p "$dir"
+  echo "window:" >"$dir/alacritty.yml"
+  echo "live_config_reload = true" >"$dir/alacritty.toml"
+
+  migrate_alacritty_yaml_config >/dev/null
+
+  [ ! -f "$dir/alacritty.yml" ]
+  [ -f "$dir/alacritty.yml.old" ]
+  [ -f "$dir/alacritty.toml" ]
+}
+
 @test "install_config_from_template substitutes font placeholder in existing file" {
   local dotfiles="$REPO_ROOT"
   local dest="$TEST_HOME/.config/kitty.conf"

@@ -1,0 +1,154 @@
+# alacritty.toml — personal Alacritty configuration
+#
+# Copy alacritty.toml.example → ~/.config/alacritty/alacritty.toml via install.sh.
+# Alacritty 0.13+ uses TOML; YAML configs are deprecated.
+
+alt_send_esc = true
+enable_experimental_conpty_backend = false
+"window.dynamic_title" = true
+"window.opacity" = 1.0
+
+[bell]
+animation = "EaseOutExpo"
+color = "0xffffff"
+duration = 0
+
+[colors]
+draw_bold_text_with_bright_colors = false
+
+[colors.bright]
+black = "#7F8490"
+blue = "#F39660"
+cyan = "#76CCE0"
+green = "#9ED072"
+magenta = "#B39DF3"
+red = "#FC5D7C"
+white = "#E2E2E3"
+yellow = "#E7C664"
+
+[colors.normal]
+black = "#2C2E34"
+blue = "#F39660"
+cyan = "#76CCE0"
+green = "#9ED072"
+magenta = "#B39DF3"
+red = "#FC5D7C"
+white = "#E2E2E3"
+yellow = "#E7C664"
+
+[colors.primary]
+background = "#2C2E34"
+foreground = "#E2E2E3"
+
+[cursor]
+style = "Block"
+unfocused_hollow = true
+
+[debug]
+log_level = "Warn"
+persistent_logging = false
+print_events = false
+ref_test = false
+render_timer = false
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+size = 14
+use_thin_strokes = true
+
+[font.bold]
+family = "{{FONT_FAMILY}}"
+style = "Bold"
+
+[font.glyph_offset]
+x = 0
+y = 0
+
+[font.italic]
+family = "{{FONT_FAMILY}}"
+style = "Italic"
+
+[font.normal]
+family = "{{FONT_FAMILY}}"
+style = "Regular"
+
+[font.offset]
+x = 0
+y = 0
+
+[[keyboard.bindings]]
+chars = "\u001Bj"
+key = "J"
+mods = "Alt"
+
+[[keyboard.bindings]]
+chars = "\u001Bk"
+key = "K"
+mods = "Alt"
+
+[[keyboard.bindings]]
+chars = "\u001Bh"
+key = "H"
+mods = "Alt"
+
+[[keyboard.bindings]]
+chars = "\u001Bl"
+key = "L"
+mods = "Alt"
+
+[[keyboard.bindings]]
+chars = "\u001Bf"
+key = "F"
+mods = "Alt"
+
+[[keyboard.bindings]]
+chars = "\u001Bn"
+key = "N"
+mods = "Alt"
+
+[general]
+live_config_reload = true
+working_directory = "None"
+
+[mouse]
+hide_when_typing = false
+
+[mouse.double_click]
+threshold = 300
+
+[mouse.hints]
+modifiers = "None"
+
+[mouse.triple_click]
+threshold = 300
+
+[[mouse.bindings]]
+action = "PasteSelection"
+mouse = "Middle"
+
+[scrolling]
+history = 100000
+multiplier = 3
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = """,│`|:"' ()[]{}<>"""
+
+[window]
+decorations = "none"
+dynamic_padding = false
+startup_mode = "Maximized"
+
+[window.dimensions]
+columns = 148
+lines = 50
+
+[window.dpi]
+x = 96.0
+y = 96.0
+
+[window.padding]
+x = 0
+y = 0

@@ -56,6 +56,7 @@ fi
 # ── Terminal emulators ────────────────────────────────────────────────────────
 if confirm_yes "Remove terminal emulator configs from ~/.config/ (with backup)?"; then
   echo -e "${BOLD}→ Terminal emulators${RESET}"
+  uninstall_copied_config "$DOTFILES_DIR" "${HOME}/.config/alacritty/alacritty.toml"
   uninstall_copied_config "$DOTFILES_DIR" "${HOME}/.config/alacritty/alacritty.yml"
   uninstall_copied_config "$DOTFILES_DIR" "${HOME}/.config/kitty/kitty.conf"
   uninstall_copied_config "$DOTFILES_DIR" "${HOME}/.config/wezterm/wezterm.lua"

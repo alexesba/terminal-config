@@ -41,10 +41,13 @@ install_config_from_template "$DOTFILES_DIR" \
   "tmux.conf.example" "${HOME}/.tmux.conf"
 remove_legacy_repo_copy "$DOTFILES_DIR/tmux.conf" "${HOME}/.tmux.conf"
 
+migrate_alacritty_yaml_config
 install_config_from_template "$DOTFILES_DIR" \
-  "terminal-emulators/alacritty.yml.example" "${HOME}/.config/alacritty/alacritty.yml"
+  "terminal-emulators/alacritty.toml.example" "${HOME}/.config/alacritty/alacritty.toml"
 remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/alacritty.yml" \
   "${HOME}/.config/alacritty/alacritty.yml"
+remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/alacritty.toml" \
+  "${HOME}/.config/alacritty/alacritty.toml"
 remove_legacy_repo_copy "$DOTFILES_DIR/terminals/alacritty.yml" \
   "${HOME}/.config/alacritty/alacritty.yml"
 
