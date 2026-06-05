@@ -131,7 +131,7 @@ Themes live in `shell/zsh/themes/` (zsh, via native `vcs_info`) and `shell/bash/
 
 ## Colour schemes
 
-Run `colorscheme` to fuzzy-pick a terminal colour scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). As you move through the list, a preview pane renders each theme live — a mock terminal window painted in the theme's own colours, the full 16-colour palette, and the key hex values:
+Run `colorscheme` to fuzzy-pick a terminal colour scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). The preview fills the top half of the window; the theme list and prompt sit below. Each preview is a mock terminal window painted in the theme's own colours, with the 16-colour palette and key hex values beside it:
 
 ```bash
 colorscheme

@@ -40,72 +40,93 @@ fgseq=$(rgb "$fg")
 on=$'\e['"48;2;${bgseq}m"$'\e['"38;2;${fgseq}m"   # paint theme bg + theme fg
 fgc() { printf '\e[38;2;%sm' "$(rgb "$1")"; }     # raw escape: switch fg to a palette color
 
-# Interior width of the mock terminal window — scales to fill the fzf preview
-# pane (FZF_PREVIEW_COLUMNS is set by fzf), clamped to a sensible range.
-W=$((${FZF_PREVIEW_COLUMNS:-46} - 2))
-((W < 40)) && W=40
-((W > 90)) && W=90
+# fzf sets FZF_PREVIEW_COLUMNS / FZF_PREVIEW_LINES for the preview pane.
+pane_cols=${FZF_PREVIEW_COLUMNS:-80}
+pane_lines=${FZF_PREVIEW_LINES:-24}
 
-# Print one body row of the window: side borders + theme bg, content padded to W.
-# $1 may contain raw color-escape bytes; padding is measured from the visible text.
-row() {
-  local s="$1" plain pad
-  plain=$(printf '%s' "$s" | sed $'s/\x1b\\[[0-9;]*m//g')
-  pad=$((W - ${#plain}))
-  ((pad < 0)) && pad=0
-  printf '%s\xe2\x94\x82%s%s%*s\xe2\x94\x82%s\n' "$on" "$s" "$on" "$pad" "" "$reset"
+# Scale the mock terminal to the preview pane (top half of a fullscreen fzf).
+W=$((pane_cols * 72 / 100 - 2))
+((W < 52)) && W=52
+((W > 110)) && W=110
+
+# Visible width of a rendered line (strip ANSI escapes).
+visible_len() {
+  local plain
+  plain=$(printf '%s' "$1" | sed $'s/\x1b\\[[0-9;]*m//g')
+  printf '%s' "${#plain}"
 }
 
-hr=$(printf '\xe2\x94\x80%.0s' $(seq 1 $W))
+_render_preview() {
+  local hr dot arr
+  local c_red c_grn c_yel c_blu c_mag c_cyn
 
-# Glyphs as real bytes so they survive %s in row() and are width-counted as 1.
-dot=$(printf '\xe2\x97\x8f') # ●
-arr=$(printf '\xe2\x9d\xaf') # ❯
+  row() {
+    local s="$1" plain pad
+    plain=$(printf '%s' "$s" | sed $'s/\x1b\\[[0-9;]*m//g')
+    pad=$((W - ${#plain}))
+    ((pad < 0)) && pad=0
+    printf '%s\xe2\x94\x82%s%s%*s\xe2\x94\x82%s\n' "$on" "$s" "$on" "$pad" "" "$reset"
+  }
 
-# Palette colors as raw escape bytes, with sensible fallbacks.
-c_red=$(fgc "${COLORS[2]:-#cc6666}")
-c_grn=$(fgc "${COLORS[3]:-#9ec07c}")
-c_yel=$(fgc "${COLORS[4]:-#e0c06f}")
-c_blu=$(fgc "${COLORS[5]:-#7aa6da}")
-c_mag=$(fgc "${COLORS[6]:-#b294bb}")
-c_cyn=$(fgc "${COLORS[7]:-#8abeb7}")
+  hr=$(printf '\xe2\x94\x80%.0s' $(seq 1 $W))
+  dot=$(printf '\xe2\x97\x8f')
+  arr=$(printf '\xe2\x9d\xaf')
 
-# ── Window chrome ────────────────────────────────────────────────────────────
-printf '%s\xe2\x95\xad%s\xe2\x95\xae%s\n' "$on" "$hr" "$reset"
-row " ${c_red}${dot} ${c_yel}${dot} ${c_grn}${dot}${on}   ${name}"
-printf '%s\xe2\x94\x9c%s\xe2\x94\xa4%s\n' "$on" "$hr" "$reset"
+  c_red=$(fgc "${COLORS[2]:-#cc6666}")
+  c_grn=$(fgc "${COLORS[3]:-#9ec07c}")
+  c_yel=$(fgc "${COLORS[4]:-#e0c06f}")
+  c_blu=$(fgc "${COLORS[5]:-#7aa6da}")
+  c_mag=$(fgc "${COLORS[6]:-#b294bb}")
+  c_cyn=$(fgc "${COLORS[7]:-#8abeb7}")
 
-# ── Sample session, painted in the theme's own colors ────────────────────────
-row ""
-row "  ${c_grn}you${on}@${c_blu}mac ${c_mag}~/code/${name}${on}"
-row "  ${c_cyn}${arr}${on} git status"
-row "  On branch ${c_grn}main${on}"
-row "  ${c_red}modified:${on}  preview.sh"
-row "  ${c_grn}new file:${on}  theme.rb"
-row "  ${c_yel}untracked:${on} notes.md"
-row ""
-printf '%s\xe2\x95\xb0%s\xe2\x95\xaf%s\n' "$on" "$hr" "$reset"
+  printf '%s\xe2\x95\xad%s\xe2\x95\xae%s\n' "$on" "$hr" "$reset"
+  row " ${c_red}${dot} ${c_yel}${dot} ${c_grn}${dot}${on}   ${name}"
+  printf '%s\xe2\x94\x9c%s\xe2\x94\xa4%s\n' "$on" "$hr" "$reset"
+  row "  ${c_grn}you${on}@${c_blu}mac ${c_mag}~/code${on}"
+  row "  ${c_cyn}${arr}${on} git status"
+  row "  On branch ${c_grn}main${on}"
+  row "  ${c_red}modified:${on}  preview.sh"
+  row "  ${c_grn}new file:${on}  theme.rb"
+  row "  ${c_yel}untracked:${on}  notes.md"
+  printf '%s\xe2\x95\xb0%s\xe2\x95\xaf%s\n' "$on" "$hr" "$reset"
 
-# ── Palette grid ─────────────────────────────────────────────────────────────
-swatch_row() {
-  local label="$1" start="$2" end="$3" i hex cellw
-  cellw=$(((W - 8) / 8)) # 8 swatches spanning the window width
-  ((cellw < 3)) && cellw=3
-  printf '  %-8s' "$label"
-  for i in $(seq "$start" "$end"); do
-    hex=${COLORS[$i]:-}
-    [ -z "$hex" ] && hex="$bg"
-    printf '\e[48;2;%sm%*s%s' "$(rgb "$hex")" "$cellw" "" "$reset"
-  done
+  swatch_row() {
+    local label="$1" start="$2" end="$3" i hex cellw
+    cellw=$(((W - 8) / 8))
+    ((cellw < 4)) && cellw=4
+    ((cellw > 10)) && cellw=10
+    printf '  %-8s' "$label"
+    for i in $(seq "$start" "$end"); do
+      hex=${COLORS[$i]:-}
+      [ -z "$hex" ] && hex="$bg"
+      printf '\e[48;2;%sm%*s%s' "$(rgb "$hex")" "$cellw" "" "$reset"
+    done
+    printf '\n'
+  }
+
+  printf '\n'
+  swatch_row "normal" 1 8
+  swatch_row "bright" 9 16
+  printf '\n  '
+  printf '\e[48;2;%sm \e[0m bg %s   ' "$bgseq" "$bg"
+  printf '\e[48;2;%sm \e[0m fg %s' "$fgseq" "$fg"
+  [ -n "$cursor" ] && printf '   \e[48;2;%sm \e[0m cursor %s' "$(rgb "$cursor")" "$cursor"
   printf '\n'
 }
-printf '\n'
-swatch_row "normal" 1 8
-swatch_row "bright" 9 16
 
-# ── Footer: key hex values ───────────────────────────────────────────────────
-printf '\n  '
-printf '\e[48;2;%sm \e[0m bg %s   ' "$bgseq" "$bg"
-printf '\e[48;2;%sm \e[0m fg %s' "$fgseq" "$fg"
-[ -n "$cursor" ] && printf '   \e[48;2;%sm \e[0m cursor %s' "$(rgb "$cursor")" "$cursor"
-printf '\n'
+lines=()
+while IFS= read -r line || [[ -n "$line" ]]; do
+  lines+=("$line")
+done < <(_render_preview)
+
+top=$(((pane_lines - ${#lines[@]}) / 2))
+((top < 0)) && top=0
+for ((i = 0; i < top; i++)); do
+  printf '\n'
+done
+
+for line in "${lines[@]}"; do
+  lpad=$(((pane_cols - $(visible_len "$line")) / 2))
+  ((lpad < 0)) && lpad=0
+  printf '%*s%s\n' "$lpad" "" "$line"
+done
