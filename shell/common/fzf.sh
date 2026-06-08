@@ -15,9 +15,9 @@ export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # ── Preview command: prefer bat > cat ─────────────────────────────────────────
 if command -v bat &>/dev/null; then
-  FZF_PREVIEW_COMMAND="bat --style=numbers,changes --wrap never --color always {} || cat {} || tree -C {}"
+  FZF_PREVIEW_COMMAND="bat --style=numbers --wrap never --color always --paging never {} </dev/null || head -200 {} </dev/null || tree -C {} </dev/null"
 else
-  FZF_PREVIEW_COMMAND="cat {} || tree -C {}"
+  FZF_PREVIEW_COMMAND="head -200 {} </dev/null || tree -C {} </dev/null"
 fi
 
 export FZF_DEFAULT_OPTS="--preview-window noborder --preview '($FZF_PREVIEW_COMMAND) 2> /dev/null'"

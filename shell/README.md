@@ -14,16 +14,20 @@ shell/
 │   ├── functions.sh      # tmux-start, restore_db
 │   ├── dircolors.sh
 │   ├── rbenv.sh
-│   ├── fzf.sh
+│   ├── fzf.sh            # FZF defaults (rg, bat preview for Ctrl-T)
+│   ├── fzf/
+│   │   └── open.sh       # Ctrl-O / Ctrl-F file finder (Telescope-style)
 │   ├── nvmrc.sh          # load-nvmrc() body
 │   └── gogh/
 │       ├── colorscheme.sh
 │       ├── preview.sh
 │       └── persist.sh
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)
+│   ├── bindings.sh       # Ctrl-O / Ctrl-F → fzf_then_open_in_editor
 │   ├── ps1.sh + themes/
 │   └── …
 └── zsh/                  # Zsh-only (vcs_info, zle, chpwd hooks, etc.)
+    ├── bindings.sh       # Ctrl-O / Ctrl-F → fzf_then_open_in_editor
     ├── ps1.sh + themes/
     └── …
 ```

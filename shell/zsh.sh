@@ -1,6 +1,6 @@
 source "$DOTFILES_DIR/shell/common/functions.sh"
 source "$DOTFILES_DIR/shell/common/gogh/colorscheme.sh"
-source "$DOTFILES_DIR/shell/zsh/functions.sh"
+source "$DOTFILES_DIR/shell/common/fzf/open.sh"
 source "$DOTFILES_DIR/shell/zsh/bindings.sh"
 source "$DOTFILES_DIR/shell/common/fzf.sh"
 source "$DOTFILES_DIR/shell/zsh/nvm.sh"
