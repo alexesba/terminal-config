@@ -12,6 +12,8 @@ source "$DOTFILES_DIR/lib/helpers.sh"
 echo -e "${CYAN}${BOLD}━━━  Updating dotfiles  ━━━${RESET}"
 echo ""
 
+migrate_repo_custom_sh "$DOTFILES_DIR"
+
 # ── Pull latest changes ───────────────────────────────────────────────────────
 cd "$DOTFILES_DIR" || exit 1
 echo -e "${BOLD}→ git pull${RESET}"

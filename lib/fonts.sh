@@ -83,7 +83,7 @@ nerd_font_filename_patterns() {
   esac
 }
 
-# Read export VAR="value" from shell/custom.sh without sourcing it.
+# Read export VAR="value" from ~/.custom.sh without sourcing it.
 # Usage: custom_export_value <file> <VAR>
 custom_export_value() {
   local file="$1" var="$2"
@@ -92,7 +92,7 @@ custom_export_value() {
 }
 
 # Resolve which Nerd Font install.sh recorded for this machine.
-# Usage: resolve_nerd_font_id [custom.sh path]
+# Usage: resolve_nerd_font_id [~/.custom.sh path]
 resolve_nerd_font_id() {
   local custom="${1:-}"
   local id family
@@ -219,18 +219,18 @@ uninstall_nerd_font() {
   return 0
 }
 
-# Uninstall the Nerd Font recorded in shell/custom.sh (install.sh / bootstrap --font).
-# Usage: uninstall_recorded_nerd_font [custom.sh path]
+# Uninstall the Nerd Font recorded in ~/.custom.sh (install.sh / bootstrap --font).
+# Usage: uninstall_recorded_nerd_font [~/.custom.sh path]
 uninstall_recorded_nerd_font() {
   local custom="${1:-}"
   local id family
 
   id=$(resolve_nerd_font_id "$custom") || {
-    echo -e "  ${DIM}—${RESET}  No TERMINAL_FONT / TERMINAL_FONT_ID in shell/custom.sh — skipping."
+    echo -e "  ${DIM}—${RESET}  No TERMINAL_FONT / TERMINAL_FONT_ID in ~/.custom.sh — skipping."
     return 0
   }
 
   family=$(nerd_font_family "$id")
-  echo -e "  ${DIM}Font recorded in custom.sh:${RESET} ${family} (${id})"
+  echo -e "  ${DIM}Font recorded in ~/.custom.sh:${RESET} ${family} (${id})"
   uninstall_nerd_font "$id"
 }

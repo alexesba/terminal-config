@@ -312,6 +312,30 @@ EOF
   [ "$status" -ne 0 ]
 }
 
+@test "migrate_repo_custom_sh copies legacy shell/custom.sh to ~/.custom.sh" {
+  local dotfiles="$TEST_HOME/terminal-config"
+  mkdir -p "$dotfiles/shell"
+  echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
+
+  run migrate_repo_custom_sh "$dotfiles"
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.custom.sh" ]
+  grep -q 'TERMINAL=kitty' "$TEST_HOME/.custom.sh"
+  [ ! -f "$dotfiles/shell/custom.sh" ]
+}
+
+@test "migrate_repo_custom_sh is a no-op when ~/.custom.sh already exists" {
+  local dotfiles="$TEST_HOME/terminal-config"
+  mkdir -p "$dotfiles/shell"
+  echo 'export TERMINAL=wezterm' >"$TEST_HOME/.custom.sh"
+  echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
+
+  run migrate_repo_custom_sh "$dotfiles"
+  [ "$status" -eq 0 ]
+  grep -q 'TERMINAL=wezterm' "$TEST_HOME/.custom.sh"
+  [ -f "$dotfiles/shell/custom.sh" ]
+}
+
 @test "needs_shell_rc_wrapper marks dotfiles-integrated install options" {
   for opt in ALIASES AUTOSUGG RBENV NVM FZF GOGH; do
     run needs_shell_rc_wrapper "$opt"

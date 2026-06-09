@@ -9,7 +9,7 @@ shell/
 ├── loader.sh             # Dispatches to bash.sh or zsh.sh
 ├── aliases.sh            # Loads built-in aliases + optional ~/.bash_aliases
 ├── aliases/default.sh    # Git, vim, open, reload, etc.
-├── custom.sh.example     # Template for personal overrides (→ custom.sh, gitignored)
+├── custom.sh.example     # Template copied to ~/.custom.sh on first install
 ├── common/               # Shared by both shells
 │   ├── functions.sh      # tmux-start, restore_db
 │   ├── dircolors.sh
@@ -34,4 +34,4 @@ shell/
 
 ## Personal overrides
 
-Copy `custom.sh.example` → `custom.sh` (or let `rc.sh` create it on first run). Set `ZSH_THEME`, `TERMINAL`, `GOGH_DIR`, tokens, and machine-specific PATH there.
+Copy `shell/custom.sh.example` → `~/.custom.sh` (or let `install.sh` do it on first run). Set `ZSH_THEME`, `TERMINAL`, `GOGH_DIR`, tokens, and machine-specific PATH there.

@@ -24,9 +24,9 @@ else
   unset _src _dir
 fi
 
-# Personal overrides (optional). Seeded by install.sh from custom.sh.example;
-# rc.sh just sources it when present — no side effects on shell startup.
-_custom="$DOTFILES_DIR/shell/custom.sh"
+# Personal overrides (optional). Seeded by install.sh from shell/custom.sh.example;
+# rc.sh sources ~/.custom.sh when present, before loader.sh (themes, TERMINAL, …).
+_custom="${HOME}/.custom.sh"
 if [ -f "$_custom" ]; then
   source "$_custom"
 fi

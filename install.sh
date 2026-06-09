@@ -10,7 +10,8 @@ source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=lib/tui.sh
 source "$DOTFILES_DIR/lib/tui.sh"
 
-CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
+CUSTOM_FILE="$(custom_sh_path)"
+migrate_repo_custom_sh "$DOTFILES_DIR"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"

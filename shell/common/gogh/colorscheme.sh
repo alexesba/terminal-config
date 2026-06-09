@@ -5,7 +5,7 @@ function colorscheme() {
   if [ ! -d "$gogh_dir" ]; then
     echo "gogh themes not found at $gogh_dir"
     echo "Clone it: git clone https://github.com/Gogh-Co/Gogh ~/src/gogh"
-    echo "Or set GOGH_DIR in shell/custom.sh to point to your Gogh checkout."
+    echo "Or set GOGH_DIR in ~/.custom.sh to point to your Gogh checkout."
     return 1
   fi
   local preview_script="$DOTFILES_DIR/shell/common/gogh/preview.sh"

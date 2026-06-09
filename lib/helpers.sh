@@ -50,6 +50,28 @@ needs_fzf_for_install() {
   esac
 }
 
+# Personal overrides + install-managed exports (TERMINAL, fonts, tokens, …).
+# Usage: custom_sh_path
+custom_sh_path() {
+  printf '%s/.custom.sh\n' "$HOME"
+}
+
+# Copy legacy repo shell/custom.sh → ~/.custom.sh when upgrading.
+# Usage: migrate_repo_custom_sh <dotfiles_dir>
+migrate_repo_custom_sh() {
+  local dotfiles_dir="$1"
+  local legacy="$dotfiles_dir/shell/custom.sh"
+  local dest
+  dest="$(custom_sh_path)"
+
+  [ -f "$dest" ] && return 0
+  [ ! -f "$legacy" ] && return 0
+
+  cp "$legacy" "$dest"
+  rm -f "$legacy"
+  echo -e "  ${GREEN}✓${RESET}  Migrated ${DIM}shell/custom.sh${RESET} → ${DIM}~/.custom.sh${RESET}"
+}
+
 # Installs a local ~/.zshrc or ~/.bashrc that sources rc.sh from this repo.
 # Other tools can append their own lines below the managed block.
 #
