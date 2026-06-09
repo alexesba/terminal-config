@@ -51,7 +51,7 @@ q_yn_if_shell() {
   local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
   if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
     printf -v "$__var" 'n'
-    tui_collapse "$num. $title" "${DIM}skip (needs ~/$BASHFILE → rc.sh)${RESET}"
+    tui_collapse "$num. $title" "${DIM}skip (needs ${HOME}/$BASHFILE → rc.sh)${RESET}"
     return
   fi
   q_yn "$__var" "$num" "$title" "$prompt" "$@"
@@ -76,7 +76,7 @@ q_yn_if_shell_and_fzf() {
   local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
   if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
     printf -v "$__var" 'n'
-    tui_collapse "$num. $title" "${DIM}skip (needs ~/$BASHFILE → rc.sh)${RESET}"
+    tui_collapse "$num. $title" "${DIM}skip (needs ${HOME}/$BASHFILE → rc.sh)${RESET}"
     return
   fi
   if [[ ! $INSTALL_FZF =~ ^[Yy]$ ]]; then
@@ -131,12 +131,12 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
   fi
 fi
 
-echo -e "   ${DIM}Installs ~/$BASHFILE wrapper sourcing rc.sh${RESET}"
+echo -e "   ${DIM}Installs ${HOME}/$BASHFILE wrapper sourcing rc.sh${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
-ask_yn "Install ~/$BASHFILE?"
+ask_yn "Install ${HOME}/$BASHFILE?"
 INSTALL_SHELL=$REPLY
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  tui_collapse "1. Shell" "${BASHFILE#.} → ~/$BASHFILE wrapper"
+  tui_collapse "1. Shell" "${BASHFILE#.} → ${HOME}/$BASHFILE wrapper"
 else
   tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(wrapper: skip)${RESET}"
 fi
@@ -317,11 +317,11 @@ _sum() { echo -e "  ${BOLD}$(printf '%-12s' "$1")${RESET} ${2}"; }
 _yn()  { [[ $1 =~ ^[Yy]$ ]] && echo "yes" || echo -e "${DIM}skip${RESET}"; }
 
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  _sum "Shell" "~/$BASHFILE wrapper → rc.sh"
+  _sum "Shell" "${HOME}/$BASHFILE wrapper → rc.sh"
 else
   _sum "Shell" "${DIM}skip${RESET}"
   echo ""
-  echo -e "  ${YELLOW}⚠${RESET}  Without ~/$BASHFILE sourcing rc.sh, dotfiles will not load:"
+  echo -e "  ${YELLOW}⚠${RESET}  Without ${HOME}/$BASHFILE sourcing rc.sh, dotfiles will not load:"
   echo -e "     ${DIM}aliases, colorscheme, FZF keybindings, nvm/rbenv init, zsh-autosuggestions${RESET}"
   echo -e "  ${DIM}Steps that depend on the shell RC were skipped automatically.${RESET}"
 fi
@@ -408,7 +408,7 @@ run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1";
 STEP_LABELS=(); STEP_FUNCS=(); STEP_ARGS=()
 add_step() { STEP_LABELS+=("$1"); STEP_FUNCS+=("$2"); STEP_ARGS+=("${3:-}"); }
 
-[[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (~/$BASHFILE)" step_shell_rc
+[[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (${HOME}/$BASHFILE)" step_shell_rc
 [[ $INSTALL_NVIM_EDITOR =~ ^[Yy]$ ]] && add_step "Default editor (nvim)" step_nvim_editor
 [[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && add_step "tmux config" step_tmux_cfg
 [[ $INSTALL_ALIASES =~ ^[Yy]$ ]] && add_step "Local aliases" step_aliases
