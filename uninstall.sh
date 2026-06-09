@@ -38,11 +38,11 @@ else
 fi
 echo ""
 
-# ── Shell RC symlinks ─────────────────────────────────────────────────────────
-if confirm_yes "Remove shell RC symlinks (~/.zshrc, ~/.bashrc) pointing into this repo?"; then
+# ── Shell RC wrappers ─────────────────────────────────────────────────────────
+if confirm_yes "Remove shell RC wrappers (~/.zshrc, ~/.bashrc) managed by terminal-config?"; then
   echo -e "${BOLD}→ Shell RC${RESET}"
-  uninstall_symlink_if_mine "$DOTFILES_DIR" "${HOME}/.zshrc"
-  uninstall_symlink_if_mine "$DOTFILES_DIR" "${HOME}/.bashrc"
+  uninstall_shell_rc_if_mine "$DOTFILES_DIR" "${HOME}/.zshrc"
+  uninstall_shell_rc_if_mine "$DOTFILES_DIR" "${HOME}/.bashrc"
   echo ""
 fi
 

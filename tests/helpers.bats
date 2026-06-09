@@ -2,6 +2,70 @@
 
 load test_helper
 
+@test "install_shell_rc_wrapper creates a local wrapper that sources rc.sh" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  [ -f "$dest" ] && [ ! -L "$dest" ]
+  grep -qF '# terminal-config: begin' "$dest"
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper converts a legacy symlink into a wrapper" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  ln -s "$src" "$dest"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  [ -f "$dest" ] && [ ! -L "$dest" ]
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper preserves existing content below the managed block" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.bashrc"
+
+  echo 'export NVM_DIR="$HOME/.nvm"' >"$dest"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  grep -qF 'export NVM_DIR="$HOME/.nvm"' "$dest"
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper refreshes the source path on update" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+  sed -i.bak 's|source ".*"|source "/old/path/rc.sh"|' "$dest" && rm -f "$dest.bak"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  grep -qF "source \"$src\"" "$dest"
+  ! grep -qF '/old/path/rc.sh' "$dest"
+}
+
+@test "uninstall_shell_rc_if_mine removes wrapper and restores pre-install backup" {
+  local dotfiles="$REPO_ROOT"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$dotfiles/rc.sh" "$dest" >/dev/null
+  echo "pre-install" >"${dest}.old"
+
+  uninstall_shell_rc_if_mine "$dotfiles" "$dest" >/dev/null
+
+  [ -f "$dest" ]
+  grep -q "pre-install" "$dest"
+  [ -f "${dest}.uninstall.old" ]
+  [ ! -f "${dest}.old" ]
+}
+
 @test "link_file creates a symlink to the source" {
   local src="$TEST_HOME/src.txt"
   local dest="$TEST_HOME/link.txt"

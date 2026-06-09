@@ -1,6 +1,7 @@
 # tmux.conf — personal tmux configuration
 #
 # Copy tmux.conf.example → ~/.tmux.conf via install.sh (local file, not in repo).
+# Also copies lib/tmux-activity-spinner.sh → ~/.tmux/activity-spinner.sh for tab spinners.
 
 set -sg escape-time 0
 
@@ -51,7 +52,9 @@ bind-key -n C-h if-shell "$not_tmux" "send-keys C-h"  "select-pane -L"
 bind-key -n C-j if-shell "$not_tmux" "send-keys C-j"  "select-pane -D"
 bind-key -n C-k if-shell "$not_tmux" "send-keys C-k"  "select-pane -U"
 
-set -g visual-activity on
+set -g visual-activity off
+set -g visual-bell off
+set -g activity-action none
 setw -g monitor-activity on
 
 # -----------#
@@ -61,7 +64,7 @@ set -g base-index 1
 setw -g pane-base-index 1
 set -g renumber-windows on            # keep window numbers gap-free when one closes
 
-set -g status-interval 5              # refresh the clock every 5s
+set -g status-interval 1              # 1s refresh for tab activity spinner + clock
 set -g status-justify left
 
 # Blend the bar into the active colour scheme. Using palette colours 0–15 means
@@ -76,11 +79,13 @@ set -g status-left '#[fg=colour2]#[fg=colour0,bg=colour2,bold] #S #[fg=colour2,b
 # Date + time — rounded pill on the right
 set -g status-right '#[fg=colour240]#[fg=colour15,bg=colour240] %a %d %b #[fg=colour250]%H:%M #[fg=colour240,bg=default] '
 
-# Window tabs — muted when inactive, accent pill when active
+# Window tabs — muted when inactive, accent pill when active.
+# Background activity: spinner in tab (~/.tmux/activity-spinner.sh, no status banner).
+# Note: do not put commas inside #{?...} — tmux misparses them as delimiters.
+setw -g window-status-activity-style 'none'
 set -g window-status-separator ''
-setw -g window-status-format '#[fg=colour244,bg=default]  #I #W#{?window_zoomed_flag,  ,} '
-setw -g window-status-current-format ' #[fg=colour7]#[fg=colour0,bg=colour7,bold] #I #W#{?window_zoomed_flag,  ,}#[fg=colour7,bg=default]'
-setw -g window-status-activity-style 'fg=colour3,bold'
+setw -g window-status-format '#[fg=colour244,bg=default]#{?window_activity_flag,#[fg=colour3]#($HOME/.tmux/activity-spinner.sh),}  #I #W#{?window_zoomed_flag,  ,} '
+setw -g window-status-current-format ' #[fg=colour7]#[fg=colour0,bg=colour7,bold]#{?window_activity_flag,#[fg=colour3]#($HOME/.tmux/activity-spinner.sh),} #I #W#{?window_zoomed_flag,  ,}#[fg=colour7,bg=default]'
 
 # Borders + messages share the accent colour
 set -g pane-active-border-style 'fg=colour4'

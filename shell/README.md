@@ -1,6 +1,6 @@
 # shell/
 
-Configuration shared by **bash** and **zsh**. Entry point is `../rc.sh` (symlinked to `~/.zshrc` or `~/.bashrc`).
+Configuration shared by **bash** and **zsh**. Entry point is `../rc.sh`, sourced from a local `~/.zshrc` or `~/.bashrc` wrapper installed by `install.sh`.
 
 ## Layout
 

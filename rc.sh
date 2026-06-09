@@ -1,4 +1,4 @@
-# ~/.zshrc / ~/.bashrc entry point (symlinked from this repo as rc.sh).
+# ~/.zshrc / ~/.bashrc sources this file via a local wrapper installed by install.sh.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
@@ -8,13 +8,12 @@ case $- in
       *) return;;
 esac
 
-# Resolve the dotfiles directory regardless of where the repo lives. The rc file
-# is a symlink into the repo, so we must follow symlinks to find the real path.
+# Resolve the dotfiles directory regardless of where the repo lives.
 if [ -n "$ZSH_VERSION" ]; then
-  # zsh: %x is this file; :A resolves symlinks + makes absolute; :h is dirname
+  # zsh: %x is rc.sh; :A resolves symlinks + makes absolute; :h is dirname
   export DOTFILES_DIR="${${(%):-%x}:A:h}"
 else
-  # bash: BASH_SOURCE is the (symlinked) rc path, so walk the symlink chain
+  # bash: BASH_SOURCE is rc.sh when sourced from the home-directory wrapper
   _src="${BASH_SOURCE[0]}"
   while [ -L "$_src" ]; do
     _dir="$(cd -P "$(dirname "$_src")" && pwd)"

@@ -87,14 +87,14 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
   fi
 fi
 
-echo -e "   ${DIM}Links rc.sh → ~/$BASHFILE${RESET}"
+echo -e "   ${DIM}Installs ~/$BASHFILE wrapper sourcing rc.sh${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
-ask_yn "Link ~/$BASHFILE?"
+ask_yn "Install ~/$BASHFILE?"
 INSTALL_SHELL=$REPLY
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  tui_collapse "1. Shell" "${BASHFILE#.} → link ~/$BASHFILE"
+  tui_collapse "1. Shell" "${BASHFILE#.} → ~/$BASHFILE wrapper"
 else
-  tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(link: skip)${RESET}"
+  tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(wrapper: skip)${RESET}"
 fi
 
 # ── 2-3. Simple yes/no steps ──────────────────────────────────────────────────
@@ -268,7 +268,7 @@ _sum() { echo -e "  ${BOLD}$(printf '%-12s' "$1")${RESET} ${2}"; }
 _yn()  { [[ $1 =~ ^[Yy]$ ]] && echo "yes" || echo -e "${DIM}skip${RESET}"; }
 
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  _sum "Shell" "link rc.sh → ~/$BASHFILE"
+  _sum "Shell" "~/$BASHFILE wrapper → rc.sh"
 else
   _sum "Shell" "${DIM}skip${RESET}"
 fi
@@ -300,8 +300,12 @@ fi
 echo ""
 
 # ── Execution steps ───────────────────────────────────────────────────────────
-step_shell_rc()  { link_file "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
-step_tmux_cfg()  { install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"; }
+step_shell_rc() { install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
+step_tmux_cfg() {
+  install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"
+  mkdir -p "${HOME}/.tmux"
+  install -m 755 "$DOTFILES_DIR/lib/tmux-activity-spinner.sh" "${HOME}/.tmux/activity-spinner.sh"
+}
 step_aliases()   {
   if [ -e "$HOME/.bash_aliases" ]; then
     echo -e "  ${GREEN}✓${RESET}  ~/.bash_aliases already exists — skipping."

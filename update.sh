@@ -20,25 +20,28 @@ echo ""
 
 # ── Re-link any symlinks already pointing into this repo ─────────────────────
 echo -e "${BOLD}→ Refreshing dotfiles${RESET}"
-echo -e "   ${DIM}(symlinks only — local template copies are never overwritten)${RESET}"
+echo -e "   ${DIM}(managed wrappers and symlinks — local template copies are never overwritten)${RESET}"
 echo ""
 
-_relink_if_mine() {
+_refresh_shell_rc() {
   local dest="$1"
-  local src="$2"
   if [ -L "$dest" ] && [[ "$(readlink "$dest")" == "$DOTFILES_DIR"* ]]; then
-    link_file "$src" "$dest"
+    install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$dest"
+  elif [ -f "$dest" ] && grep -qF '# terminal-config: begin' "$dest"; then
+    install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$dest"
   fi
 }
 
-# Shell RC — rc.sh
+# Shell RC — local wrapper sourcing rc.sh
 for _rc in ~/.zshrc ~/.bashrc; do
-  _relink_if_mine "$_rc" "$DOTFILES_DIR/rc.sh"
+  _refresh_shell_rc "$_rc"
 done
 
 # tmux + terminal emulators — migrate legacy symlinks → local copies (with backup)
 install_config_from_template "$DOTFILES_DIR" \
   "tmux.conf.example" "${HOME}/.tmux.conf"
+mkdir -p "${HOME}/.tmux"
+install -m 755 "$DOTFILES_DIR/lib/tmux-activity-spinner.sh" "${HOME}/.tmux/activity-spinner.sh"
 remove_legacy_repo_copy "$DOTFILES_DIR/tmux.conf" "${HOME}/.tmux.conf"
 
 migrate_alacritty_yaml_config

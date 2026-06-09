@@ -61,7 +61,7 @@ cd ~/Projects/terminal-config
 ./update.sh
 ```
 
-Pulls the latest changes and re-links any symlinks that are already pointing into this repo. Safe to run at any time.
+Pulls the latest changes and refreshes managed shell RC wrappers (and any legacy symlinks still pointing into this repo). Safe to run at any time.
 
 ---
 
@@ -109,7 +109,7 @@ cd ~/Projects/terminal-config
 
 Detaches this machine from the dotfiles repo:
 
-- Removes `~/.zshrc` / `~/.bashrc` symlinks (restores `*.old` if install backed up your previous rc)
+- Removes `~/.zshrc` / `~/.bashrc` wrappers (restores `*.old` if install backed up your previous rc)
 - Removes copied configs (`~/.tmux.conf`, terminal emulator configs) — always backed up to `*.uninstall.old` first
 - Uninstalls the Nerd Font recorded in `shell/custom.sh` (Homebrew cask on macOS, font files in `~/.local/share/fonts/` on Linux)
 - Optionally removes empty `~/.bash_aliases` and `~/.config/wezterm/colors.lua`
