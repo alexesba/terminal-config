@@ -2,6 +2,70 @@
 
 load test_helper
 
+@test "install_shell_rc_wrapper creates a local wrapper that sources rc.sh" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  [ -f "$dest" ] && [ ! -L "$dest" ]
+  grep -qF '# terminal-config: begin' "$dest"
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper converts a legacy symlink into a wrapper" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  ln -s "$src" "$dest"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  [ -f "$dest" ] && [ ! -L "$dest" ]
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper preserves existing content below the managed block" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.bashrc"
+
+  echo 'export NVM_DIR="$HOME/.nvm"' >"$dest"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  grep -qF 'export NVM_DIR="$HOME/.nvm"' "$dest"
+  grep -qF "source \"$src\"" "$dest"
+}
+
+@test "install_shell_rc_wrapper refreshes the source path on update" {
+  local dotfiles="$REPO_ROOT"
+  local src="$dotfiles/rc.sh"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+  sed -i.bak 's|source ".*"|source "/old/path/rc.sh"|' "$dest" && rm -f "$dest.bak"
+  install_shell_rc_wrapper "$src" "$dest" >/dev/null
+
+  grep -qF "source \"$src\"" "$dest"
+  ! grep -qF '/old/path/rc.sh' "$dest"
+}
+
+@test "uninstall_shell_rc_if_mine removes wrapper and restores pre-install backup" {
+  local dotfiles="$REPO_ROOT"
+  local dest="$TEST_HOME/.zshrc"
+
+  install_shell_rc_wrapper "$dotfiles/rc.sh" "$dest" >/dev/null
+  echo "pre-install" >"${dest}.old"
+
+  uninstall_shell_rc_if_mine "$dotfiles" "$dest" >/dev/null
+
+  [ -f "$dest" ]
+  grep -q "pre-install" "$dest"
+  [ -f "${dest}.uninstall.old" ]
+  [ ! -f "${dest}.old" ]
+}
+
 @test "link_file creates a symlink to the source" {
   local src="$TEST_HOME/src.txt"
   local dest="$TEST_HOME/link.txt"
@@ -246,4 +310,50 @@ EOF
   [ "$status" -ne 0 ]
   run is_colorscheme_terminal ""
   [ "$status" -ne 0 ]
+}
+
+@test "migrate_repo_custom_sh copies legacy shell/custom.sh to ~/.custom.sh" {
+  local dotfiles="$TEST_HOME/terminal-config"
+  mkdir -p "$dotfiles/shell"
+  echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
+
+  run migrate_repo_custom_sh "$dotfiles"
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.custom.sh" ]
+  grep -q 'TERMINAL=kitty' "$TEST_HOME/.custom.sh"
+  [ ! -f "$dotfiles/shell/custom.sh" ]
+}
+
+@test "migrate_repo_custom_sh is a no-op when ~/.custom.sh already exists" {
+  local dotfiles="$TEST_HOME/terminal-config"
+  mkdir -p "$dotfiles/shell"
+  echo 'export TERMINAL=wezterm' >"$TEST_HOME/.custom.sh"
+  echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
+
+  run migrate_repo_custom_sh "$dotfiles"
+  [ "$status" -eq 0 ]
+  grep -q 'TERMINAL=wezterm' "$TEST_HOME/.custom.sh"
+  [ -f "$dotfiles/shell/custom.sh" ]
+}
+
+@test "needs_shell_rc_wrapper marks dotfiles-integrated install options" {
+  for opt in ALIASES AUTOSUGG RBENV NVM FZF GOGH; do
+    run needs_shell_rc_wrapper "$opt"
+    [ "$status" -eq 0 ]
+  done
+  for opt in TMUX RIPGREP BAT HUB TIG; do
+    run needs_shell_rc_wrapper "$opt"
+    [ "$status" -ne 0 ]
+  done
+}
+
+@test "needs_fzf_for_install marks FZF-integrated install options" {
+  for opt in RIPGREP BAT GOGH; do
+    run needs_fzf_for_install "$opt"
+    [ "$status" -eq 0 ]
+  done
+  for opt in TMUX HUB TIG FZF NVM; do
+    run needs_fzf_for_install "$opt"
+    [ "$status" -ne 0 ]
+  done
 }

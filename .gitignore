@@ -1,6 +1,3 @@
-# Personal overrides — copy *.example → local file to customise
-shell/custom.sh
-
 # CI workflows (negate a global ~/.gitignore that ignores .github)
 !.github/
 !.github/workflows/

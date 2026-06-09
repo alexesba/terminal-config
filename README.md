@@ -44,7 +44,7 @@ cd ~/Projects/terminal-config
 
 `install.sh` is fully interactive:
 
-1. **Questions** — each prompt collapses to a single `✓` line after you answer (shell, tmux, terminal + Nerd Font, tools, etc.). Re-running defaults to your saved terminal/font from `shell/custom.sh`.
+1. **Questions** — each prompt collapses to a single `✓` line after you answer (shell, tmux, terminal + Nerd Font, tools, etc.). Re-running defaults to your saved terminal/font from `~/.custom.sh`.
 2. **Summary** — shows everything that will be installed and asks `Proceed?` before changing anything.
 3. **Progress** — runs each step with a progress bar; completed steps become `✓ i/total` lines with detail output kept underneath.
 
@@ -61,7 +61,7 @@ cd ~/Projects/terminal-config
 ./update.sh
 ```
 
-Pulls the latest changes and re-links any symlinks that are already pointing into this repo. Safe to run at any time.
+Pulls the latest changes and refreshes managed shell RC wrappers (and any legacy symlinks still pointing into this repo). Safe to run at any time.
 
 ---
 
@@ -109,18 +109,18 @@ cd ~/Projects/terminal-config
 
 Detaches this machine from the dotfiles repo:
 
-- Removes `~/.zshrc` / `~/.bashrc` symlinks (restores `*.old` if install backed up your previous rc)
+- Removes `~/.zshrc` / `~/.bashrc` wrappers (restores `*.old` if install backed up your previous rc)
 - Removes copied configs (`~/.tmux.conf`, terminal emulator configs) — always backed up to `*.uninstall.old` first
-- Uninstalls the Nerd Font recorded in `shell/custom.sh` (Homebrew cask on macOS, font files in `~/.local/share/fonts/` on Linux)
+- Uninstalls the Nerd Font recorded in `~/.custom.sh` (Homebrew cask on macOS, font files in `~/.local/share/fonts/` on Linux)
 - Optionally removes empty `~/.bash_aliases` and `~/.config/wezterm/colors.lua`
 
-Does **not** delete the repo, `shell/custom.sh`, or other tools installed by `bootstrap.sh` (nvm, fzf, Gogh, TPM, tmux, etc.).
+Does **not** delete the repo, `~/.custom.sh`, or other tools installed by `bootstrap.sh` (nvm, fzf, Gogh, TPM, tmux, etc.).
 
 ---
 
 ## Themes
 
-Set `ZSH_THEME` in `shell/custom.sh` (the variable is honored by both shells):
+Set `ZSH_THEME` in `~/.custom.sh` (the variable is honored by both shells):
 
 ```bash
 export ZSH_THEME="robbyrussell"   # ➜  project git:(main) ✗
@@ -145,7 +145,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 ### How it's applied and persisted
 
-`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`). You can override it in `shell/custom.sh` — the value must be a name [Gogh recognizes](https://github.com/Gogh-Co/Gogh) (e.g. `gnome-terminal`, `konsole`, `foot`), not just the three emulators this repo ships config templates for.
+`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`). You can override it in `~/.custom.sh` — the value must be a name [Gogh recognizes](https://github.com/Gogh-Co/Gogh) (e.g. `gnome-terminal`, `konsole`, `foot`), not just the three emulators this repo ships config templates for.
 
 | Terminal | How the pick persists |
 |---|---|
@@ -155,7 +155,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 ### Configuration
 
 - **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
-- **`TERMINAL`** — managed by `install.sh`; set it manually in `shell/custom.sh` to override detection.
+- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.custom.sh` to override detection.
 
 Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./install.sh`).
 
@@ -167,7 +167,7 @@ The repo ships **templates** (`*.example`). `install.sh` copies them to your hom
 
 | What | Template | Your local file |
 |---|---|---|
-| Shell overrides | `shell/custom.sh.example` | `shell/custom.sh` |
+| Shell overrides | `shell/custom.sh.example` | `~/.custom.sh` |
 | tmux | `tmux.conf.example` | `~/.tmux.conf` |
 | Alacritty | `terminal-emulators/alacritty.toml.example` | `~/.config/alacritty/alacritty.toml` |
 | Kitty | `terminal-emulators/kitty.conf.example` | `~/.config/kitty/kitty.conf` |
@@ -175,11 +175,11 @@ The repo ships **templates** (`*.example`). `install.sh` copies them to your hom
 
 `git pull` updates the templates in the repo; it does **not** change your local copies. To pick up upstream template changes, diff against the `.example` file and merge what you want by hand:
 
-`install.sh` seeds `shell/custom.sh` from `custom.sh.example` on first run. To create or compare by hand:
+`install.sh` seeds `~/.custom.sh` from `shell/custom.sh.example` on first run. To create or compare by hand:
 
 ```bash
-cp shell/custom.sh.example shell/custom.sh   # first time only (install.sh does this too)
-diff shell/custom.sh.example shell/custom.sh # see new example keys
+cp shell/custom.sh.example ~/.custom.sh   # first time only (install.sh does this too)
+diff shell/custom.sh.example ~/.custom.sh # see new example keys
 ```
 
 For extra aliases only, you can also use a local `~/.bash_aliases` file (not in the repo).
@@ -227,7 +227,7 @@ When you pick a terminal emulator during `./install.sh`, you also choose a **Ner
 
 1. Installs the font via Homebrew (`brew install --cask font-…`) on macOS, or downloads from [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) on Linux
 2. Substitutes `{{FONT_FAMILY}}` in the copied terminal config with your choice
-3. Records `TERMINAL_FONT` and `TERMINAL_FONT_ID` in `shell/custom.sh` (used on re-run and by `uninstall.sh`)
+3. Records `TERMINAL_FONT` and `TERMINAL_FONT_ID` in `~/.custom.sh` (used on re-run and by `uninstall.sh`)
 
 Reinstall a font standalone:
 

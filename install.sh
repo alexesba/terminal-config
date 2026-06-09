@@ -10,7 +10,8 @@ source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=lib/tui.sh
 source "$DOTFILES_DIR/lib/tui.sh"
 
-CUSTOM_FILE="$DOTFILES_DIR/shell/custom.sh"
+CUSTOM_FILE="$(custom_sh_path)"
+migrate_repo_custom_sh "$DOTFILES_DIR"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"
@@ -41,6 +42,49 @@ q_yn() {
   printf -v "$__var" '%s' "$REPLY"
   [[ $REPLY =~ ^[Yy]$ ]] && val="yes" || val="${DIM}skip${RESET}"
   tui_collapse "$num. $title" "$val"
+}
+
+# Like q_yn, but auto-skips when the shell RC wrapper step was declined — those
+# options only take effect when rc.sh is sourced from ~/{.zshrc,.bashrc}.
+# Usage: q_yn_if_shell <result_var> <number> <title> <prompt> [desc line...]
+q_yn_if_shell() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs ${HOME}/$BASHFILE → rc.sh)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
+}
+
+# Auto-skip when FZF was declined — ripgrep/bat only wire into FZF in rc.sh;
+# Gogh's colorscheme picker also invokes fzf directly.
+# Usage: q_yn_if_fzf <result_var> <number> <title> <prompt> [desc line...]
+q_yn_if_fzf() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_FZF =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs FZF)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
+}
+
+# Like q_yn_if_shell, but also requires FZF (colorscheme function + fzf picker).
+# Usage: q_yn_if_shell_and_fzf <result_var> <number> <title> <prompt> [desc...]
+q_yn_if_shell_and_fzf() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs ${HOME}/$BASHFILE → rc.sh)${RESET}"
+    return
+  fi
+  if [[ ! $INSTALL_FZF =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs FZF)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
 }
 
 # ── 1. Shell ──────────────────────────────────────────────────────────────────
@@ -87,14 +131,14 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
   fi
 fi
 
-echo -e "   ${DIM}Links rc.sh → ~/$BASHFILE${RESET}"
+echo -e "   ${DIM}Installs ${HOME}/$BASHFILE wrapper sourcing rc.sh${RESET}"
 echo    "   Provides aliases, PATH tweaks, and prompt settings."
-ask_yn "Link ~/$BASHFILE?"
+ask_yn "Install ${HOME}/$BASHFILE?"
 INSTALL_SHELL=$REPLY
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  tui_collapse "1. Shell" "${BASHFILE#.} → link ~/$BASHFILE"
+  tui_collapse "1. Shell" "${BASHFILE#.} → ${HOME}/$BASHFILE wrapper"
 else
-  tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(link: skip)${RESET}"
+  tui_collapse "1. Shell" "${BASHFILE#.} ${DIM}(wrapper: skip)${RESET}"
 fi
 
 # ── 2-3. Simple yes/no steps ──────────────────────────────────────────────────
@@ -103,13 +147,17 @@ q_yn INSTALL_TMUX 2 "tmux (.tmux.conf)" "Install?" \
   "Custom keybindings, status bar, and plugin settings." \
   "tmux binary will be installed if not already present."
 
-q_yn INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Create empty ~/.bash_aliases?" \
+q_yn_if_shell INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Create empty ~/.bash_aliases?" \
   "Built-in aliases load automatically from the repo (shell/aliases/)." \
   "Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
 
-# ── 4. Terminal emulator + font ───────────────────────────────────────────────
+q_yn_if_shell INSTALL_NVIM_EDITOR 4 "Default editor (nvim)" "Set EDITOR=nvim?" \
+  "Writes export EDITOR=nvim to ~/.custom.sh." \
+  "Used by git, the Ctrl-O/Ctrl-F file opener, and other CLI tools."
+
+# ── 5. Terminal emulator + font ───────────────────────────────────────────────
 tui_begin
-echo -e "${BOLD}4. Terminal emulator config${RESET}"
+echo -e "${BOLD}5. Terminal emulator config${RESET}"
 if grep -qi microsoft /proc/version 2>/dev/null; then
   echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators run on the Windows side."
   INSTALL_TERMINAL=4
@@ -184,48 +232,49 @@ fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   if [[ "$INSTALL_FONT" == true ]]; then
-    tui_collapse "4. Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY}"
+    tui_collapse "5. Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY}"
   else
-    tui_collapse "4. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
+    tui_collapse "5. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
 else
-  tui_collapse "4. Terminal" "${DIM}skip${RESET}"
+  tui_collapse "5. Terminal" "${DIM}skip${RESET}"
 fi
 
-# ── 5-13. Tool steps ──────────────────────────────────────────────────────────
-q_yn INSTALL_AUTOSUGG 5 "zsh-autosuggestions" "Install?" \
+# ── 6-14. Tool steps ──────────────────────────────────────────────────────────
+q_yn_if_shell INSTALL_AUTOSUGG 6 "zsh-autosuggestions" "Install?" \
   "Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions)." \
   "Suggests commands as you type based on your history."
 
-q_yn INSTALL_RBENV 6 "rbenv — Ruby version manager" "Install?" \
+q_yn_if_shell INSTALL_RBENV 7 "rbenv — Ruby version manager" "Install?" \
   "Installed via brew (macOS) or git clone on Linux." \
   "Manages multiple Ruby versions per project via .ruby-version."
 
-q_yn INSTALL_NVM 7 "nvm — Node version manager" "Install?" \
+q_yn_if_shell INSTALL_NVM 8 "nvm — Node version manager" "Install?" \
   "Installed via the official nvm install script (latest version)." \
   "Switches Node versions automatically based on .nvmrc files."
 
-q_yn INSTALL_FZF 8 "FZF — fuzzy finder" "Install?" \
+q_yn_if_shell INSTALL_FZF 9 "FZF — fuzzy finder" "Install?" \
   "Clones FZF into ~/.fzf and runs its installer." \
-  "Fuzzy search for files, command history, and more."
+  "Ctrl-T history/files, Ctrl-O/Ctrl-F file finder, and colorscheme picker."
 
-q_yn INSTALL_RIPGREP 9 "ripgrep — fast file search" "Install?" \
-  "Used by FZF for file finding (faster than ag/find)." \
-  "Also available as 'rg' for quick searches from the terminal."
+q_yn_if_fzf INSTALL_RIPGREP 10 "ripgrep — fast file search" "Install?" \
+  "Lists files for FZF (Ctrl-T, Ctrl-O, Ctrl-F) via FZF_DEFAULT_COMMAND." \
+  "Falls back to find/ag when rg is not installed."
 
-q_yn INSTALL_BAT 10 "bat — better cat" "Install?" \
-  "Used by FZF for syntax-highlighted file previews." \
-  "Also replaces cat for reading files with line numbers and colour."
+q_yn_if_fzf INSTALL_BAT 11 "bat — better cat" "Install?" \
+  "Syntax-highlighted previews in FZF (Ctrl-T, Ctrl-O, Ctrl-F)." \
+  "Falls back to head when bat is not installed."
 
-q_yn INSTALL_HUB 11 "hub — GitHub CLI wrapper" "Install?" \
+q_yn INSTALL_HUB 12 "hub — GitHub CLI wrapper" "Install?" \
   "Wraps git with GitHub-aware commands (alias git=hub)." \
   "Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
 
-q_yn INSTALL_GOGH 12 "Gogh — terminal colour schemes" "Install?" \
+q_yn_if_shell_and_fzf INSTALL_GOGH 13 "Gogh — terminal colour schemes" "Install?" \
   "Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh." \
-  "Run colorscheme in your shell to fuzzy-pick and apply any scheme."
+  "Run colorscheme in your shell to fuzzy-pick and apply any scheme." \
+  "Requires shell RC (colorscheme function) and FZF (theme picker)."
 
-q_yn INSTALL_TIG 13 "tig — git text-mode interface" "Install?" \
+q_yn INSTALL_TIG 14 "tig — git text-mode interface" "Install?" \
   "Installed via brew (macOS) or your Linux package manager." \
   "Browse commits, branches, and diffs from the terminal."
 
@@ -268,11 +317,16 @@ _sum() { echo -e "  ${BOLD}$(printf '%-12s' "$1")${RESET} ${2}"; }
 _yn()  { [[ $1 =~ ^[Yy]$ ]] && echo "yes" || echo -e "${DIM}skip${RESET}"; }
 
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
-  _sum "Shell" "link rc.sh → ~/$BASHFILE"
+  _sum "Shell" "${HOME}/$BASHFILE wrapper → rc.sh"
 else
   _sum "Shell" "${DIM}skip${RESET}"
+  echo ""
+  echo -e "  ${YELLOW}⚠${RESET}  Without ${HOME}/$BASHFILE sourcing rc.sh, dotfiles will not load:"
+  echo -e "     ${DIM}aliases, colorscheme, FZF keybindings, nvm/rbenv init, zsh-autosuggestions${RESET}"
+  echo -e "  ${DIM}Steps that depend on the shell RC were skipped automatically.${RESET}"
 fi
 _sum "Aliases" "$(_yn "$INSTALL_ALIASES")"
+_sum "Editor" "$(_yn "$INSTALL_NVIM_EDITOR")"
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   if [[ "$INSTALL_FONT" == true ]]; then
     _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config + ${TERMINAL_FONT_FAMILY}"
@@ -300,8 +354,22 @@ fi
 echo ""
 
 # ── Execution steps ───────────────────────────────────────────────────────────
-step_shell_rc()  { link_file "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
-step_tmux_cfg()  { install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"; }
+_ensure_custom_file() {
+  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
+  fi
+}
+
+step_shell_rc() { install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
+step_nvim_editor() {
+  _ensure_custom_file
+  set_env_var "$CUSTOM_FILE" EDITOR "nvim"
+}
+step_tmux_cfg() {
+  install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"
+  mkdir -p "${HOME}/.tmux"
+  install -m 755 "$DOTFILES_DIR/lib/tmux-activity-spinner.sh" "${HOME}/.tmux/activity-spinner.sh"
+}
 step_aliases()   {
   if [ -e "$HOME/.bash_aliases" ]; then
     echo -e "  ${GREEN}✓${RESET}  ~/.bash_aliases already exists — skipping."
@@ -330,9 +398,7 @@ step_terminal()  {
         "${HOME}/.config/wezterm/wezterm.lua" \
         "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" wezterm)" ;;
   esac
-  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
-    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
-  fi
+  _ensure_custom_file
   set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
   set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
   set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
@@ -342,7 +408,8 @@ run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1";
 STEP_LABELS=(); STEP_FUNCS=(); STEP_ARGS=()
 add_step() { STEP_LABELS+=("$1"); STEP_FUNCS+=("$2"); STEP_ARGS+=("${3:-}"); }
 
-[[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (~/$BASHFILE)" step_shell_rc
+[[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (${HOME}/$BASHFILE)" step_shell_rc
+[[ $INSTALL_NVIM_EDITOR =~ ^[Yy]$ ]] && add_step "Default editor (nvim)" step_nvim_editor
 [[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && add_step "tmux config" step_tmux_cfg
 [[ $INSTALL_ALIASES =~ ^[Yy]$ ]] && add_step "Local aliases" step_aliases
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then

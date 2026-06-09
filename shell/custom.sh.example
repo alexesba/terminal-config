@@ -1,7 +1,7 @@
-# custom.sh — personal overrides loaded by rc.sh (both bash and zsh)
+# ~/.custom.sh — personal overrides loaded by rc.sh (both bash and zsh)
 #
-# This file is NOT tracked by git (see .gitignore).
-# Copy custom.sh.example → custom.sh and customise freely.
+# install.sh copies this template to ~/.custom.sh on first run (not into the repo).
+# Edit ~/.custom.sh freely — it lives in your home directory.
 #
 # Good things to put here:
 #   • Private API keys / tokens (export GITHUB_TOKEN="...")
@@ -14,6 +14,7 @@
 # export PATH="$HOME/go/bin:$PATH"
 
 # ── Example: default editor ───────────────────────────────────────────────────
+# install.sh can set this for you (Set EDITOR=nvim? during install).
 # export EDITOR=nvim
 # export VISUAL=nvim
 
