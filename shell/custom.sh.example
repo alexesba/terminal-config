@@ -14,6 +14,7 @@
 # export PATH="$HOME/go/bin:$PATH"
 
 # ── Example: default editor ───────────────────────────────────────────────────
+# install.sh can set this for you (Set EDITOR=nvim? during install).
 # export EDITOR=nvim
 # export VISUAL=nvim
 

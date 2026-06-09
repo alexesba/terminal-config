@@ -151,9 +151,13 @@ q_yn_if_shell INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Creat
   "Built-in aliases load automatically from the repo (shell/aliases/)." \
   "Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
 
-# ── 4. Terminal emulator + font ───────────────────────────────────────────────
+q_yn_if_shell INSTALL_NVIM_EDITOR 4 "Default editor (nvim)" "Set EDITOR=nvim?" \
+  "Writes export EDITOR=nvim to ~/.custom.sh." \
+  "Used by git, the Ctrl-O/Ctrl-F file opener, and other CLI tools."
+
+# ── 5. Terminal emulator + font ───────────────────────────────────────────────
 tui_begin
-echo -e "${BOLD}4. Terminal emulator config${RESET}"
+echo -e "${BOLD}5. Terminal emulator config${RESET}"
 if grep -qi microsoft /proc/version 2>/dev/null; then
   echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators run on the Windows side."
   INSTALL_TERMINAL=4
@@ -228,49 +232,49 @@ fi
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   if [[ "$INSTALL_FONT" == true ]]; then
-    tui_collapse "4. Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY}"
+    tui_collapse "5. Terminal" "${TERMINAL_NAME} + ${TERMINAL_FONT_FAMILY}"
   else
-    tui_collapse "4. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
+    tui_collapse "5. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
 else
-  tui_collapse "4. Terminal" "${DIM}skip${RESET}"
+  tui_collapse "5. Terminal" "${DIM}skip${RESET}"
 fi
 
-# ── 5-13. Tool steps ──────────────────────────────────────────────────────────
-q_yn_if_shell INSTALL_AUTOSUGG 5 "zsh-autosuggestions" "Install?" \
+# ── 6-14. Tool steps ──────────────────────────────────────────────────────────
+q_yn_if_shell INSTALL_AUTOSUGG 6 "zsh-autosuggestions" "Install?" \
   "Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions)." \
   "Suggests commands as you type based on your history."
 
-q_yn_if_shell INSTALL_RBENV 6 "rbenv — Ruby version manager" "Install?" \
+q_yn_if_shell INSTALL_RBENV 7 "rbenv — Ruby version manager" "Install?" \
   "Installed via brew (macOS) or git clone on Linux." \
   "Manages multiple Ruby versions per project via .ruby-version."
 
-q_yn_if_shell INSTALL_NVM 7 "nvm — Node version manager" "Install?" \
+q_yn_if_shell INSTALL_NVM 8 "nvm — Node version manager" "Install?" \
   "Installed via the official nvm install script (latest version)." \
   "Switches Node versions automatically based on .nvmrc files."
 
-q_yn_if_shell INSTALL_FZF 8 "FZF — fuzzy finder" "Install?" \
+q_yn_if_shell INSTALL_FZF 9 "FZF — fuzzy finder" "Install?" \
   "Clones FZF into ~/.fzf and runs its installer." \
   "Ctrl-T history/files, Ctrl-O/Ctrl-F file finder, and colorscheme picker."
 
-q_yn_if_fzf INSTALL_RIPGREP 9 "ripgrep — fast file search" "Install?" \
+q_yn_if_fzf INSTALL_RIPGREP 10 "ripgrep — fast file search" "Install?" \
   "Lists files for FZF (Ctrl-T, Ctrl-O, Ctrl-F) via FZF_DEFAULT_COMMAND." \
   "Falls back to find/ag when rg is not installed."
 
-q_yn_if_fzf INSTALL_BAT 10 "bat — better cat" "Install?" \
+q_yn_if_fzf INSTALL_BAT 11 "bat — better cat" "Install?" \
   "Syntax-highlighted previews in FZF (Ctrl-T, Ctrl-O, Ctrl-F)." \
   "Falls back to head when bat is not installed."
 
-q_yn INSTALL_HUB 11 "hub — GitHub CLI wrapper" "Install?" \
+q_yn INSTALL_HUB 12 "hub — GitHub CLI wrapper" "Install?" \
   "Wraps git with GitHub-aware commands (alias git=hub)." \
   "Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
 
-q_yn_if_shell_and_fzf INSTALL_GOGH 12 "Gogh — terminal colour schemes" "Install?" \
+q_yn_if_shell_and_fzf INSTALL_GOGH 13 "Gogh — terminal colour schemes" "Install?" \
   "Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh." \
   "Run colorscheme in your shell to fuzzy-pick and apply any scheme." \
   "Requires shell RC (colorscheme function) and FZF (theme picker)."
 
-q_yn INSTALL_TIG 13 "tig — git text-mode interface" "Install?" \
+q_yn INSTALL_TIG 14 "tig — git text-mode interface" "Install?" \
   "Installed via brew (macOS) or your Linux package manager." \
   "Browse commits, branches, and diffs from the terminal."
 
@@ -322,6 +326,7 @@ else
   echo -e "  ${DIM}Steps that depend on the shell RC were skipped automatically.${RESET}"
 fi
 _sum "Aliases" "$(_yn "$INSTALL_ALIASES")"
+_sum "Editor" "$(_yn "$INSTALL_NVIM_EDITOR")"
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   if [[ "$INSTALL_FONT" == true ]]; then
     _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config + ${TERMINAL_FONT_FAMILY}"
@@ -349,7 +354,17 @@ fi
 echo ""
 
 # ── Execution steps ───────────────────────────────────────────────────────────
+_ensure_custom_file() {
+  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
+  fi
+}
+
 step_shell_rc() { install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
+step_nvim_editor() {
+  _ensure_custom_file
+  set_env_var "$CUSTOM_FILE" EDITOR "nvim"
+}
 step_tmux_cfg() {
   install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"
   mkdir -p "${HOME}/.tmux"
@@ -383,9 +398,7 @@ step_terminal()  {
         "${HOME}/.config/wezterm/wezterm.lua" \
         "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" wezterm)" ;;
   esac
-  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
-    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
-  fi
+  _ensure_custom_file
   set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
   set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
   set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
@@ -396,6 +409,7 @@ STEP_LABELS=(); STEP_FUNCS=(); STEP_ARGS=()
 add_step() { STEP_LABELS+=("$1"); STEP_FUNCS+=("$2"); STEP_ARGS+=("${3:-}"); }
 
 [[ $INSTALL_SHELL   =~ ^[Yy]$ ]] && add_step "Shell RC (~/$BASHFILE)" step_shell_rc
+[[ $INSTALL_NVIM_EDITOR =~ ^[Yy]$ ]] && add_step "Default editor (nvim)" step_nvim_editor
 [[ $INSTALL_TMUX    =~ ^[Yy]$ ]] && add_step "tmux config" step_tmux_cfg
 [[ $INSTALL_ALIASES =~ ^[Yy]$ ]] && add_step "Local aliases" step_aliases
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
