@@ -50,26 +50,35 @@ needs_fzf_for_install() {
   esac
 }
 
-# Personal overrides + install-managed exports (TERMINAL, fonts, tokens, …).
-# Usage: custom_sh_path
-custom_sh_path() {
-  printf '%s/.custom.sh\n' "$HOME"
+# Machine-local env, secrets, and install-managed exports (TERMINAL, fonts, …).
+# Usage: local_sh_path
+local_sh_path() {
+  printf '%s/.local.sh\n' "$HOME"
 }
 
-# Copy legacy repo shell/custom.sh → ~/.custom.sh when upgrading.
-# Usage: migrate_repo_custom_sh <dotfiles_dir>
-migrate_repo_custom_sh() {
+# Migrate legacy paths to ~/.local.sh (repo shell/custom.sh, then ~/.custom.sh).
+# Usage: migrate_local_sh <dotfiles_dir>
+migrate_local_sh() {
   local dotfiles_dir="$1"
-  local legacy="$dotfiles_dir/shell/custom.sh"
-  local dest
-  dest="$(custom_sh_path)"
+  local dest legacy_repo legacy_home
+  dest="$(local_sh_path)"
 
   [ -f "$dest" ] && return 0
-  [ ! -f "$legacy" ] && return 0
 
-  cp "$legacy" "$dest"
-  rm -f "$legacy"
-  echo -e "  ${GREEN}✓${RESET}  Migrated ${DIM}shell/custom.sh${RESET} → ${DIM}~/.custom.sh${RESET}"
+  legacy_repo="$dotfiles_dir/shell/custom.sh"
+  if [ -f "$legacy_repo" ]; then
+    cp "$legacy_repo" "$dest"
+    rm -f "$legacy_repo"
+    echo -e "  ${GREEN}✓${RESET}  Migrated ${DIM}shell/custom.sh${RESET} → ${DIM}~/.local.sh${RESET}"
+    return 0
+  fi
+
+  legacy_home="${HOME}/.custom.sh"
+  if [ -f "$legacy_home" ]; then
+    cp "$legacy_home" "$dest"
+    rm -f "$legacy_home"
+    echo -e "  ${GREEN}✓${RESET}  Migrated ${DIM}~/.custom.sh${RESET} → ${DIM}~/.local.sh${RESET}"
+  fi
 }
 
 # Installs a local ~/.zshrc or ~/.bashrc that sources rc.sh from this repo.

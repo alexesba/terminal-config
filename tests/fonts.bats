@@ -42,8 +42,8 @@ load test_helper
   ! grep -q '{{FONT_FAMILY}}' "$dest"
 }
 
-@test "custom_export_value reads export from custom.sh without sourcing" {
-  local file="$TEST_HOME/custom.sh"
+@test "custom_export_value reads export from a local config file without sourcing" {
+  local file="$TEST_HOME/.local.sh"
   cat >"$file" <<'EOF'
 export TERMINAL="wezterm"
 export TERMINAL_FONT="CaskaydiaCove NFP"

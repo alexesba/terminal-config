@@ -10,8 +10,8 @@ source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=lib/tui.sh
 source "$DOTFILES_DIR/lib/tui.sh"
 
-CUSTOM_FILE="$(custom_sh_path)"
-migrate_repo_custom_sh "$DOTFILES_DIR"
+LOCAL_FILE="$(local_sh_path)"
+migrate_local_sh "$DOTFILES_DIR"
 
 printf "${CYAN}${BOLD}"
 cat << "EOF"
@@ -152,7 +152,7 @@ q_yn_if_shell INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Creat
   "Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
 
 q_yn_if_shell INSTALL_NVIM_EDITOR 4 "Default editor (nvim)" "Set EDITOR=nvim?" \
-  "Writes export EDITOR=nvim to ~/.custom.sh." \
+  "Writes export EDITOR=nvim to ~/.local.sh." \
   "Used by git, the Ctrl-O/Ctrl-F file opener, and other CLI tools."
 
 # ── 5. Terminal emulator + font ───────────────────────────────────────────────
@@ -163,7 +163,7 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
   INSTALL_TERMINAL=4
 else
   _saved_terminal=""
-  [ -f "$CUSTOM_FILE" ] && _saved_terminal=$(custom_export_value "$CUSTOM_FILE" TERMINAL)
+  [ -f "$LOCAL_FILE" ] && _saved_terminal=$(custom_export_value "$LOCAL_FILE" TERMINAL)
   _terminal_default=""
   case "$_saved_terminal" in
     alacritty) _terminal_default=1 ;;
@@ -204,7 +204,7 @@ esac
 
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   _saved_font_id=""
-  [ -f "$CUSTOM_FILE" ] && _saved_font_id=$(resolve_nerd_font_id "$CUSTOM_FILE")
+  [ -f "$LOCAL_FILE" ] && _saved_font_id=$(resolve_nerd_font_id "$LOCAL_FILE")
   case "$_saved_font_id" in
     jetbrains) _font_default=2 ;;
     fira)      _font_default=3 ;;
@@ -354,16 +354,16 @@ fi
 echo ""
 
 # ── Execution steps ───────────────────────────────────────────────────────────
-_ensure_custom_file() {
-  if [ ! -f "$CUSTOM_FILE" ] && [ -f "$DOTFILES_DIR/shell/custom.sh.example" ]; then
-    cp "$DOTFILES_DIR/shell/custom.sh.example" "$CUSTOM_FILE"
+_ensure_local_file() {
+  if [ ! -f "$LOCAL_FILE" ] && [ -f "$DOTFILES_DIR/shell/local.sh.example" ]; then
+    cp "$DOTFILES_DIR/shell/local.sh.example" "$LOCAL_FILE"
   fi
 }
 
 step_shell_rc() { install_shell_rc_wrapper "$DOTFILES_DIR/rc.sh" "$HOME/$BASHFILE"; }
 step_nvim_editor() {
-  _ensure_custom_file
-  set_env_var "$CUSTOM_FILE" EDITOR "nvim"
+  _ensure_local_file
+  set_env_var "$LOCAL_FILE" EDITOR "nvim"
 }
 step_tmux_cfg() {
   install_config_from_template "$DOTFILES_DIR" "tmux.conf.example" "${HOME}/.tmux.conf"
@@ -398,10 +398,10 @@ step_terminal()  {
         "${HOME}/.config/wezterm/wezterm.lua" \
         "$(nerd_font_family_for_terminal "$TERMINAL_FONT_ID" wezterm)" ;;
   esac
-  _ensure_custom_file
-  set_env_var "$CUSTOM_FILE" TERMINAL "$TERMINAL_NAME"
-  set_env_var "$CUSTOM_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
-  set_env_var "$CUSTOM_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
+  _ensure_local_file
+  set_env_var "$LOCAL_FILE" TERMINAL "$TERMINAL_NAME"
+  set_env_var "$LOCAL_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
+  set_env_var "$LOCAL_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
 }
 run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1"; }
 
