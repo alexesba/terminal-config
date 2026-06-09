@@ -30,6 +30,26 @@ is_colorscheme_terminal() {
   esac
 }
 
+# Returns 0 when an install.sh INSTALL_* option only works if ~/{.zshrc,.bashrc}
+# sources rc.sh (aliases, shell functions, plugin init, etc.).
+# Usage: needs_shell_rc_wrapper <OPTION_SUFFIX>
+needs_shell_rc_wrapper() {
+  case "$1" in
+    ALIASES|AUTOSUGG|RBENV|NVM|FZF|GOGH) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Returns 0 when an install.sh INSTALL_* option only wires into FZF via rc.sh
+# (file listing, previews, or the colorscheme picker).
+# Usage: needs_fzf_for_install <OPTION_SUFFIX>
+needs_fzf_for_install() {
+  case "$1" in
+    RIPGREP|BAT|GOGH) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # Installs a local ~/.zshrc or ~/.bashrc that sources rc.sh from this repo.
 # Other tools can append their own lines below the managed block.
 #

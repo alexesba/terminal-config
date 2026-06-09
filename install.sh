@@ -43,6 +43,49 @@ q_yn() {
   tui_collapse "$num. $title" "$val"
 }
 
+# Like q_yn, but auto-skips when the shell RC wrapper step was declined — those
+# options only take effect when rc.sh is sourced from ~/{.zshrc,.bashrc}.
+# Usage: q_yn_if_shell <result_var> <number> <title> <prompt> [desc line...]
+q_yn_if_shell() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs ~/$BASHFILE → rc.sh)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
+}
+
+# Auto-skip when FZF was declined — ripgrep/bat only wire into FZF in rc.sh;
+# Gogh's colorscheme picker also invokes fzf directly.
+# Usage: q_yn_if_fzf <result_var> <number> <title> <prompt> [desc line...]
+q_yn_if_fzf() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_FZF =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs FZF)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
+}
+
+# Like q_yn_if_shell, but also requires FZF (colorscheme function + fzf picker).
+# Usage: q_yn_if_shell_and_fzf <result_var> <number> <title> <prompt> [desc...]
+q_yn_if_shell_and_fzf() {
+  local __var="$1" num="$2" title="$3" prompt="$4"; shift 4
+  if [[ ! $INSTALL_SHELL =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs ~/$BASHFILE → rc.sh)${RESET}"
+    return
+  fi
+  if [[ ! $INSTALL_FZF =~ ^[Yy]$ ]]; then
+    printf -v "$__var" 'n'
+    tui_collapse "$num. $title" "${DIM}skip (needs FZF)${RESET}"
+    return
+  fi
+  q_yn "$__var" "$num" "$title" "$prompt" "$@"
+}
+
 # ── 1. Shell ──────────────────────────────────────────────────────────────────
 _detected_shell_name=""
 if [[ "$SHELL" =~ zsh ]];  then _detected_shell_name="zsh"
@@ -103,7 +146,7 @@ q_yn INSTALL_TMUX 2 "tmux (.tmux.conf)" "Install?" \
   "Custom keybindings, status bar, and plugin settings." \
   "tmux binary will be installed if not already present."
 
-q_yn INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Create empty ~/.bash_aliases?" \
+q_yn_if_shell INSTALL_ALIASES 3 "Local alias overrides (~/.bash_aliases)" "Create empty ~/.bash_aliases?" \
   "Built-in aliases load automatically from the repo (shell/aliases/)." \
   "Optionally create ~/.bash_aliases for machine-specific extras (not symlinked)."
 
@@ -193,37 +236,38 @@ else
 fi
 
 # ── 5-13. Tool steps ──────────────────────────────────────────────────────────
-q_yn INSTALL_AUTOSUGG 5 "zsh-autosuggestions" "Install?" \
+q_yn_if_shell INSTALL_AUTOSUGG 5 "zsh-autosuggestions" "Install?" \
   "Installed via brew (or cloned to ~/.zsh/zsh-autosuggestions)." \
   "Suggests commands as you type based on your history."
 
-q_yn INSTALL_RBENV 6 "rbenv — Ruby version manager" "Install?" \
+q_yn_if_shell INSTALL_RBENV 6 "rbenv — Ruby version manager" "Install?" \
   "Installed via brew (macOS) or git clone on Linux." \
   "Manages multiple Ruby versions per project via .ruby-version."
 
-q_yn INSTALL_NVM 7 "nvm — Node version manager" "Install?" \
+q_yn_if_shell INSTALL_NVM 7 "nvm — Node version manager" "Install?" \
   "Installed via the official nvm install script (latest version)." \
   "Switches Node versions automatically based on .nvmrc files."
 
-q_yn INSTALL_FZF 8 "FZF — fuzzy finder" "Install?" \
+q_yn_if_shell INSTALL_FZF 8 "FZF — fuzzy finder" "Install?" \
   "Clones FZF into ~/.fzf and runs its installer." \
-  "Fuzzy search for files, command history, and more."
+  "Ctrl-T history/files, Ctrl-O/Ctrl-F file finder, and colorscheme picker."
 
-q_yn INSTALL_RIPGREP 9 "ripgrep — fast file search" "Install?" \
-  "Used by FZF for file finding (faster than ag/find)." \
-  "Also available as 'rg' for quick searches from the terminal."
+q_yn_if_fzf INSTALL_RIPGREP 9 "ripgrep — fast file search" "Install?" \
+  "Lists files for FZF (Ctrl-T, Ctrl-O, Ctrl-F) via FZF_DEFAULT_COMMAND." \
+  "Falls back to find/ag when rg is not installed."
 
-q_yn INSTALL_BAT 10 "bat — better cat" "Install?" \
-  "Used by FZF for syntax-highlighted file previews." \
-  "Also replaces cat for reading files with line numbers and colour."
+q_yn_if_fzf INSTALL_BAT 10 "bat — better cat" "Install?" \
+  "Syntax-highlighted previews in FZF (Ctrl-T, Ctrl-O, Ctrl-F)." \
+  "Falls back to head when bat is not installed."
 
 q_yn INSTALL_HUB 11 "hub — GitHub CLI wrapper" "Install?" \
   "Wraps git with GitHub-aware commands (alias git=hub)." \
   "Enables: hub pull-request, hub browse, hub clone owner/repo, etc."
 
-q_yn INSTALL_GOGH 12 "Gogh — terminal colour schemes" "Install?" \
+q_yn_if_shell_and_fzf INSTALL_GOGH 12 "Gogh — terminal colour schemes" "Install?" \
   "Clones https://github.com/Gogh-Co/Gogh into ~/src/gogh." \
-  "Run colorscheme in your shell to fuzzy-pick and apply any scheme."
+  "Run colorscheme in your shell to fuzzy-pick and apply any scheme." \
+  "Requires shell RC (colorscheme function) and FZF (theme picker)."
 
 q_yn INSTALL_TIG 13 "tig — git text-mode interface" "Install?" \
   "Installed via brew (macOS) or your Linux package manager." \
@@ -271,6 +315,10 @@ if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then
   _sum "Shell" "~/$BASHFILE wrapper → rc.sh"
 else
   _sum "Shell" "${DIM}skip${RESET}"
+  echo ""
+  echo -e "  ${YELLOW}⚠${RESET}  Without ~/$BASHFILE sourcing rc.sh, dotfiles will not load:"
+  echo -e "     ${DIM}aliases, colorscheme, FZF keybindings, nvm/rbenv init, zsh-autosuggestions${RESET}"
+  echo -e "  ${DIM}Steps that depend on the shell RC were skipped automatically.${RESET}"
 fi
 _sum "Aliases" "$(_yn "$INSTALL_ALIASES")"
 if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then

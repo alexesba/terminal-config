@@ -311,3 +311,25 @@ EOF
   run is_colorscheme_terminal ""
   [ "$status" -ne 0 ]
 }
+
+@test "needs_shell_rc_wrapper marks dotfiles-integrated install options" {
+  for opt in ALIASES AUTOSUGG RBENV NVM FZF GOGH; do
+    run needs_shell_rc_wrapper "$opt"
+    [ "$status" -eq 0 ]
+  done
+  for opt in TMUX RIPGREP BAT HUB TIG; do
+    run needs_shell_rc_wrapper "$opt"
+    [ "$status" -ne 0 ]
+  done
+}
+
+@test "needs_fzf_for_install marks FZF-integrated install options" {
+  for opt in RIPGREP BAT GOGH; do
+    run needs_fzf_for_install "$opt"
+    [ "$status" -eq 0 ]
+  done
+  for opt in TMUX HUB TIG FZF NVM; do
+    run needs_fzf_for_install "$opt"
+    [ "$status" -ne 0 ]
+  done
+}
