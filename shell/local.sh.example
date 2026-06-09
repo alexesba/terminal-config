@@ -32,3 +32,8 @@
 # ── Terminal font (written into emulator config by install.sh) ────────────────
 # export TERMINAL_FONT={{TERMINAL_FONT}}
 # export TERMINAL_FONT_ID={{TERMINAL_FONT_ID}}
+
+# ── Example: zsh history (defaults in shell/zsh/history.sh — override here) ───
+# export HISTFILE="$HOME/.zsh_history"
+# export HISTSIZE=50000
+# export SAVEHIST=20000
