@@ -47,7 +47,7 @@ _prompt_precompute() {
 }
 
 # ── Theme loader ──────────────────────────────────────────────────────────────
-# Override by setting ZSH_THEME in ~/.custom.sh (shared with zsh). To create a
+# Override by setting ZSH_THEME in ~/.local.sh (shared with zsh). To create a
 # theme, add shell/bash/themes/<name>.sh defining _prompt_render.
 _BASH_THEME="${ZSH_THEME:-robbyrussell}"
 _theme_file="$DOTFILES_DIR/shell/bash/themes/${_BASH_THEME}.sh"

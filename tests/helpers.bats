@@ -312,27 +312,39 @@ EOF
   [ "$status" -ne 0 ]
 }
 
-@test "migrate_repo_custom_sh copies legacy shell/custom.sh to ~/.custom.sh" {
+@test "migrate_local_sh copies legacy shell/custom.sh to ~/.local.sh" {
   local dotfiles="$TEST_HOME/terminal-config"
   mkdir -p "$dotfiles/shell"
   echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
 
-  run migrate_repo_custom_sh "$dotfiles"
+  run migrate_local_sh "$dotfiles"
   [ "$status" -eq 0 ]
-  [ -f "$TEST_HOME/.custom.sh" ]
-  grep -q 'TERMINAL=kitty' "$TEST_HOME/.custom.sh"
+  [ -f "$TEST_HOME/.local.sh" ]
+  grep -q 'TERMINAL=kitty' "$TEST_HOME/.local.sh"
   [ ! -f "$dotfiles/shell/custom.sh" ]
 }
 
-@test "migrate_repo_custom_sh is a no-op when ~/.custom.sh already exists" {
+@test "migrate_local_sh copies legacy ~/.custom.sh to ~/.local.sh" {
   local dotfiles="$TEST_HOME/terminal-config"
   mkdir -p "$dotfiles/shell"
   echo 'export TERMINAL=wezterm' >"$TEST_HOME/.custom.sh"
+
+  run migrate_local_sh "$dotfiles"
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.local.sh" ]
+  grep -q 'TERMINAL=wezterm' "$TEST_HOME/.local.sh"
+  [ ! -f "$TEST_HOME/.custom.sh" ]
+}
+
+@test "migrate_local_sh is a no-op when ~/.local.sh already exists" {
+  local dotfiles="$TEST_HOME/terminal-config"
+  mkdir -p "$dotfiles/shell"
+  echo 'export TERMINAL=wezterm' >"$TEST_HOME/.local.sh"
   echo 'export TERMINAL=kitty' >"$dotfiles/shell/custom.sh"
 
-  run migrate_repo_custom_sh "$dotfiles"
+  run migrate_local_sh "$dotfiles"
   [ "$status" -eq 0 ]
-  grep -q 'TERMINAL=wezterm' "$TEST_HOME/.custom.sh"
+  grep -q 'TERMINAL=wezterm' "$TEST_HOME/.local.sh"
   [ -f "$dotfiles/shell/custom.sh" ]
 }
 

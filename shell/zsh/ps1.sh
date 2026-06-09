@@ -47,7 +47,7 @@ add-zsh-hook precmd _precmd_jobs
 setopt PROMPT_SUBST
 
 # ── Theme loader ──────────────────────────────────────────────────────────────
-# Override by setting ZSH_THEME in ~/.custom.sh before loader.sh runs.
+# Override by setting ZSH_THEME in ~/.local.sh before loader.sh runs.
 # Example:  export ZSH_THEME="minimal"
 # To create your own theme add a file to shell/zsh/themes/<name>.sh
 # and define PROMPT (and optionally RPROMPT) using the shared variables:

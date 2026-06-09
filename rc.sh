@@ -24,11 +24,11 @@ else
   unset _src _dir
 fi
 
-# Personal overrides (optional). Seeded by install.sh from shell/custom.sh.example;
-# rc.sh sources ~/.custom.sh when present, before loader.sh (themes, TERMINAL, …).
-_custom="${HOME}/.custom.sh"
-if [ -f "$_custom" ]; then
-  source "$_custom"
+# Machine-local env and secrets (optional). Seeded by install.sh from shell/local.sh.example;
+# rc.sh sources ~/.local.sh when present, before loader.sh (themes, TERMINAL, …).
+_local="${HOME}/.local.sh"
+if [ -f "$_local" ]; then
+  source "$_local"
 fi
 
 export PATH="/usr/local/bin:$PATH"

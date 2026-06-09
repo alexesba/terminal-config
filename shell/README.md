@@ -9,7 +9,7 @@ shell/
 ├── loader.sh             # Dispatches to bash.sh or zsh.sh
 ├── aliases.sh            # Loads built-in aliases + optional ~/.bash_aliases
 ├── aliases/default.sh    # Git, vim, open, reload, etc.
-├── custom.sh.example     # Template copied to ~/.custom.sh on first install
+├── local.sh.example      # Template copied to ~/.local.sh on first install
 ├── common/               # Shared by both shells
 │   ├── functions.sh      # tmux-start, restore_db
 │   ├── dircolors.sh
@@ -34,4 +34,15 @@ shell/
 
 ## Personal overrides
 
-Copy `shell/custom.sh.example` → `~/.custom.sh` (or let `install.sh` do it on first run). Set `ZSH_THEME`, `TERMINAL`, `GOGH_DIR`, tokens, and machine-specific PATH there.
+Startup loads personal files in this order (see `../rc.sh` and `aliases.sh`):
+
+| File | When it loads | Use it for |
+|---|---|---|
+| `~/.local.sh` | Early, before `loader.sh` | `ZSH_THEME`, `TERMINAL`, `GOGH_DIR`, `EDITOR`, tokens, PATH — anything the prompt and dotfiles need before the rest of the shell config runs. Seeded from `shell/local.sh.example` by `install.sh`. |
+| `shell/aliases/default.sh` | Via `aliases.sh` | Built-in aliases shipped with this repo (`gs`, `vim=nvim`, `reload`, …). |
+| `~/.bash_aliases` | Last in `aliases.sh` | **Alias overrides only** — redefine a repo alias (e.g. `alias gs='git status -sb'`) or add aliases that must win over defaults. Loaded in **both bash and zsh** despite the name (Debian/Ubuntu convention). Optional; `install.sh` can create an empty file as a placeholder. |
+| Below the managed block in `~/.zshrc` / `~/.bashrc` | After `rc.sh` finishes | Tool inits (nvm, conda, …) and anything that must run last, including alias overrides. |
+
+**`~/.local.sh` vs `~/.bash_aliases`:** env vars and theme belong in `~/.local.sh`. Alias overrides belong in `~/.bash_aliases` (or below the wrapper in your rc file) because `~/.local.sh` is sourced *before* repo aliases — a conflicting alias there would be overwritten by `aliases/default.sh`.
+
+Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on first run). `update.sh` migrates legacy `shell/custom.sh` and `~/.custom.sh` automatically.
