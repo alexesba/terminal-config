@@ -132,7 +132,7 @@ if [[ -n "$TEM_SHELL" && "$TEM_SHELL" != "$SHELL" ]]; then
 fi
 
 echo -e "   ${DIM}Installs ${HOME}/$BASHFILE wrapper sourcing rc.sh${RESET}"
-echo    "   Provides aliases, PATH tweaks, and prompt settings."
+echo    "   Provides aliases and prompt settings."
 ask_yn "Install ${HOME}/$BASHFILE?"
 INSTALL_SHELL=$REPLY
 if [[ $INSTALL_SHELL =~ ^[Yy]$ ]]; then

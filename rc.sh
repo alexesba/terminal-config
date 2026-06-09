@@ -31,6 +31,4 @@ if [ -f "$_local" ]; then
   source "$_local"
 fi
 
-export PATH="/usr/local/bin:$PATH"
-
 source "$DOTFILES_DIR/shell/loader.sh"
