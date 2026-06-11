@@ -1,3 +1,5 @@
+source "$DOTFILES_DIR/lib/tmux_sessions.sh"
+
 function tmux-start {
   local tmux_dirname tmux_app
   tmux_dirname="${1:-$(pwd)}"
@@ -17,9 +19,7 @@ function tmux-start {
     echo "Session found.  Connecting."
   fi
 
-  sleep 0.5
-
-  tmux attach-session -t "$tmux_app"
+  tmux_attach_session "$tmux_app"
 }
 
 function restore_db {
