@@ -31,4 +31,8 @@ if [ -f "$_local" ]; then
   source "$_local"
 fi
 
+# shellcheck source=lib/update_check.sh disable=SC1091
+source "$DOTFILES_DIR/lib/update_check.sh"
+terminal_config_update_check
+
 source "$DOTFILES_DIR/shell/loader.sh"

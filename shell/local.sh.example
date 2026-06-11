@@ -33,6 +33,9 @@
 # export TERMINAL_FONT={{TERMINAL_FONT}}
 # export TERMINAL_FONT_ID={{TERMINAL_FONT_ID}}
 
+# ── Example: disable dotfiles update notice on shell startup ────────────────
+# export TERMINAL_CONFIG_UPDATE_CHECK=0
+
 # ── Example: zsh history (defaults in shell/zsh/history.sh — override here) ───
 # export HISTFILE="$HOME/.zsh_history"
 # export HISTSIZE=50000
