@@ -6,6 +6,8 @@ function tmux-start {
     tmux_dirname="$(pwd)"
   fi
 
+  tmux_dirname="$(cd "$tmux_dirname" && pwd)" || return
+
   tmux_app="$(basename "$tmux_dirname")"
 
   if ! tmux has-session -t "$tmux_app" 2>/dev/null; then
