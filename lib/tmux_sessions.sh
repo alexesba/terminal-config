@@ -115,7 +115,7 @@ _tmux_table_row_colored() {
 _tmux_short_path() {
   local p="$1" home="${HOME:-}"
   case "$p" in
-    "$home"/*) printf '~/%s' "${p#"$home"/}" ;;
+    "$home"/*) printf '%s/%s' '~' "${p#"$home"/}" ;;
     *) printf '%s' "$p" ;;
   esac
 }
