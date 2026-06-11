@@ -11,7 +11,7 @@ shell/
 ├── aliases/default.sh    # Git, vim, open, reload, etc.
 ├── local.sh.example      # Template copied to ~/.local.sh on first install
 ├── common/               # Shared by both shells
-│   ├── functions.sh      # tmux-start, tmux-list, tmux-switch, restore_db
+│   ├── functions.sh      # sources lib/tmux_sessions.sh; restore_db
 │   ├── dircolors.sh
 │   ├── rbenv.sh
 │   ├── fzf.sh            # FZF defaults (rg, bat preview for Ctrl-T)

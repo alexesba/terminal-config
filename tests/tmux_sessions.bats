@@ -12,8 +12,8 @@ fi
 case "$1" in
   list-sessions)
     if [[ "${2:-}" == "-F" ]]; then
-      printf 'work|/Users/me/work|1\n'
-      printf 'api|/Users/me/api|0\n'
+      printf 'work|/Users/me/work|1|2\n'
+      printf 'api|/Users/me/api|0|1\n'
     fi
     exit 0
     ;;
@@ -34,7 +34,9 @@ EOF
   ' _ "$REPO_ROOT"
   [ "$status" -eq 0 ]
   [[ "$output" == *"Session"* ]]
-  [[ "$output" == *">"* ]]
+  [[ "$output" == *"Status"* ]]
+  [[ "$output" == *"attached"* ]]
+  [[ "$output" == *"detached"* ]]
   [[ "$output" == *"work"* ]]
   [[ "$output" == *"/Users/me/work"* ]]
   [[ "$output" == *"--------"* ]]
@@ -59,6 +61,18 @@ EOF
     tmux_attach_session work
   ' _ "$REPO_ROOT"
   [ "$status" -eq 0 ]
+}
+
+@test "tmux-start creates a session when none exists" {
+  _setup_mock_tmux
+  mkdir -p "$TEST_HOME/work"
+  run env PATH="$TEST_HOME/bin:$PATH" bash -c '
+    source "$1/lib/tmux_sessions.sh"
+    tmux-start "$2/work"
+  ' _ "$REPO_ROOT" "$TEST_HOME"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No Session found"* ]]
+  [[ "$output" == *"Creating"* ]]
 }
 
 @test "tmux-switch fails when no sessions exist" {
