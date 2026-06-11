@@ -151,10 +151,9 @@ _tmux_fzf_field() {
 }
 
 # First fzf input row: column titles (paired with --header-lines=1, not selectable).
+# Requires _tmux_session_widths to have run first.
 _tmux_fzf_title_line() {
-  local lines="$1"
   local bold_cyan="${BOLD:-\033[1m}${CYAN:-\033[1;36m}"
-  _tmux_session_widths "$lines"
   _tmux_fzf_field "$_TMUX_W_SESS" "$bold_cyan" "Session"
   printf '\t'
   _tmux_fzf_field "$_TMUX_W_STAT" "$bold_cyan" "Status"
@@ -168,7 +167,6 @@ _tmux_format_fzf_lines() {
   local stat_label green="${GREEN:-\033[1;32m}" dim="${DIM:-\033[2m}"
   local col1 col2 col3
   [ -n "$lines" ] || return 0
-  _tmux_session_widths "$lines"
   while IFS='|' read -r sess_name sess_path client_count win_count; do
     [ -n "$sess_name" ] || continue
     sess_path="$(_tmux_short_path "$sess_path")"
@@ -185,6 +183,15 @@ _tmux_format_fzf_lines() {
   done <<EOF
 $lines
 EOF
+}
+
+# Title row + session rows for tmux-switch fzf (widths computed once).
+_tmux_fzf_pipe() {
+  local lines="$1"
+  [ -n "$lines" ] || return 0
+  _tmux_session_widths "$lines"
+  _tmux_fzf_title_line
+  _tmux_format_fzf_lines "$lines"
 }
 
 # Attach outside tmux, switch client when already inside a session.
@@ -295,12 +302,8 @@ function tmux-switch {
     return 1
   }
   selection="$(
-    {
-      _tmux_fzf_title_line "$lines"
-      _tmux_format_fzf_lines "$lines"
-    } | FZF_DEFAULT_OPTS='--layout=default --no-preview' fzf \
+    _tmux_fzf_pipe "$lines" | FZF_DEFAULT_OPTS='--layout=default --no-preview' fzf \
       --ansi \
-      --layout=default \
       --no-sort \
       --header-lines=1 \
       --delimiter=$'\t' \
