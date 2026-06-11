@@ -87,6 +87,18 @@ EOF
   [[ "$output" == *"No tmux sessions."* ]]
 }
 
+@test "tmux-switch fzf pipe emits ansi colors when stdout is piped" {
+  _setup_mock_tmux
+  run env PATH="$TEST_HOME/bin:$PATH" bash -c '
+    source "$1/lib/tmux_sessions.sh"
+    _tmux_fzf_pipe "$(tmux_sessions_tsv)"
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *$'\033[1;32m'* ]]
+  [[ "$output" == *$'\033[2m'* ]]
+  [[ "$output" == *$'\033[1;36m'* ]]
+}
+
 @test "tmux-switch fails when fzf is missing" {
   _setup_mock_tmux
   run env PATH="$TEST_HOME/bin:/usr/bin:/bin" bash -c '
