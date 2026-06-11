@@ -224,12 +224,10 @@ function tmux-start {
 
 _tmux_sessions_table() {
   # sess_path — not "path"; zsh reserves $path for command lookup.
-  local lines="${1:-}" row sess_name sess_path client_count win_count
+  local lines row sess_name sess_path client_count win_count
   local rows=() stat_label bold_cyan="${BOLD:-\033[1m}${CYAN:-\033[1;36m}" dim="${DIM:-\033[2m}"
 
-  if [ -z "$lines" ]; then
-    lines="$(tmux_sessions_tsv)" || return 0
-  fi
+  lines="$(tmux_sessions_tsv)" || return 0
   [ -n "$lines" ] || return 0
 
   while IFS='|' read -r sess_name sess_path client_count win_count; do
