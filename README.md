@@ -19,7 +19,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **tig** | Git text-mode browser (`alias tig` in aliases) |
 | **FZF** | Fuzzy file finder with `rg`/`bat` preview |
 | **zsh-autosuggestions** | History + completion suggestions as you type |
-| **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` |
+| **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` (no auto-restore on startup; closing all sessions clears the save) |
 | **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
 | **Color schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
