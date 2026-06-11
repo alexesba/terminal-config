@@ -8,9 +8,9 @@ _tmux_require() {
   }
 }
 
-# Prints session_name<TAB>path<TAB>attached (0|1) for each session.
+# Prints session_name|path|attached (0|1). Pipe delimiter — tmux -F '\t' is literal.
 tmux_sessions_tsv() {
-  tmux list-sessions -F '#{session_name}\t#{session_path}\t#{session_attached}' 2>/dev/null
+  tmux list-sessions -F '#{session_name}|#{session_path}|#{session_attached}' 2>/dev/null
 }
 
 # Attach outside tmux, switch client when already inside a session.
@@ -24,24 +24,63 @@ tmux_attach_session() {
   fi
 }
 
-function tmux-list {
-  local lines
-  _tmux_require || return
-  lines="$(tmux_sessions_tsv)" || {
-    echo "No tmux sessions."
-    return 0
-  }
-  [ -n "$lines" ] || {
-    echo "No tmux sessions."
-    return 0
-  }
-  printf '  %-20s %s\n' "SESSION" "PATH"
-  printf '%s\n' "$lines" | awk -F'\t' '
+_tmux_sessions_table() {
+  local home="${HOME:-}"
+  tmux_sessions_tsv | awk -F'|' -v home="$home" '
+    function shortpath(p,    prefix) {
+      prefix = home "/"
+      if (home != "" && index(p, prefix) == 1) {
+        return "~/" substr(p, length(prefix) + 1)
+      }
+      return p
+    }
+    function h_border(left, mid, right, w1, w2, w3,    s, i, pad) {
+      pad = 2
+      s = left
+      for (i = 0; i < w1 + pad; i++) s = s "─"
+      s = s mid
+      for (i = 0; i < w2 + pad; i++) s = s "─"
+      s = s mid
+      for (i = 0; i < w3 + pad; i++) s = s "─"
+      return s right
+    }
     {
-      mark = ($3 == 1) ? "● " : "  "
-      printf "  %s%-18s %s\n", mark, $1, $2
+      status = ($3 == 1) ? "\xe2\x97\x8f" : " "
+      path = shortpath($2)
+      rows[NR] = status SUBSEP $1 SUBSEP path
+      if (length(status) > w_status) w_status = length(status)
+      if (length($1) > w_session) w_session = length($1)
+      if (length(path) > w_path) w_path = length(path)
+    }
+    END {
+      if (NR == 0) exit
+      w_status = (w_status < 6) ? 6 : w_status
+      w_session = (w_session < 7) ? 7 : w_session
+      w_path = (w_path < 4) ? 4 : w_path
+
+      printf " %s\n", h_border("╭", "┬", "╮", w_status, w_session, w_path)
+      printf " │ %-*s │ %-*s │ %-*s │\n", \
+        w_status, "Status", w_session, "Session", w_path, "Path"
+      printf " %s\n", h_border("├", "┼", "┤", w_status, w_session, w_path)
+
+      for (i = 1; i <= NR; i++) {
+        split(rows[i], c, SUBSEP)
+        printf " │ %-*s │ %-*s │ %-*s │\n", \
+          w_status, c[1], w_session, c[2], w_path, c[3]
+      }
+
+      printf " %s\n", h_border("╰", "┴", "╯", w_status, w_session, w_path)
     }
   '
+}
+
+function tmux-list {
+  _tmux_require || return
+  if ! tmux_sessions_tsv | grep -q .; then
+    echo "No tmux sessions."
+    return 0
+  fi
+  _tmux_sessions_table
 }
 
 function tmux-switch {
@@ -56,13 +95,23 @@ function tmux-switch {
     return 1
   fi
   selection="$(
-    tmux_sessions_tsv | awk -F'\t' '{
-      mark = ($3 == 1) ? "● " : "  "
-      printf "%s%s\t%s\t%s\n", mark, $1, $2, $1
-    }' | fzf \
+    tmux_sessions_tsv | awk -F'|' -v home="${HOME:-}" '
+      function shortpath(p) {
+        prefix = home "/"
+        if (home != "" && index(p, prefix) == 1) {
+          return "~/" substr(p, length(prefix) + 1)
+        }
+        return p
+      }
+      {
+        mark = ($3 == 1) ? "\xe2\x97\x8f" : " "
+        path = shortpath($2)
+        printf "%s\t%s\t%s\t%s\n", mark, $1, path, $1
+      }
+    ' | fzf \
       --delimiter=$'\t' \
-      --with-nth=1,2 \
-      --accept-nth=3 \
+      --with-nth=1,2,3 \
+      --accept-nth=4 \
       --header='tmux sessions (● = attached)' \
       --prompt='tmux> ' \
       --height=40% \

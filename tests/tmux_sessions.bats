@@ -12,8 +12,8 @@ fi
 case "$1" in
   list-sessions)
     if [[ "${2:-}" == "-F" ]]; then
-      printf 'work\t/Users/me/work\t1\n'
-      printf 'api\t/Users/me/api\t0\n'
+      printf 'work|/Users/me/work|1\n'
+      printf 'api|/Users/me/api|0\n'
     fi
     exit 0
     ;;
@@ -33,10 +33,11 @@ EOF
     tmux-list
   ' _ "$REPO_ROOT"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SESSION"* ]]
-  [[ "$output" == *"● work"* ]]
-  [[ "$output" == *"api"* ]]
+  [[ "$output" == *"Session"* ]]
+  [[ "$output" == *"●"* ]]
+  [[ "$output" == *"work"* ]]
   [[ "$output" == *"/Users/me/work"* ]]
+  [[ "$output" == *"─"* ]]
 }
 
 @test "tmux-list reports no sessions when tmux list fails" {
