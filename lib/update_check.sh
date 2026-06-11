@@ -41,10 +41,8 @@ terminal_config_update_check() {
   [ "${behind:-0}" -eq 0 ] && return 0
 
   if [ "$behind" -eq 1 ]; then
-    printf '\n%sNew terminal-config update available!%s Run %s./update.sh%s to get it.\n\n' \
-      "$CYAN" "$RESET" "$CYAN" "$RESET"
+    echo -e "\n${CYAN}New terminal-config update available!${RESET} Run ${CYAN}./update.sh${RESET} to get it.\n"
   else
-    printf '\n%sNew terminal-config updates available (%s)!%s Run %s./update.sh%s to get them.\n\n' \
-      "$CYAN" "$behind" "$RESET" "$CYAN" "$RESET"
+    echo -e "\n${CYAN}New terminal-config updates available (${behind})!${RESET} Run ${CYAN}./update.sh${RESET} to get them.\n"
   fi
 }
