@@ -10,6 +10,8 @@ _tmux_require() {
 }
 
 _tmux_use_color() {
+  # fzf reads from a pipe (stdout is not a TTY); still emit ANSI for --ansi.
+  [ -n "${_TMUX_COLOR_FORCE:-}" ] && return 0
   [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]
 }
 
@@ -48,16 +50,6 @@ _tmux_cell() {
 # Prints name|path|attached_clients|windows. Pipe delimiter — tmux -F '\t' is literal.
 tmux_sessions_tsv() {
   tmux list-sessions -F '#{session_name}|#{session_path}|#{session_attached}|#{session_windows}' 2>/dev/null
-}
-
-_tmux_parse_row() {
-  local row="$1"
-  _TMUX_ROW_WINDOWS="${row##*|}"
-  row="${row%|*}"
-  _TMUX_ROW_ATTACHED="${row##*|}"
-  row="${row%|*}"
-  _TMUX_ROW_NAME="${row%%|*}"
-  _TMUX_ROW_PATH="${row#*|}"
 }
 
 _tmux_attached_p() {
@@ -178,7 +170,7 @@ _tmux_format_fzf_lines() {
       col1="$(_tmux_fzf_field "$_TMUX_W_SESS" "" "$sess_name")"
       col2="$(_tmux_fzf_field "$_TMUX_W_STAT" "$dim" "$stat_label")"
     fi
-    col3="$(_tmux_colored "$dim" "$sess_path")"
+    col3="$(_tmux_fzf_field "$_TMUX_W_PATH" "$dim" "$sess_path")"
     printf '%s\t%s\t%s\t%s\n' "$col1" "$col2" "$col3" "$sess_name"
   done <<EOF
 $lines
@@ -190,8 +182,8 @@ _tmux_fzf_pipe() {
   local lines="$1"
   [ -n "$lines" ] || return 0
   _tmux_session_widths "$lines"
-  _tmux_fzf_title_line
-  _tmux_format_fzf_lines "$lines"
+  _TMUX_COLOR_FORCE=1 _tmux_fzf_title_line
+  _TMUX_COLOR_FORCE=1 _tmux_format_fzf_lines "$lines"
 }
 
 # Attach outside tmux, switch client when already inside a session.
@@ -231,20 +223,11 @@ function tmux-start {
 
 _tmux_sessions_table() {
   # sess_path — not "path"; zsh reserves $path for command lookup.
-  local lines row sess_name sess_path client_count win_count
-  local rows=() stat_label bold_cyan="${BOLD:-\033[1m}${CYAN:-\033[1;36m}" dim="${DIM:-\033[2m}"
+  local lines sess_name sess_path client_count win_count stat_label
+  local bold_cyan="${BOLD:-\033[1m}${CYAN:-\033[1;36m}" dim="${DIM:-\033[2m}"
 
   lines="$(tmux_sessions_tsv)" || return 0
   [ -n "$lines" ] || return 0
-
-  while IFS='|' read -r sess_name sess_path client_count win_count; do
-    [ -n "$sess_name" ] || continue
-    rows+=("${sess_name}|${sess_path}|${client_count}|${win_count}")
-  done <<EOF
-$lines
-EOF
-
-  [ "${#rows[@]}" -eq 0 ] && return 0
 
   _tmux_session_widths "$lines"
 
@@ -264,16 +247,15 @@ EOF
   _tmux_cell "$_TMUX_W_PATH" "$dim" "$(_tmux_repeat '-' "$_TMUX_W_PATH")"
   printf '\n'
 
-  for row in "${rows[@]}"; do
-    _tmux_parse_row "$row"
-    sess_name="$_TMUX_ROW_NAME"
-    sess_path="$(_tmux_short_path "$_TMUX_ROW_PATH")"
-    client_count="$_TMUX_ROW_ATTACHED"
-    win_count="$_TMUX_ROW_WINDOWS"
+  while IFS='|' read -r sess_name sess_path client_count win_count; do
+    [ -n "$sess_name" ] || continue
+    sess_path="$(_tmux_short_path "$sess_path")"
     stat_label="$(_tmux_status_label "$client_count" "$win_count")"
     _tmux_table_row_colored "$_TMUX_W_SESS" "$_TMUX_W_STAT" "$_TMUX_W_PATH" \
       "$sess_name" "$stat_label" "$sess_path" "$client_count"
-  done
+  done <<EOF
+$lines
+EOF
   printf '\n'
 }
 
