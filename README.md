@@ -63,6 +63,8 @@ cd ~/Projects/terminal-config
 
 Pulls the latest changes and refreshes managed shell RC wrappers (and any legacy symlinks still pointing into this repo). Safe to run at any time.
 
+On interactive shell startup, `rc.sh` may fetch upstream (at most once every 4 days) and print a one-line hint when this repo is behind — run `./update.sh` to catch up. Disable with `export TERMINAL_CONFIG_UPDATE_CHECK=0` in `~/.local.sh`.
+
 ---
 
 ## Tests
