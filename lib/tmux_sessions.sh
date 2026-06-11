@@ -13,6 +13,23 @@ tmux_sessions_tsv() {
   tmux list-sessions -F '#{session_name}|#{session_path}|#{session_attached}' 2>/dev/null
 }
 
+_tmux_short_path() {
+  local p="$1" home="${HOME:-}"
+  case "$p" in
+    "$home"/*) printf '~/%s' "${p#"$home"/}" ;;
+    *) printf '%s' "$p" ;;
+  esac
+}
+
+_tmux_repeat() {
+  local char="$1" count="$2" out="" i=0
+  while [ "$i" -lt "$count" ]; do
+    out="${out}${char}"
+    i=$((i + 1))
+  done
+  printf '%s' "$out"
+}
+
 # Attach outside tmux, switch client when already inside a session.
 tmux_attach_session() {
   local session="$1"
@@ -25,53 +42,32 @@ tmux_attach_session() {
 }
 
 _tmux_sessions_table() {
-  local home="${HOME:-}"
-  tmux_sessions_tsv | awk -F'|' -v home="$home" '
-    function shortpath(p,    prefix) {
-      prefix = home "/"
-      if (home != "" && index(p, prefix) == 1) {
-        return "~/" substr(p, length(prefix) + 1)
-      }
-      return p
-    }
-    function h_border(left, mid, right, w1, w2, w3,    s, i, pad) {
-      pad = 2
-      s = left
-      for (i = 0; i < w1 + pad; i++) s = s "─"
-      s = s mid
-      for (i = 0; i < w2 + pad; i++) s = s "─"
-      s = s mid
-      for (i = 0; i < w3 + pad; i++) s = s "─"
-      return s right
-    }
-    {
-      status = ($3 == 1) ? "\xe2\x97\x8f" : " "
-      path = shortpath($2)
-      rows[NR] = status SUBSEP $1 SUBSEP path
-      if (length(status) > w_status) w_status = length(status)
-      if (length($1) > w_session) w_session = length($1)
-      if (length(path) > w_path) w_path = length(path)
-    }
-    END {
-      if (NR == 0) exit
-      w_status = (w_status < 6) ? 6 : w_status
-      w_session = (w_session < 7) ? 7 : w_session
-      w_path = (w_path < 4) ? 4 : w_path
+  local line name path attached w_session=7 w_path=4
+  local -a rows=()
 
-      printf " %s\n", h_border("╭", "┬", "╮", w_status, w_session, w_path)
-      printf " │ %-*s │ %-*s │ %-*s │\n", \
-        w_status, "Status", w_session, "Session", w_path, "Path"
-      printf " %s\n", h_border("├", "┼", "┤", w_status, w_session, w_path)
+  while IFS='|' read -r name path attached; do
+    [ -n "$name" ] || continue
+    path="$(_tmux_short_path "$path")"
+    [ "${#name}" -gt "$w_session" ] && w_session=${#name}
+    [ "${#path}" -gt "$w_path" ] && w_path=${#path}
+    rows+=("${name}|${path}|${attached}")
+  done < <(tmux_sessions_tsv)
 
-      for (i = 1; i <= NR; i++) {
-        split(rows[i], c, SUBSEP)
-        printf " │ %-*s │ %-*s │ %-*s │\n", \
-          w_status, c[1], w_session, c[2], w_path, c[3]
-      }
+  [ "${#rows[@]}" -eq 0 ] && return 0
 
-      printf " %s\n", h_border("╰", "┴", "╯", w_status, w_session, w_path)
-    }
-  '
+  printf '\n'
+  printf '  %-2s %-*s  %s\n' '' "$w_session" "Session" "Path"
+  printf '  %-2s %-*s  %s\n' '' "$w_session" "$(_tmux_repeat '-' "$w_session")" "$(_tmux_repeat '-' "$w_path")"
+
+  for line in "${rows[@]}"; do
+    IFS='|' read -r name path attached <<< "$line"
+    if [ "$attached" = 1 ]; then
+      printf '  %-2s %-*s  %s\n' '>' "$w_session" "$name" "$path"
+    else
+      printf '  %-2s %-*s  %s\n' '' "$w_session" "$name" "$path"
+    fi
+  done
+  printf '\n'
 }
 
 function tmux-list {
@@ -84,7 +80,7 @@ function tmux-list {
 }
 
 function tmux-switch {
-  local selection session
+  local selection
   _tmux_require || return
   command -v fzf >/dev/null 2>&1 || {
     echo "fzf not found" >&2
@@ -95,24 +91,19 @@ function tmux-switch {
     return 1
   fi
   selection="$(
-    tmux_sessions_tsv | awk -F'|' -v home="${HOME:-}" '
-      function shortpath(p) {
-        prefix = home "/"
-        if (home != "" && index(p, prefix) == 1) {
-          return "~/" substr(p, length(prefix) + 1)
-        }
-        return p
-      }
-      {
-        mark = ($3 == 1) ? "\xe2\x97\x8f" : " "
-        path = shortpath($2)
-        printf "%s\t%s\t%s\t%s\n", mark, $1, path, $1
-      }
-    ' | fzf \
+    while IFS='|' read -r name path attached; do
+      [ -n "$name" ] || continue
+      path="$(_tmux_short_path "$path")"
+      if [ "$attached" = 1 ]; then
+        printf '>\t%s\t%s\t%s\n' "$name" "$path" "$name"
+      else
+        printf ' \t%s\t%s\t%s\n' "$name" "$path" "$name"
+      fi
+    done < <(tmux_sessions_tsv) | fzf \
       --delimiter=$'\t' \
       --with-nth=1,2,3 \
       --accept-nth=4 \
-      --header='tmux sessions (● = attached)' \
+      --header='tmux sessions (> = attached)' \
       --prompt='tmux> ' \
       --height=40% \
       --border=rounded

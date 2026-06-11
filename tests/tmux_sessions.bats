@@ -34,10 +34,10 @@ EOF
   ' _ "$REPO_ROOT"
   [ "$status" -eq 0 ]
   [[ "$output" == *"Session"* ]]
-  [[ "$output" == *"●"* ]]
+  [[ "$output" == *">"* ]]
   [[ "$output" == *"work"* ]]
   [[ "$output" == *"/Users/me/work"* ]]
-  [[ "$output" == *"─"* ]]
+  [[ "$output" == *"--------"* ]]
 }
 
 @test "tmux-list reports no sessions when tmux list fails" {
