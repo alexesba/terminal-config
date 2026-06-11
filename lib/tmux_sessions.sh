@@ -251,16 +251,16 @@ function tmux-list {
 function tmux-switch {
   local selection lines
   _tmux_require || return
-  command -v fzf >/dev/null 2>&1 || {
-    echo "fzf not found" >&2
-    return 1
-  }
   lines="$(tmux_sessions_tsv)" || {
     _tmux_colored "${YELLOW:-\033[1;33m}" "No tmux sessions."
     return 1
   }
   [ -n "$lines" ] || {
     _tmux_colored "${YELLOW:-\033[1;33m}" "No tmux sessions."
+    return 1
+  }
+  command -v fzf >/dev/null 2>&1 || {
+    echo "fzf not found" >&2
     return 1
   }
   selection="$(
