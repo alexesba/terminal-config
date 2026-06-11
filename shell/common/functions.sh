@@ -10,9 +10,7 @@ function tmux-start {
 
   if ! tmux has-session -t "$tmux_app" 2>/dev/null; then
     echo "No Session found.  Creating and configuring."
-    pushd "$tmux_dirname" || return
-    tmux new-session -d -s "$tmux_app"
-    popd || return
+    tmux new-session -d -s "$tmux_app" -c "$tmux_dirname" || return
   else
     echo "Session found.  Connecting."
   fi
