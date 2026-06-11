@@ -101,8 +101,14 @@ set -g @plugin 'tmux-plugins/tmux-sensible'
 set -g @plugin 'tmux-plugins/tmux-resurrect'   # prefix + Ctrl-s save / Ctrl-r restore
 set -g @plugin 'tmux-plugins/tmux-continuum'   # auto-save every 15 min
 
-set -g @continuum-restore 'on'
+# Auto-restore on tmux server start brings back every saved session (surprising
+# after tmux-start). Off by default — restore manually with prefix + Ctrl-r.
+set -g @continuum-restore 'off'
 set -g @resurrect-capture-pane-contents 'on'
+
+# Drop the resurrect snapshot when the last session closes so closed panes
+# stay closed (even for manual prefix + Ctrl-r restore).
+set-hook -g session-closed 'run-shell "~/.tmux/clear-resurrect-when-empty.sh"'
 
 # Initialize TPM — must stay at the very bottom of tmux.conf
 run '~/.tmux/plugins/tpm/tpm'
