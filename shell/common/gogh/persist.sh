@@ -16,6 +16,21 @@ field() {
   sed -n "s/^export $1=\"\(#[0-9A-Fa-f]\{6\}\)\".*/\1/p" "$file" | head -n1
 }
 
+record_current_theme() {
+  local theme="$1"
+  local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/gogh"
+  local name
+  mkdir -p "$state_dir"
+  name=$(sed -n 's/^export PROFILE_NAME="\([^"]*\)".*/\1/p' "$theme" | head -n1)
+  [ -z "$name" ] && name=$(basename "$theme" .sh)
+  {
+    echo "name=$name"
+    echo "file=$(basename "$theme")"
+  } >"${state_dir}/current"
+}
+
+record_current_theme "$file"
+
 case "$term" in
   wezterm)
     cfg="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}"

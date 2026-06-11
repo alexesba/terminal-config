@@ -137,6 +137,7 @@ Run `colorscheme` to fuzzy-pick a terminal color scheme from the [Gogh](https://
 
 ```bash
 colorscheme
+colorscheme update    # pull latest Gogh themes (~/src/gogh by default)
 ```
 
 ![colorscheme picker with live preview](doc/screenshots/colorscheme.png)
@@ -156,6 +157,8 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 - **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
 - **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override detection.
+
+Run `colorscheme update` (or `colorscheme --update`) to `git pull` the Gogh checkout when new themes are added upstream.
 
 Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./install.sh`).
 
