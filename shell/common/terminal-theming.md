@@ -83,6 +83,38 @@ Uses `ps comm=` with `ucomm=` fallback on macOS where GUI apps sometimes report 
 
 ## `terminal_use.sh`
 
+### When you need `use-terminal`
+
+**Auto-detect is on by default** — interactive shells, `colorscheme`, and `tmux-start` set `TERMINAL` to the emulator hosting the window. Most users never run `use-terminal`.
+
+Use it when:
+
+- Auto-detect picked the wrong emulator (multiple apps installed, unusual tmux layout)
+- You want to point `colorscheme` at a different emulator **for this shell only**
+- You need to re-apply the saved Gogh theme after switching (`use-terminal kitty apply`)
+
+Inside tmux, new panes inherit session `TERMINAL` (`update-environment` in `tmux.conf.example`) — no `use-terminal` per pane.
+
+### Command reference
+
+| Command | Effect |
+|---|---|
+| `use-terminal` | fzf menu — pick Alacritty / Kitty / WezTerm (or reset to install default) |
+| `use-terminal status` | Show current `TERMINAL`, install default, and detected host |
+| `use-terminal detect` | Detect hosting emulator and set `TERMINAL` (same as `sync`) |
+| `use-terminal detect --print` | Print detected name only; do not change `TERMINAL` |
+| `use-terminal detect --export` | Print `export TERMINAL=…` for scripting |
+| `use-terminal sync` | Same as `use-terminal detect` |
+| `use-terminal alacritty` / `kitty` / `wezterm` | Manual override for this shell (`TERMINAL_OVERRIDE=1`) |
+| `use-terminal kitty apply` | Switch target and re-run saved Gogh theme |
+| `use-terminal reset` | Restore `TERMINAL` from `~/.local.sh`; clear override |
+
+Manual picks set **`TERMINAL_OVERRIDE=1`** until `use-terminal reset`. Background auto-detect is suppressed while override is active.
+
+Disable auto-detect entirely: `export TERMINAL_AUTO_DETECT=0` in `~/.local.sh` (see `shell/local.sh.example`). Explicit `use-terminal detect` / `sync` still apply.
+
+Install default (persistent): **`TERMINAL=…`** in `~/.local.sh` (set by `install.sh`). Session override does not change this file.
+
 ### `sync_terminal_to_host`
 
 - Respects `TERMINAL_AUTO_DETECT=0` for background auto-sync (shell load, `colorscheme`); **`use-terminal detect` / `sync` always apply** (pass `force=1`).
@@ -94,10 +126,6 @@ Uses `ps comm=` with `ucomm=` fallback on macOS where GUI apps sometimes report 
 ### Auto-sync on shell load
 
 Runs at source time and again on **first prompt** (`precmd` / `PROMPT_COMMAND`) until `TERMINAL` matches detected host. tmux panes sometimes lack full client info during `.zshrc` load.
-
-### `use-terminal detect`
-
-By default: detect **and apply** (same as `sync`). `--print` / `--export` for scripting only.
 
 ---
 
@@ -152,6 +180,7 @@ Without step 3, attaching to an **existing** session kept old OSC colors on pane
 | `TERMINAL_AUTO_DETECT=0` | Disable auto-sync (set in `~/.local.sh`) |
 | `TERMINAL_AUTO_DETECT_VERBOSE=1` | Print when auto-sync changes `TERMINAL` |
 | `GOGH_TMUX_SESSION` | Target tmux session for pane OSC clear when not inside tmux |
+| `GOGH_DIR` | Gogh repo root (themes in `installs/`; default `~/src/gogh`) |
 
 ---
 

@@ -149,20 +149,9 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. Scrolling the list does n
 
 Themes target the terminal emulator you're running in (Alacritty, Kitty, or WezTerm — chosen at install). New windows and tabs keep the theme after you pick one. If Alacritty theming fails, run `pip install --user -r ~/src/gogh/requirements.txt` (or re-run `./install.sh` / `./bootstrap.sh --gogh`).
 
-**Switch emulator for this session** — when you have more than one installed, or auto-detect picked the wrong one:
+If a theme applies to the wrong app, run `use-terminal` or `use-terminal status`. Full command reference: `use-terminal --help`.
 
-```bash
-use-terminal              # pick Alacritty / Kitty / WezTerm
-use-terminal detect       # detect hosting emulator and apply
-use-terminal sync         # re-run auto-detect
-use-terminal kitty apply  # switch + re-apply saved theme
-use-terminal reset        # restore install default from ~/.local.sh
-use-terminal status       # current target vs default
-```
-
-Auto-detect is on by default. Disable with `export TERMINAL_AUTO_DETECT=0` in `~/.local.sh`.
-
-Optional in `~/.local.sh`: `TERMINAL` (install default), `GOGH_DIR` (Gogh checkout, default `~/src/gogh`). Install Gogh via `./bootstrap.sh --gogh` or during `./install.sh`.
+Optional in `~/.local.sh`: `GOGH_DIR` (Gogh checkout, default `~/src/gogh`). Install Gogh via `./bootstrap.sh --gogh` or during `./install.sh`.
 
 ---
 

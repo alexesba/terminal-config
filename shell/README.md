@@ -59,8 +59,9 @@ Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on fi
 
 ## Terminal detection & tmux theming (developers)
 
-Implementation overview and debugging checklist. Per-function behaviour is documented
-in the source files. End-user usage is in the [root README](../README.md#color-schemes).
+Implementation overview, **`use-terminal` command reference**, and debugging checklist:
+**[shell/common/terminal-theming.md](common/terminal-theming.md)**. Per-function notes are in the script sources.
+End-user `colorscheme` usage is in the [root README](../README.md#color-schemes).
 
 ## Zsh history
 
