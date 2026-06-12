@@ -45,6 +45,27 @@ load test_helper
   [ "$status" -eq 0 ]
 }
 
+@test "zsh config_open_file does not clobber PATH via local path" {
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/bin/nvim" <<'EOF'
+#!/usr/bin/env bash
+printf '%s' "$PATH"
+EOF
+  chmod +x "$TEST_HOME/bin/nvim"
+  touch "$TEST_HOME/local-target.sh"
+
+  run zsh -fc "
+    export HOME='$TEST_HOME'
+    export DOTFILES_DIR='$REPO_ROOT'
+    export EDITOR=nvim
+    export PATH='$TEST_HOME/bin:/usr/bin:/bin'
+    source '$REPO_ROOT/shell/common/config_edit.sh'
+    config_open_file '$TEST_HOME/local-target.sh'
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"$TEST_HOME/bin"* ]]
+}
+
 @test "zsh shell chain defines config and bindings" {
   run zsh -fc "
     export DOTFILES_DIR='$REPO_ROOT'

@@ -31,9 +31,8 @@ fzf_then_open_in_editor() {
   )" </dev/tty || return
 
   [ -n "$file" ] || return
-  local editor
-  editor=$(_resolve_editor) || return 1
-  "$editor" "$file"
+  # After fzf returns — $EDITOR must be a real binary (nvim), not alias vim=nvim.
+  "${EDITOR:-nvim}" "$file"
 
   _zle_reset_prompt_if_active
 }

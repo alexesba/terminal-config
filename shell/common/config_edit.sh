@@ -3,9 +3,6 @@
 #   config          — config file picker (also in: help)
 #   config --help
 
-# shellcheck source=shell/common/editor.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/editor.sh"
-
 config() {
   case "${1:-}" in
     -h|--help|help)
@@ -24,31 +21,28 @@ EOF
 
 # Open a config path in \$EDITOR (shared by config_edit and help menu).
 config_open_file() {
-  local path="$1"
-  local editor
+  local target="$1"
 
-  editor=$(_resolve_editor) || return 1
-
-  case "$path" in
+  case "$target" in
     "$HOME/.bash_aliases")
-      if [ ! -e "$path" ]; then
-        touch "$path"
+      if [ ! -e "$target" ]; then
+        touch "$target"
       fi
       ;;
     "$HOME/.local.sh")
-      if [ ! -e "$path" ]; then
-        cp "$DOTFILES_DIR/shell/local.sh.example" "$path"
+      if [ ! -e "$target" ]; then
+        cp "$DOTFILES_DIR/shell/local.sh.example" "$target"
       fi
       ;;
   esac
 
-  if [ ! -e "$path" ]; then
-    printf 'File not found: %s\n' "$path" >&2
+  if [ ! -e "$target" ]; then
+    printf 'File not found: %s\n' "$target" >&2
     printf 'Run ./update.sh to copy templates, or re-run install.sh.\n' >&2
     return 1
   fi
 
-  "$editor" "$path"
+  "${EDITOR:-nvim}" "$target"
 }
 
 config_edit() {
@@ -64,8 +58,8 @@ config_edit() {
   }
 
   list_script="$DOTFILES_DIR/shell/common/config_list.sh"
-  editor=$(_resolve_editor) || return 1
-  editor_name="${editor##*/}"
+  editor_name="${EDITOR:-nvim}"
+  editor_name="${editor_name##*/}"
 
   if command -v bat &>/dev/null; then
     preview_cmd='bat --style=numbers --color=always --paging=never --line-range 1:40 {} 2>/dev/null || head -40 {}'
