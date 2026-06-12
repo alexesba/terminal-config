@@ -92,9 +92,7 @@ function colorscheme() {
     sh "$gogh_dir/$selection"
   fi
   [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
-  if [ "${TERMINAL:-}" = wezterm ]; then
-    bash "$DOTFILES_DIR/shell/common/gogh/reload_wezterm.sh" 2>/dev/null || true
-  elif [ "${TERMINAL:-}" = alacritty ]; then
+  if [ "${TERMINAL:-}" = alacritty ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
   elif [ "${TERMINAL:-}" = kitty ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true

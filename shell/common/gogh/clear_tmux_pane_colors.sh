@@ -3,8 +3,6 @@
 # (kitty, alacritty) inherit config reloads for the whole pane, not just
 # lines drawn after the reload.
 #
-# WezTerm hooks set OSC 10/11/4 per pane; overrides persist until cleared.
-#
 # Usage:
 #   clear_tmux_pane_colors.sh --session              # current tmux session (requires TMUX)
 #   clear_tmux_pane_colors.sh --session <name>       # named session (works outside tmux)

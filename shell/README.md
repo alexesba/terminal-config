@@ -29,7 +29,7 @@ shell/
 │   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
 │   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL
 │   ├── terminal_list.sh  # rows / fzf formatting for use-terminal
-│   ├── terminal-theming.md  # architecture: detection order, tmux hooks, why bash
+│   ├── terminal-theming.md  # architecture: detection, theming, why bash
 │   └── gogh/
 │       ├── colorscheme.sh
 │       ├── apply_saved.sh       # re-apply saved theme for current TERMINAL
@@ -38,8 +38,7 @@ shell/
 │       ├── preview.sh
 │       ├── persist.sh           # theme state + colors.lua for WezTerm
 │       ├── reload_kitty.sh      # clear pane OSC + SIGUSR1 Kitty
-│       ├── reload_alacritty.sh  # clear pane OSC + touch alacritty.toml
-│       └── reload_wezterm.sh    # touch colors.lua → config reload
+│       └── reload_alacritty.sh  # clear pane OSC + touch alacritty.toml
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)
 │   ├── bindings.sh       # Ctrl-O/F file finder
 │   ├── ps1.sh + themes/

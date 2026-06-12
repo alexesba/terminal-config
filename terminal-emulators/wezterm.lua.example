@@ -27,7 +27,6 @@ local config = {
 -- Persisted Gogh theme from `colorscheme` → ~/.config/wezterm/colors.lua.
 -- Config reload (watch list) updates every pane — parent shell, tmux, splits,
 -- and window padding — without per-pane OSC escape sequences.
-local GOGH_SCHEME = 'Gogh Active'
 local colors_path = wezterm.config_dir .. '/colors.lua'
 wezterm.add_to_config_reload_watch_list(colors_path)
 
@@ -41,25 +40,39 @@ local function gogh_background_layer(color)
   }
 end
 
-local function load_gogh_colors()
+local function load_gogh_theme()
   local f = io.open(colors_path, 'r')
   if not f then
-    return nil
+    return nil, nil
   end
   f:close()
-  local ok, colors = pcall(dofile, colors_path)
-  if ok and type(colors) == 'table' then
-    return colors
+  local ok, data = pcall(dofile, colors_path)
+  if not ok or type(data) ~= 'table' or not data.foreground then
+    return nil, nil
   end
-  return nil
+  local scheme_name = data.scheme_name
+  if type(scheme_name) ~= 'string' or scheme_name == '' then
+    scheme_name = 'Sonokai (Gogh)'
+  end
+  local colors = {
+    foreground = data.foreground,
+    background = data.background,
+    ansi = data.ansi,
+    brights = data.brights,
+  }
+  if data.cursor_bg then
+    colors.cursor_bg = data.cursor_bg
+    colors.cursor_border = data.cursor_border
+  end
+  return scheme_name, colors
 end
 
-local colors = load_gogh_colors()
+local scheme_name, colors = load_gogh_theme()
 if colors then
   config.color_schemes = {
-    [GOGH_SCHEME] = colors,
+    [scheme_name] = colors,
   }
-  config.color_scheme = GOGH_SCHEME
+  config.color_scheme = scheme_name
   config.background = gogh_background_layer(colors.background)
 end
 

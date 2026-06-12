@@ -57,9 +57,7 @@ fi
 
 [ -f "$persist_script" ] && bash "$persist_script" "$theme" "$term"
 
-if [ "$term" = wezterm ]; then
-  bash "$DOTFILES_DIR/shell/common/gogh/reload_wezterm.sh" 2>/dev/null || true
-elif [ "$term" = alacritty ]; then
+if [ "$term" = alacritty ]; then
   bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
 elif [ "$term" = kitty ]; then
   bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true

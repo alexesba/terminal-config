@@ -61,7 +61,9 @@ export PROFILE_NAME="Clone Of Ubuntu"
 EOF
   cat >"$TEST_HOME/.config/wezterm/colors.lua" <<'EOF'
 -- Source theme: clone-of-ubuntu.sh
-return {}
+return {
+  scheme_name = "Clone Of Ubuntu",
+}
 EOF
   run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" \
     WEZTERM_CONFIG_DIR="$TEST_HOME/.config/wezterm" KITTY_CONFIG_DIRECTORY= GOGH_STATE_FILE= \

@@ -49,6 +49,7 @@ read_config_for_terminal() {
       local wezterm_colors="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}/colors.lua"
       if [ -f "$wezterm_colors" ]; then
         file=$(sed -n 's/^-- Source theme: //p' "$wezterm_colors" | head -n1)
+        name=$(sed -n 's/^  scheme_name = "\([^"]*\)",\?$/\1/p' "$wezterm_colors" | head -n1)
       fi
       ;;
     kitty)

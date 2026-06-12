@@ -1,7 +1,7 @@
 # tmux.conf — personal tmux configuration
 #
 # Copy tmux.conf.example → ~/.tmux.conf via install.sh (local file, not in repo).
-# Also copies helper scripts into ~/.tmux/ (activity spinner, gogh theme hook, …).
+# Also copies helper scripts into ~/.tmux/ (activity spinner, resurrect helper, …).
 
 set -sg escape-time 0
 

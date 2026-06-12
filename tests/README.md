@@ -39,7 +39,7 @@ Shared setup lives in `test_helper.bash` (`TEST_HOME`, `REPO_ROOT`, helpers like
 | `update_check.bats` | Throttled dotfiles update hint in `rc.sh` |
 | `gogh_clear_tmux_pane_colors.bats` | Pane OSC clear + `reload_kitty.sh` |
 | `gogh_reload_alacritty.bats` | Alacritty config reload nudge |
-| `gogh_reload_wezterm.bats` | WezTerm config-only reload (`colors.lua`, `color_scheme`) |
+| `gogh_persist_wezterm.bats` | WezTerm persist (`scheme_name` in colors.lua) |
 | `gogh_current.bats` | Active theme detection, `persist.sh`, `list.sh` |
 | `gogh_deps.bats` | Gogh Python deps and `apply_saved.sh` hints |
 | `gogh_preview.bats` | fzf preview layout |
