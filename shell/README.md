@@ -18,9 +18,13 @@ shell/
 │   ├── fzf/
 │   │   └── open.sh       # Ctrl-O / Ctrl-F file finder (Telescope-style)
 │   ├── nvmrc.sh          # load-nvmrc() body
+│   ├── terminal_use.sh   # use-terminal — fzf picker + session TERMINAL override
+│   ├── terminal_list.sh  # rows / fzf formatting for use-terminal
 │   └── gogh/
 │       ├── colorscheme.sh
 │       ├── apply_persisted.sh   # WezTerm tmux hook; installed as ~/.tmux/apply-gogh-theme.sh
+│       ├── apply_saved.sh       # re-apply saved theme for current TERMINAL
+│       ├── deps.sh              # Gogh Python deps (Alacritty theming)
 │       ├── preview.sh
 │       └── persist.sh
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)

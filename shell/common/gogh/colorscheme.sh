@@ -77,13 +77,25 @@ function colorscheme() {
     --preview-window='up:50%:border-bottom:wrap') || return
 
   [ -z "$selection" ] && return
+  if [ "${TERMINAL:-}" = alacritty ]; then
+    if ! bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" ensure; then
+      bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" hint >&2
+      return 1
+    fi
+  fi
   local apply_persisted_script="$DOTFILES_DIR/shell/common/gogh/apply_persisted.sh"
   sh "$gogh_dir/$selection"
   # Persist the choice so it survives new terminal windows (e.g. WezTerm, which
   # gogh otherwise only themes for the current session).
   [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
-  # WezTerm OSC is per-pane; sync every pane in this tmux session after a pick.
+  # WezTerm OSC is per-pane; sync every tmux pane (no-op for kitty/alacritty).
   [ -f "$apply_persisted_script" ] && bash "$apply_persisted_script" --session
+  # File-based terminals: clear stale tmux OSC overrides and reload the outer emulator.
+  if [ "${TERMINAL:-}" = alacritty ]; then
+    bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
+  elif [ "${TERMINAL:-}" = kitty ]; then
+    bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true
+  fi
 }
 
 color_scheme() { colorscheme "$@"; }

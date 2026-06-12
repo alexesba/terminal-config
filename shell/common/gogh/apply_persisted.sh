@@ -12,8 +12,25 @@
 #   apply_persisted.sh --session    — all panes in the current tmux session
 set -u
 
+_persisted_terminal() {
+  if [ -n "${TERMINAL:-}" ]; then
+    printf '%s\n' "$TERMINAL"
+    return 0
+  fi
+  local state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
+  [ -f "$state" ] || return 1
+  sed -n 's/^terminal=//p' "$state" | head -n1
+}
+
 _wezterm_target() {
-  [ "${TERMINAL:-}" = wezterm ] && return 0
+  # Respect use-terminal / colorscheme target: do not fall through to ~/.local.sh
+  # (often wezterm) and trigger WezTerm OSC inside tmux when targeting alacritty.
+  local term
+  term="$(_persisted_terminal || true)"
+  if [ -n "$term" ]; then
+    [ "$term" = wezterm ]
+    return
+  fi
   local local_sh="${HOME:-}/.local.sh"
   [ -f "$local_sh" ] && grep -qE '^[[:space:]]*export TERMINAL=(wezterm|"wezterm")' "$local_sh"
 }

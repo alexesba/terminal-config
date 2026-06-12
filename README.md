@@ -22,6 +22,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 | **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` (no auto-restore on startup; closing all sessions clears the save) |
 | **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
 | **Color schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
+| **Terminal switch** | `use-terminal` — fzf menu to target `colorscheme` at another installed emulator for this shell |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
 ---
@@ -152,13 +153,26 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 | Terminal | How the pick persists |
 |---|---|
-| **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. Inside tmux, new panes inherit those colours from the outer terminal — no extra hooks needed. |
+| **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. Inside tmux, new panes inherit those colours from the outer terminal — no extra hooks needed. **Alacritty** needs Gogh's Python deps (`pip install --user -r ~/src/gogh/requirements.txt`); `install.sh` / `bootstrap.sh --gogh` installs them automatically. |
 | **WezTerm** | Gogh themes the current pane via OSC; `colorscheme` also writes `~/.config/wezterm/colors.lua` (new WezTerm panes/windows). Inside tmux, new panes do not read `colors.lua`; with tmux 3.6+, hooks in `tmux.conf.example` run `~/.tmux/apply-gogh-theme.sh` (WezTerm only) on new splits, and `colorscheme` re-applies OSC to every pane in the session after you pick a theme. |
+
+### Switching terminal emulators (session only)
+
+`install.sh` records one default in `~/.local.sh` (`TERMINAL=wezterm`, etc.). To try another installed emulator without editing that file, run **`use-terminal`** — an fzf menu (same style as `tmux-switch`) listing only binaries found on your `PATH`:
+
+```bash
+use-terminal              # pick Alacritty / Kitty / WezTerm
+use-terminal kitty apply  # switch + re-apply saved Gogh theme
+use-terminal reset        # restore install default from ~/.local.sh
+use-terminal status       # current target vs default (no menu)
+```
+
+The override applies to **this shell only**; `colorscheme` and `apply_saved.sh` follow the selected `TERMINAL`. Run `./update.sh` once if a config template is missing under `~/.config/`.
 
 ### Configuration
 
 - **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
-- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override detection.
+- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override the install default permanently. For a temporary switch, use **`use-terminal`** (see above).
 
 Run `colorscheme update` (or `colorscheme --update`) to `git pull` the Gogh checkout when new themes are added upstream.
 

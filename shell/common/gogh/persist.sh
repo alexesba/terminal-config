@@ -6,7 +6,34 @@
 # loads, so the scheme sticks. WezTerm auto-reloads when this file changes.
 #
 # Usage: persist.sh /path/to/theme.sh <terminal>
+#        persist.sh --terminal <name>   # session target for tmux hooks (no theme file)
 set -u
+
+record_gogh_terminal() {
+  local term="${1:-}"
+  [ -n "$term" ] || return 0
+  local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/gogh"
+  local current="${state_dir}/current"
+  mkdir -p "$state_dir"
+  if [ ! -f "$current" ]; then
+    printf 'terminal=%s\n' "$term" >"$current"
+    return 0
+  fi
+  if grep -q '^terminal=' "$current"; then
+    grep -v '^terminal=' "$current" >"${current}.tmp"
+    printf 'terminal=%s\n' "$term" >>"${current}.tmp"
+    mv "${current}.tmp" "$current"
+  else
+    printf 'terminal=%s\n' "$term" >>"$current"
+  fi
+}
+
+case "${1:-}" in
+  --terminal)
+    record_gogh_terminal "${2:-}"
+    exit 0
+    ;;
+esac
 
 file="${1:-}"
 term="${2:-}"
@@ -18,6 +45,7 @@ field() {
 
 record_current_theme() {
   local theme="$1"
+  local term="${2:-}"
   local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/gogh"
   local name
   mkdir -p "$state_dir"
@@ -26,10 +54,11 @@ record_current_theme() {
   {
     echo "name=$name"
     echo "file=$(basename "$theme")"
+    [ -n "$term" ] && echo "terminal=$term"
   } >"${state_dir}/current"
 }
 
-record_current_theme "$file"
+record_current_theme "$file" "$term"
 
 case "$term" in
   wezterm)

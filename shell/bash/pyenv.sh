@@ -8,7 +8,7 @@ load-pyenv() {
   if [ -d ./venv ]; then
     # shellcheck disable=SC1091
     source ./venv/bin/activate >/dev/null 2>&1
-  elif [ -n "$VIRTUAL_ENV" ]; then
+  elif [ -n "${VIRTUAL_ENV:-}" ]; then
     deactivate >/dev/null 2>&1
   fi
 }
