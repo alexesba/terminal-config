@@ -37,7 +37,7 @@ _help_run_action() {
 }
 
 help_menu() {
-  local list_script preview_script selection action editor
+  local list_script preview_script selection
 
   # shellcheck source=shell/common/fzf_prepare.sh disable=SC1091
   source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
@@ -51,7 +51,6 @@ help_menu() {
 
   list_script="$DOTFILES_DIR/shell/common/help_list.sh"
   preview_script="$DOTFILES_DIR/shell/common/help_preview.sh"
-  editor="${EDITOR:-${VISUAL:-nvim}}"
 
   selection="$(
     bash "$list_script" rows | fzf \
@@ -62,7 +61,7 @@ help_menu() {
       --margin=0,4% \
       --border=rounded \
       --delimiter=$'\t' \
-      --with-nth=1,3 \
+      --with-nth=4 \
       --accept-nth=2 \
       --header='help — pick an action or config file · Enter runs/opens · Esc cancels' \
       --prompt='help> ' \
@@ -73,10 +72,6 @@ help_menu() {
 
   [ -n "$selection" ] || return 0
   _help_run_action "$selection"
-
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    zle reset-prompt
-  fi
 }
 
 help() {

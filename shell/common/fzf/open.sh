@@ -11,6 +11,8 @@ fzf_then_open_in_editor() {
 
   # shellcheck source=../fzf_prepare.sh disable=SC1091
   source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
+  # shellcheck source=../editor.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/editor.sh"
   _fzf_prepare_tty
 
   file="$(
@@ -29,9 +31,9 @@ fzf_then_open_in_editor() {
   )" </dev/tty || return
 
   [ -n "$file" ] || return
-  ${EDITOR:-nvim} "$file"
+  local editor
+  editor=$(_resolve_editor) || return 1
+  "$editor" "$file"
 
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    zle reset-prompt
-  fi
+  _zle_reset_prompt_if_active
 }

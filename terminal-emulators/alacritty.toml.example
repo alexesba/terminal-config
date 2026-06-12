@@ -63,37 +63,6 @@ family = "{{FONT_FAMILY}}"
 [font.bold_italic]
 family = "{{FONT_FAMILY}}"
 
-[[keyboard.bindings]]
-chars = "\u001Bj"
-key = "J"
-mods = "Alt"
-
-[[keyboard.bindings]]
-chars = "\u001Bk"
-key = "K"
-mods = "Alt"
-
-[[keyboard.bindings]]
-chars = "\u001Bl"
-key = "L"
-mods = "Alt"
-
-[[keyboard.bindings]]
-chars = "\u001Bf"
-key = "F"
-mods = "Alt"
-
-[[keyboard.bindings]]
-chars = "\u001Bn"
-key = "N"
-mods = "Alt"
-
-# Dotfiles — run at the shell prompt (macOS Option otherwise types special chars)
-[[keyboard.bindings]]
-key = "Slash"
-mods = "Alt"
-chars = "help\r"
-
 [general]
 live_config_reload = true
 working_directory = "None"

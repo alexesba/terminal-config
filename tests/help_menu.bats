@@ -9,7 +9,7 @@ load test_helper
   [[ "$output" == *$'Show key bindings\tbindings\t'* ]]
   [[ "$output" == *$'Color scheme\tcolorscheme\t'* ]]
   [[ "$output" == *$'Switch terminal\tuse-terminal\t'* ]]
-  [[ "$output" == *$'Edit · Shell env & theme\tedit:'"$TEST_HOME/.local.sh"* ]]
+  [[ "$output" == *$'Edit - Shell env & theme\tedit:'"$TEST_HOME/.local.sh"* ]]
 }
 
 @test "bindings_help documents help command" {

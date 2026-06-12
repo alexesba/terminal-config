@@ -1327,10 +1327,15 @@ term xterm-256color
 #: better off just hiding the titlebar with hide_window_decorations.
 
 
-# Option as Meta (ESC-prefix) breaks zsh/readline (^ [ h hang until Esc).
-# Dotfiles Alt+S / Alt+H use send_text maps below instead. Set to yes only if
-# you need Meta keys in neovim/tmux and accept the tradeoff (requires Kitty restart).
-macos_option_as_alt no
+# macos_option_as_alt no
+
+#: Use the option key as an alt key. With this set to no, kitty will
+#: use the macOS native Option+Key = unicode character behavior. This
+#: will break any Alt+key keyboard shortcuts in your terminal
+#: programs, but you can use the macOS unicode input technique. You
+#: can use the values: left, right, or both to use only the left,
+#: right or both Option keys as Alt, instead. Changing this setting by
+#: reloading the config is not supported.
 
 # macos_hide_from_tasks yes
 
@@ -1394,9 +1399,6 @@ macos_quit_when_last_window_closed yes
 #: }}}
 
 #: Keyboard shortcuts {{{
-
-# Dotfiles: Option+? opens the unified help menu at the shell prompt.
-map alt+slash send_text normal,application help\x0d
 
 #: Keys are identified simply by their lowercase unicode characters.
 #: For example: ``a`` for the A key, ``[`` for the left square bracket

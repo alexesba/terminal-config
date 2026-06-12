@@ -2,6 +2,10 @@
 #
 #   config          — config file picker (also in: help)
 #   config --help
+
+# shellcheck source=shell/common/editor.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/editor.sh"
+
 config() {
   case "${1:-}" in
     -h|--help|help)
@@ -21,7 +25,9 @@ EOF
 # Open a config path in \$EDITOR (shared by config_edit and help menu).
 config_open_file() {
   local path="$1"
-  local editor="${EDITOR:-${VISUAL:-nvim}}"
+  local editor
+
+  editor=$(_resolve_editor) || return 1
 
   case "$path" in
     "$HOME/.bash_aliases")
@@ -46,7 +52,7 @@ config_open_file() {
 }
 
 config_edit() {
-  local list_script selection preview_cmd editor
+  local list_script selection preview_cmd editor editor_name
 
   # shellcheck source=shell/common/fzf_prepare.sh disable=SC1091
   source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
@@ -58,7 +64,8 @@ config_edit() {
   }
 
   list_script="$DOTFILES_DIR/shell/common/config_list.sh"
-  editor="${EDITOR:-${VISUAL:-nvim}}"
+  editor=$(_resolve_editor) || return 1
+  editor_name="${editor##*/}"
 
   if command -v bat &>/dev/null; then
     preview_cmd='bat --style=numbers --color=always --paging=never --line-range 1:40 {} 2>/dev/null || head -40 {}'
@@ -75,9 +82,9 @@ config_edit() {
       --margin=0,4% \
       --border=rounded \
       --delimiter=$'\t' \
-      --with-nth=1,3 \
+      --with-nth=4 \
       --accept-nth=2 \
-      --header='Settings — pick a config file · Enter opens in '"$editor"' · Esc cancels' \
+      --header='Settings — pick a config file · Enter opens in '"$editor_name"' · Esc cancels' \
       --prompt='config> ' \
       --preview-window='right:55%:border-left' \
       --preview="$preview_cmd" \
@@ -86,8 +93,4 @@ config_edit() {
 
   [ -n "$selection" ] || return 0
   config_open_file "$selection"
-
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    zle reset-prompt
-  fi
 }

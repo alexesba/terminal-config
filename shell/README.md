@@ -67,8 +67,6 @@ Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on fi
 
 **Quick edit:** run **`help`** for a unified fzf menu — edit config files, show key bindings, pick a color scheme, or switch terminal. Shortcuts: `config`, `bindings`, `colorscheme`, `use-terminal`.
 
-Optional terminal maps (see `terminal-emulators/*.example`): Kitty **Alt+/** or Alacritty **Alt+/** runs `help`. Avoid Ctrl+S (flow control), Ctrl+H (backspace), and Ctrl+B (tmux prefix).
-
 ## Terminal detection & tmux theming (developers)
 
 Implementation overview, **`use-terminal` command reference**, and debugging checklist:
