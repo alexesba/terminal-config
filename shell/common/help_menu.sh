@@ -78,8 +78,8 @@ help() {
         return 0
         ;;
       *)
-        command help "$@"
-        return
+        builtin help "$@"
+        return $?
         ;;
     esac
   fi

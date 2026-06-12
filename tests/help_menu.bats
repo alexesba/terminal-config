@@ -47,5 +47,5 @@ load test_helper
     help read 2>&1 | head -n1
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == read* ]]
+  [[ "$output" =~ ^read: ]]
 }
