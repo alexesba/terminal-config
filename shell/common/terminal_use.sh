@@ -73,7 +73,12 @@ _use_terminal_activate() {
 
 # fzf menu: pick alacritty|kitty|wezterm or reset to install default.
 _use_terminal_menu() {
-  local default current selection list_script header lines
+  local default current selection list_script header lines prompt
+
+  # shellcheck source=fzf_prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  prompt=$(_fzf_icon_prompt terminal)
+
   list_script="$(_terminal_list_script)"
   default="$(_terminal_default)"
   default="${default:-wezterm}"
@@ -103,7 +108,7 @@ _use_terminal_menu() {
       --delimiter=$'\t' \
       --with-nth=1,2,3 \
       --accept-nth=4 \
-      --prompt=$'\033[1;36mterminal\033[0m> ' \
+      --prompt="$prompt" \
       --height=40% \
       --border=rounded \
       --border-label=$'\033[1;36m terminal \033[0m'

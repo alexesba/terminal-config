@@ -37,7 +37,11 @@ _help_run_action() {
 }
 
 help_menu() {
-  local list_script preview_script selection
+  local list_script preview_script selection prompt
+
+  # shellcheck source=shell/common/fzf_prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  prompt=$(_fzf_icon_prompt help)
 
   command -v fzf >/dev/null 2>&1 || {
     printf 'fzf not found — install via ./bootstrap.sh --fzf\n' >&2
@@ -56,11 +60,12 @@ help_menu() {
       --min-height=12 \
       --margin=0,4% \
       --border=rounded \
+      --border-label=$'\033[1;36m help \033[0m' \
       --delimiter=$'\t' \
       --with-nth=4 \
       --accept-nth=2 \
       --header='help — pick an action or config file · Enter runs/opens · Esc cancels' \
-      --prompt='help> ' \
+      --prompt="$prompt" \
       --preview-window='right:55%:border-left' \
       --preview="bash '$preview_script' {2} {3}" \
       --bind='ctrl-/:toggle-preview'
