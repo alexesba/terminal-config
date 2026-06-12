@@ -205,6 +205,13 @@ _tmux_sync_session_terminal() {
   if [ -n "${DOTFILES_DIR:-}" ] && [ -f "$DOTFILES_DIR/shell/common/gogh/persist.sh" ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$TERMINAL" 2>/dev/null || true
   fi
+  case "${TERMINAL:-}" in
+    kitty|alacritty)
+      [ -n "${DOTFILES_DIR:-}" ] || return 0
+      GOGH_TMUX_SESSION="$session" bash "$DOTFILES_DIR/shell/common/gogh/reload_${TERMINAL}.sh" \
+        2>/dev/null || true
+      ;;
+  esac
 }
 
 function tmux-start {

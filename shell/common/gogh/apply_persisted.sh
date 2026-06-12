@@ -31,6 +31,65 @@ _normalize_session_terminal() {
   return 1
 }
 
+_hook_process_comm() {
+  ps -o comm= -p "$1" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+_hook_parent_pid() {
+  ps -o ppid= -p "$1" 2>/dev/null | awk 'NF { print $1; exit }'
+}
+
+_hook_normalize_name() {
+  local base="${1##*/}"
+  base="${base%.app}"
+  printf '%s' "$base" | tr '[:upper:]' '[:lower:]'
+}
+
+_hook_from_pid() {
+  local pid="$1" ppid comm base
+  [ -n "$pid" ] || return 1
+  while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
+    comm="$(_hook_process_comm "$pid")" || break
+    [ -n "$comm" ] || break
+    base="$(_hook_normalize_name "$comm")"
+    case "$base" in
+      alacritty|kitty|wezterm)
+        printf '%s\n' "$base"
+        return 0
+        ;;
+    esac
+    ppid="$(_hook_parent_pid "$pid")" || break
+    [ -z "$ppid" ] || [ "$ppid" = "$pid" ] && break
+    pid="$ppid"
+  done
+  return 1
+}
+
+# Outer emulator hosting this tmux client (works in run-shell hooks without TMUX).
+_hook_hosting_terminal() {
+  command -v tmux >/dev/null 2>&1 || return 1
+
+  local client_pid detected
+  client_pid="$(tmux display-message -p '#{client_pid}' 2>/dev/null)"
+  if [ -n "$client_pid" ]; then
+    detected="$(_hook_from_pid "$client_pid" 2>/dev/null || true)"
+    if [ -n "$detected" ]; then
+      printf '%s\n' "$detected"
+      return 0
+    fi
+  fi
+
+  while IFS= read -r client_pid; do
+    [ -n "$client_pid" ] || continue
+    detected="$(_hook_from_pid "$client_pid" 2>/dev/null || true)"
+    if [ -n "$detected" ]; then
+      printf '%s\n' "$detected"
+      return 0
+    fi
+  done < <(tmux list-clients -F '#{client_pid}' 2>/dev/null)
+  return 1
+}
+
 _tmux_session_terminal() {
   command -v tmux >/dev/null 2>&1 || return 1
   local session term
@@ -66,16 +125,18 @@ _persisted_terminal() {
 }
 
 _wezterm_target() {
-  # Respect use-terminal / colorscheme target: do not fall through to ~/.local.sh
-  # (often wezterm) and trigger WezTerm OSC inside tmux when targeting alacritty.
-  local term
+  # Never apply WezTerm OSC when the outer terminal is kitty or alacritty, even if
+  # ~/.local.sh / gogh state still say wezterm (common with tmux hooks).
+  local term hosting
+  hosting="$(_hook_hosting_terminal 2>/dev/null || true)"
+  hosting="$(_normalize_session_terminal "$hosting" 2>/dev/null || true)"
+  case "$hosting" in
+    alacritty|kitty) return 1 ;;
+    wezterm) return 0 ;;
+  esac
+
   term="$(_persisted_terminal || true)"
-  if [ -n "$term" ]; then
-    [ "$term" = wezterm ]
-    return
-  fi
-  local local_sh="${HOME:-}/.local.sh"
-  [ -f "$local_sh" ] && grep -qE '^[[:space:]]*export TERMINAL=(wezterm|"wezterm")' "$local_sh"
+  [ "$term" = wezterm ]
 }
 
 _load_persisted_theme() {
