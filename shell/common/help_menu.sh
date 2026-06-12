@@ -39,10 +39,6 @@ _help_run_action() {
 help_menu() {
   local list_script preview_script selection
 
-  # shellcheck source=shell/common/fzf_prepare.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
-  _fzf_prepare_tty
-
   command -v fzf >/dev/null 2>&1 || {
     printf 'fzf not found — install via ./bootstrap.sh --fzf\n' >&2
     printf 'Try: config · bindings · colorscheme · use-terminal\n' >&2

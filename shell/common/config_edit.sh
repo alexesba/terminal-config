@@ -48,10 +48,6 @@ config_open_file() {
 config_edit() {
   local list_script selection preview_cmd editor editor_name
 
-  # shellcheck source=shell/common/fzf_prepare.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
-  _fzf_prepare_tty
-
   command -v fzf >/dev/null 2>&1 || {
     printf 'fzf not found — install via ./bootstrap.sh --fzf\n' >&2
     return 1

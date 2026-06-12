@@ -9,11 +9,11 @@ fzf_then_open_in_editor() {
     preview_cmd='head -60 {} </dev/null'
   fi
 
-  # shellcheck source=../fzf_prepare.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
-  # shellcheck source=../editor.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/editor.sh"
-  _fzf_prepare_tty
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    emulate -L zsh
+    setopt localoptions pipefail 2>/dev/null
+    zle -I
+  fi
 
   file="$(
     FZF_DEFAULT_OPTS= eval "${FZF_DEFAULT_COMMAND:-find . -type f}" | fzf \
@@ -31,8 +31,9 @@ fzf_then_open_in_editor() {
   )" </dev/tty || return
 
   [ -n "$file" ] || return
-  # After fzf returns — $EDITOR must be a real binary (nvim), not alias vim=nvim.
   "${EDITOR:-nvim}" "$file"
 
-  _zle_reset_prompt_if_active
+  if [[ -n "${ZSH_VERSION:-}" && -n "${WIDGET:-}" ]]; then
+    zle reset-prompt
+  fi
 }
