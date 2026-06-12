@@ -77,10 +77,13 @@ function colorscheme() {
     --preview-window='up:50%:border-bottom:wrap') || return
 
   [ -z "$selection" ] && return
+  local apply_persisted_script="$DOTFILES_DIR/shell/common/gogh/apply_persisted.sh"
   sh "$gogh_dir/$selection"
   # Persist the choice so it survives new terminal windows (e.g. WezTerm, which
   # gogh otherwise only themes for the current session).
   [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
+  # WezTerm OSC is per-pane; sync every pane in this tmux session after a pick.
+  [ -f "$apply_persisted_script" ] && bash "$apply_persisted_script" --session
 }
 
 color_scheme() { colorscheme "$@"; }
