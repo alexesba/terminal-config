@@ -21,8 +21,10 @@ shell/
 │   ├── config_list.sh    # rows for config picker
 │   ├── help_menu.sh      # help — unified fzf menu (configs, bindings, colorscheme, …)
 │   ├── help_list.sh      # rows for help menu
-│   ├── bindings_menu.sh  # bindings — key binding reference only
-│   ├── bindings_help.sh  # binding list text for bindings menu
+│   ├── bindings_menu.sh  # bindings — show bindings.md via bat
+│   ├── bindings_help.sh  # prints bindings.md (for scripts/tests)
+│   ├── bindings.md       # key binding reference (source of truth)
+│   ├── display.sh        # top-aligned markdown display (bindings)
 │   ├── nvmrc.sh          # load-nvmrc() body
 │   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
 │   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL

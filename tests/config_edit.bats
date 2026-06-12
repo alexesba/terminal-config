@@ -27,10 +27,10 @@ load test_helper
 }
 
 @test "bindings_help lists help and file finder shortcuts" {
-  run bash "$REPO_ROOT/shell/common/bindings_help.sh" list
+  run bash "$REPO_ROOT/shell/common/bindings_help.sh"
   [ "$status" -eq 0 ]
-  [[ "$output" == *'help	Unified menu'* ]]
-  [[ "$output" == *'not used'* ]]
+  [[ "$output" == *'`help`'* ]]
+  [[ "$output" == *'Not used'* ]]
   [[ "$output" == *'Ctrl+O'* ]]
   [[ "$output" == *'Ctrl+T'* ]]
 }

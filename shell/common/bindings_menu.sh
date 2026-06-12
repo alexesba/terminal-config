@@ -1,6 +1,6 @@
-# Show terminal-config key bindings in an fzf read-only list.
+# Show terminal-config key bindings (shell/common/bindings.md via bat).
 #
-#   bindings          — fzf menu (Alt+H)
+#   bindings          — display bindings reference
 #   bindings --help
 bindings() {
   case "${1:-}" in
@@ -8,7 +8,7 @@ bindings() {
       cat <<EOF
 Usage: bindings
 
-  bindings    List keyboard shortcuts for this dotfiles setup
+  bindings    Show keyboard shortcuts for this dotfiles setup
 
 See also: help (unified menu)
 EOF
@@ -19,35 +19,9 @@ EOF
 }
 
 show_bindings() {
-  local help_script
+  local bindings_md="$DOTFILES_DIR/shell/common/bindings.md"
 
-  # shellcheck source=shell/common/fzf_prepare.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
-  _fzf_prepare_tty
-
-  command -v fzf >/dev/null 2>&1 || {
-    bash "$DOTFILES_DIR/shell/common/bindings_help.sh" list
-    return 0
-  }
-
-  help_script="$DOTFILES_DIR/shell/common/bindings_help.sh"
-
-  bash "$help_script" list | fzf \
-    --ansi \
-    --layout=reverse \
-    --height=85% \
-    --min-height=12 \
-    --margin=0,4% \
-    --border=rounded \
-    --delimiter=$'\t' \
-    --with-nth=1,2 \
-    --header='Key bindings · Enter/Esc to close · Or run: help · bindings' \
-    --prompt='bindings> ' \
-    --bind='enter:accept' \
-    --bind='double-click:accept' \
-    </dev/tty >/dev/null || true
-
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    zle reset-prompt
-  fi
+  # shellcheck source=shell/common/display.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/display.sh"
+  _show_markdown_top_center "$bindings_md"
 }
