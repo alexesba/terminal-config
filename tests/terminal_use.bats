@@ -183,6 +183,7 @@ EOF
   cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
 name=Test
 file=theme.sh
+terminal=kitty
 EOF
   cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
 #!/usr/bin/env bash

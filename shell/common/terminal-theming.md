@@ -35,7 +35,7 @@ sync_terminal_to_host()      ← export TERMINAL; tmux set-environment TERMINAL
        └── tmux hooks (apply_persisted) → WezTerm OSC only if host is WezTerm
 ```
 
-**Persistence:** `~/.local/state/gogh/current` holds `name=`, `file=`, `terminal=` (last theme + which emulator it was applied for). **`terminal=` in state is not trusted alone for tmux hooks** — the outer host wins.
+**Persistence:** `~/.local/state/gogh/` holds one flat file per emulator (`alacritty`, `kitty`, `wezterm`, each with `name=` / `file=`) plus `last_active`. Legacy `current` (flat or JSON) is migrated on first use. **`last_active` is not trusted alone for tmux hooks** — the outer host wins.
 
 ---
 

@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Detect the active Gogh theme. Prints: DISPLAY_NAME<TAB>theme.sh
+# Detect the active Gogh theme for the hosting terminal. Prints: DISPLAY_NAME<TAB>theme.sh
 #
-# Usage: current.sh [gogh_installs_dir]
+# Usage: current.sh [gogh_installs_dir] [terminal]
+#        TERMINAL env is used when terminal arg is omitted.
 
 gogh_dir="${1:-${GOGH_DIR:-$HOME/src/gogh}/installs}"
-state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
+term="${2:-${TERMINAL:-}}"
+
+_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=state.sh disable=SC1091
+source "$_dir/state.sh"
 
 name=""
 file=""
@@ -25,23 +30,64 @@ file_from_profile_name() {
   return 1
 }
 
-if [ -f "$state" ]; then
-  name=$(sed -n 's/^name=//p' "$state" | head -n1)
-  file=$(sed -n 's/^file=//p' "$state" | head -n1)
-fi
-
-if [ -z "$file" ]; then
-  wezterm_colors="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}/colors.lua"
-  if [ -f "$wezterm_colors" ]; then
-    file=$(sed -n 's/^-- Source theme: //p' "$wezterm_colors" | head -n1)
+# Read persisted JSON state for the requested terminal.
+read_state_for_terminal() {
+  local t="$1" line
+  line="$(gogh_state_theme_for_terminal "$t")"
+  name="${line%%$'\t'*}"
+  file="${line#*$'\t'}"
+  if [ -n "$name" ] && [ -z "$file" ]; then
+    file=$(file_from_profile_name "$name" || true)
   fi
-fi
+}
 
-if [ -z "$name" ]; then
-  kitty_colors="${KITTY_CONFIG_DIRECTORY:-$HOME/.config/kitty}/colors.conf"
-  if [ -f "$kitty_colors" ]; then
-    name=$(sed -n 's/^# Color theme: //p' "$kitty_colors" | head -n1)
-    [ -z "$file" ] && [ -n "$name" ] && file=$(file_from_profile_name "$name" || true)
+# Fallback: read theme markers from emulator config files.
+read_config_for_terminal() {
+  local t="$1"
+  case "$t" in
+    wezterm)
+      local wezterm_colors="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}/colors.lua"
+      if [ -f "$wezterm_colors" ]; then
+        file=$(sed -n 's/^-- Source theme: //p' "$wezterm_colors" | head -n1)
+      fi
+      ;;
+    kitty)
+      local kitty_colors="${KITTY_CONFIG_DIRECTORY:-$HOME/.config/kitty}/colors.conf"
+      if [ -f "$kitty_colors" ]; then
+        name=$(sed -n 's/^# Color theme: //p' "$kitty_colors" | head -n1)
+        [ -z "$file" ] && [ -n "$name" ] && file=$(file_from_profile_name "$name" || true)
+      fi
+      ;;
+    alacritty)
+      # Alacritty has no Gogh theme marker in config; JSON state is the source of truth.
+      :
+      ;;
+  esac
+}
+
+if [ -n "$term" ]; then
+  read_state_for_terminal "$term"
+  if [ -z "$file" ] && [ -z "$name" ]; then
+    read_config_for_terminal "$term"
+  fi
+else
+  # No terminal specified: prefer last_active, then any stored terminal, then config fallbacks.
+  gogh_state_migrate_legacy
+  term="$(gogh_state_last_active)"
+  if [ -n "$term" ]; then
+    read_state_for_terminal "$term"
+  fi
+  if [ -z "$file" ] && [ -z "$name" ]; then
+    for t in wezterm kitty alacritty; do
+      read_state_for_terminal "$t"
+      [ -n "$file" ] || [ -n "$name" ] && break
+    done
+  fi
+  if [ -z "$file" ] && [ -z "$name" ]; then
+    for t in wezterm kitty; do
+      read_config_for_terminal "$t"
+      [ -n "$file" ] || [ -n "$name" ] && break
+    done
   fi
 fi
 

@@ -30,10 +30,12 @@ fi
 [ -n "$term" ] || exit 0
 is_colorscheme_terminal "$term" || exit 0
 
-state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
-[ -f "$state" ] || exit 0
+_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=state.sh disable=SC1091
+source "$_dir/state.sh"
 
-file="$(sed -n 's/^file=//p' "$state" | head -n1)"
+theme_line="$(gogh_state_theme_for_terminal "$term")"
+file="${theme_line#*$'\t'}"
 [ -n "$file" ] || exit 0
 
 gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
