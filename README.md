@@ -6,7 +6,7 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 
 **Get started** — [Requirements](#requirements) · [Install](#install) · [Update](#update) · [Uninstall](#uninstall)
 
-**Use it** — [Themes](#themes) · [Color schemes](#color-schemes) · [Customization](#customization) · [Fonts](#fonts)
+**Use it** — [Commands](#commands) · [Themes](#themes) · [Color schemes](#color-schemes) · [Customization](#customization) · [Fonts](#fonts)
 
 **More** — [What's included](#whats-included) · [Tools](#tools-installed-by-bootstrap) · [Cross-platform](#cross-platform-notes) · [Tests](#tests) · [Credits](#credits--acknowledgments)
 
@@ -72,6 +72,46 @@ Does **not** delete the repo, `~/.local.sh`, or other tools installed by `bootst
 
 ---
 
+## Commands
+
+After `./install.sh` links your shell RC, these functions load from `rc.sh`. Interactive pickers need **fzf** (installed via `./bootstrap.sh --fzf` or during install).
+
+| Command | What it does |
+|---|---|
+| `help` | Unified fzf menu — edit configs, show bindings, run `colorscheme`, or `use-terminal` |
+| `config` | fzf picker for local dotfiles only (`~/.local.sh`, `~/.tmux.conf`, terminal configs, Gogh color files, …) |
+| `bindings` | Show keyboard shortcuts (`shell/common/bindings.md`) |
+| `colorscheme` | Fuzzy-pick and apply a [Gogh](https://github.com/Gogh-Co/Gogh) theme — see [Color schemes](#color-schemes) |
+| `use-terminal` | Point `colorscheme` at another installed emulator for this shell (or auto-detect the hosting window) |
+| `reload` | Re-source `~/.zshrc` or `~/.bashrc` to pick up config changes |
+
+**tmux session helpers** (from `lib/tmux_sessions.sh`):
+
+| Command | What it does |
+|---|---|
+| `tmux-start [dir]` | Create or attach to a session named after the directory |
+| `tmux-list` | List sessions with attached/detached status |
+| `tmux-switch` | fzf picker to switch sessions |
+
+Common subcommands:
+
+```bash
+help --help              # usage
+config --help
+bindings --help
+colorscheme update       # git pull Gogh themes
+use-terminal status      # current TERMINAL vs install default
+use-terminal detect      # auto-detect hosting emulator
+use-terminal reset       # restore TERMINAL from ~/.local.sh
+use-terminal kitty apply # switch target and re-apply saved theme
+```
+
+In **bash**, `help CMD` still runs the shell builtin; use `help` with no arguments for the dotfiles menu.
+
+Without fzf, `help` and `config` print install hints — use the direct commands (`bindings`, `colorscheme`, `use-terminal`) instead.
+
+---
+
 ## Themes
 
 Set `ZSH_THEME` in `~/.local.sh` (the variable is honored by both shells):
@@ -100,7 +140,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. Scrolling the list does n
 
 Themes target the terminal emulator you're running in (Alacritty, Kitty, or WezTerm — chosen at install). New windows and tabs keep the theme after you pick one. If Alacritty theming fails, run `pip install --user -r ~/src/gogh/requirements.txt` (or re-run `./install.sh` / `./bootstrap.sh --gogh`).
 
-If a theme applies to the wrong app, run `use-terminal` or `use-terminal status`. Full command reference: `use-terminal --help`.
+If a theme applies to the wrong app, run `use-terminal status` or `use-terminal detect`. See [Commands](#commands) for the full list.
 
 Optional in `~/.local.sh`: `GOGH_DIR` (Gogh checkout, default `~/src/gogh`). Install Gogh via `./bootstrap.sh --gogh` or during `./install.sh`.
 
@@ -169,7 +209,9 @@ On WSL, install fonts on the Windows side for GUI terminals.
 | **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` (no auto-restore on startup; closing all sessions clears the save) |
 | **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
 | **Color schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
+| **Dotfiles menus** | `help`, `config`, `bindings` — fzf menus to run actions or edit local configs |
 | **Terminal switch** | `use-terminal` — fzf menu to target `colorscheme` at another installed emulator for this shell |
+| **tmux helpers** | `tmux-start`, `tmux-list`, `tmux-switch` — session create/list/switch |
 | **WSL support** | Clipboard, `open` alias, package manager detection |
 
 ---
