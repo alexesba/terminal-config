@@ -4,6 +4,12 @@
 
 Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sensible aliases, and one-command setup on macOS, Linux, and WSL.
 
+**Get started** — [Requirements](#requirements) · [Install](#install) · [Update](#update) · [Uninstall](#uninstall)
+
+**Use it** — [Themes](#themes) · [Color schemes](#color-schemes) · [Customization](#customization) · [Fonts](#fonts)
+
+**More** — [What's included](#whats-included) · [Tools](#tools-installed-by-bootstrap) · [Cross-platform](#cross-platform-notes) · [Tests](#tests) · [Credits](#credits--acknowledgments)
+
 ---
 
 ## What's included
