@@ -24,20 +24,66 @@ local config = {
   })
 }
 
--- Persisted gogh theme written by the `colorscheme` shell function. Loaded by
--- absolute path (config dir) rather than require(), so it resolves correctly
--- even though this file is symlinked from the dotfiles repo. Registered on the
--- reload watch list so picking a scheme updates open windows too.
+-- Persisted Gogh theme from `colorscheme` → ~/.config/wezterm/colors.lua.
+-- Config reload (watch list) updates every pane — parent shell, tmux, splits,
+-- and window padding — without per-pane OSC escape sequences.
 local colors_path = wezterm.config_dir .. '/colors.lua'
 wezterm.add_to_config_reload_watch_list(colors_path)
-local f = io.open(colors_path, 'r')
-if f then
-  f:close()
-  local ok, colors = pcall(dofile, colors_path)
-  if ok and type(colors) == 'table' then
-    config.colors = colors
-    config.color_scheme = nil
-  end
+
+local function gogh_background_layer(color)
+  return {
+    {
+      source = { Color = color },
+      width = '100%',
+      height = '100%',
+    },
+  }
 end
+
+local function load_gogh_theme()
+  local f = io.open(colors_path, 'r')
+  if not f then
+    return nil, nil
+  end
+  f:close()
+  local ok, data = pcall(dofile, colors_path)
+  if not ok or type(data) ~= 'table' or not data.foreground then
+    return nil, nil
+  end
+  local scheme_name = data.scheme_name
+  if type(scheme_name) ~= 'string' or scheme_name == '' then
+    scheme_name = 'Sonokai (Gogh)'
+  end
+  local colors = {
+    foreground = data.foreground,
+    background = data.background,
+    ansi = data.ansi,
+    brights = data.brights,
+  }
+  if data.cursor_bg then
+    colors.cursor_bg = data.cursor_bg
+    colors.cursor_border = data.cursor_border
+  end
+  return scheme_name, colors
+end
+
+local scheme_name, colors = load_gogh_theme()
+if colors then
+  config.color_schemes = {
+    [scheme_name] = colors,
+  }
+  config.color_scheme = scheme_name
+  config.background = gogh_background_layer(colors.background)
+end
+
+wezterm.on('window-config-reloaded', function(window)
+  local effective = window:effective_config()
+  local bg = effective.colors and effective.colors.background
+  if bg then
+    window:set_config_overrides({
+      background = gogh_background_layer(bg),
+    })
+  end
+end)
 
 return config

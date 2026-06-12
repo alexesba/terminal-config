@@ -29,15 +29,14 @@ shell/
 │   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
 │   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL
 │   ├── terminal_list.sh  # rows / fzf formatting for use-terminal
-│   ├── terminal-theming.md  # architecture: detection order, tmux hooks, why bash
+│   ├── terminal-theming.md  # architecture: detection, theming, why bash
 │   └── gogh/
 │       ├── colorscheme.sh
-│       ├── apply_persisted.sh   # WezTerm tmux hook; installed as ~/.tmux/apply-gogh-theme.sh
 │       ├── apply_saved.sh       # re-apply saved theme for current TERMINAL
-│       ├── clear_tmux_pane_colors.sh  # strip tmux per-pane OSC palette overrides
+│       ├── clear_tmux_pane_colors.sh  # strip tmux per-pane OSC (kitty/alacritty)
 │       ├── deps.sh              # Gogh Python deps (Alacritty theming)
 │       ├── preview.sh
-│       ├── persist.sh
+│       ├── persist.sh           # theme state + colors.lua for WezTerm
 │       ├── reload_kitty.sh      # clear pane OSC + SIGUSR1 Kitty
 │       └── reload_alacritty.sh  # clear pane OSC + touch alacritty.toml
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)

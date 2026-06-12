@@ -87,14 +87,11 @@ function colorscheme() {
       return 1
     fi
   fi
-  local apply_persisted_script="$DOTFILES_DIR/shell/common/gogh/apply_persisted.sh"
-  sh "$gogh_dir/$selection"
-  # Persist the choice so it survives new terminal windows (e.g. WezTerm, which
-  # gogh otherwise only themes for the current session).
+  # Kitty/Alacritty: Gogh writes config files. WezTerm: persist + config reload only.
+  if [ "${TERMINAL:-}" != wezterm ]; then
+    sh "$gogh_dir/$selection"
+  fi
   [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
-  # WezTerm OSC is per-pane; sync every tmux pane (no-op for kitty/alacritty).
-  [ -f "$apply_persisted_script" ] && bash "$apply_persisted_script" --session
-  # File-based terminals: clear stale tmux OSC overrides and reload the outer emulator.
   if [ "${TERMINAL:-}" = alacritty ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
   elif [ "${TERMINAL:-}" = kitty ]; then

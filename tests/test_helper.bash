@@ -8,6 +8,7 @@ setup() {
   mkdir -p "$TEST_HOME"
   export HOME="$TEST_HOME"
   export REPO_ROOT="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
+  export DOTFILES_DIR="$REPO_ROOT"
   # shellcheck source=../lib/helpers.sh disable=SC1091
   source "$REPO_ROOT/lib/helpers.sh"
   # shellcheck source=../lib/fonts.sh disable=SC1091

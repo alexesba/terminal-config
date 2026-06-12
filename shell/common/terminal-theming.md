@@ -11,11 +11,11 @@ are in the script sources (`terminal_detect.sh`, `terminal_use.sh`, `gogh/*`, et
 | Emulator | How Gogh applies a theme | Inside tmux |
 |---|---|---|
 | **Kitty / Alacritty** | Writes config files (`colors.conf`, `alacritty.toml`) | Panes inherit the outer terminal's palette — **no per-pane config** |
-| **WezTerm** | OSC escape sequences (live, per-pane) | New panes do not read `colors.lua`; tmux 3.6+ hooks re-send OSC to each `#{pane_tty}` |
+| **WezTerm** | Writes `~/.config/wezterm/colors.lua` (includes `scheme_name`); `wezterm.lua` sets `color_scheme` from that name | Panes inherit the outer palette on config reload — **same as Kitty/Alacritty** |
 
 `~/.local.sh` stores an **install default** (`TERMINAL=wezterm`). That is not always the emulator hosting the current window (e.g. Alacritty tab with default still `wezterm`). Auto-detect sets **`TERMINAL` for this shell/session** so `colorscheme` targets the right app.
 
-**Failure mode we hit:** tmux hooks (`~/.tmux/apply-gogh-theme.sh`) ran in Kitty/Alacritty and applied **WezTerm OSC** to panes because `~/.local.sh` or gogh state said `wezterm`. Panes then looked like a wrong/brown palette until OSC overrides were cleared.
+**Historical failure mode:** WezTerm used Gogh OSC (dynamic escape sequences) plus tmux hooks. That split palette state between config reload (background/margins) and per-pane OSC (foreground/ANSI), causing mismatches after tmux exit and on new splits. We now use **config-only** theming for WezTerm.
 
 ---
 
@@ -30,12 +30,12 @@ detect_terminal_emulator()   ← outer emulator (env, client walk, …)
        ▼
 sync_terminal_to_host()      ← export TERMINAL; tmux set-environment TERMINAL
        │
-       ├── colorscheme / apply_saved  → Gogh → config file or OSC
-       │
-       └── tmux hooks (apply_persisted) → WezTerm OSC only if host is WezTerm
+       └── colorscheme / apply_saved
+              ├── kitty/alacritty → Gogh writes config → reload_*.sh
+              └── wezterm → persist.sh → colors.lua (scheme_name + palette)
 ```
 
-**Persistence:** `~/.local/state/gogh/` holds one flat file per emulator (`alacritty`, `kitty`, `wezterm`, each with `name=` / `file=`) plus `last_active`. Legacy `current` (flat or JSON) is migrated on first use. **`last_active` is not trusted alone for tmux hooks** — the outer host wins.
+**Persistence:** `~/.local/state/gogh/` holds one flat file per emulator (`alacritty`, `kitty`, `wezterm`, each with `name=` / `file=`) plus `last_active`. Legacy `current` (flat or JSON) is migrated on first use.
 
 ---
 
@@ -45,14 +45,25 @@ sync_terminal_to_host()      ← export TERMINAL; tmux set-environment TERMINAL
 |---|---|
 | `terminal_detect.sh` | Detect hosting emulator (`alacritty` / `kitty` / `wezterm`) |
 | `terminal_use.sh` | `use-terminal` command; `sync_terminal_to_host`; auto-sync on shell start |
-| `gogh/apply_persisted.sh` | Installed as `~/.tmux/apply-gogh-theme.sh` — **WezTerm-only** tmux hooks |
-| `gogh/clear_tmux_pane_colors.sh` | Strip tmux 3.6+ per-pane OSC palette (OSC 104/110/111) |
-| `gogh/reload_kitty.sh` | Clear pane OSC, then `SIGUSR1` Kitty |
-| `gogh/reload_alacritty.sh` | Clear pane OSC, then `touch` alacritty.toml |
+| `gogh/persist.sh` | Write theme state + `colors.lua` for WezTerm |
+| `gogh/reload_kitty.sh` | Clear tmux pane OSC, then `SIGUSR1` Kitty |
+| `gogh/reload_alacritty.sh` | Clear tmux pane OSC, then `touch` alacritty.toml |
+| `gogh/clear_tmux_pane_colors.sh` | Strip stale per-pane OSC from tmux (kitty/alacritty reload only) |
+| `terminal-emulators/wezterm.lua.example` | Loads `colors.lua`; `color_scheme` = `scheme_name` from file |
 | `lib/tmux_sessions.sh` | `tmux-start` → sync TERMINAL + reload file-based emulator |
-| `tmux.conf.example` | `update-environment "TERMINAL"`; WezTerm-only gogh hooks |
+| `tmux.conf.example` | `update-environment "TERMINAL"` — no WezTerm colour hooks |
 
 Scripts are invoked as `bash path/to/script.sh` so they always run under **bash** even when the interactive shell is **zsh** (see [Why bash?](#why-bash)).
+
+---
+
+## WezTerm config-only theming
+
+1. **`colorscheme`** skips `sh theme.sh` when `TERMINAL=wezterm` (no Gogh OSC).
+2. **`persist.sh`** parses the Gogh theme file and writes `~/.config/wezterm/colors.lua` with `scheme_name` (from Gogh `PROFILE_NAME`) and the palette.
+3. **`wezterm.lua`** registers `colors.lua` on the watch list, reads `scheme_name`, and sets `config.color_scheme`. Window padding uses matching `config.background`.
+
+Config reload updates **all panes** (parent shell, tmux panes, new splits, margins) from one palette. fzf **preview** still uses OSC in an isolated preview subprocess.
 
 ---
 
@@ -129,33 +140,15 @@ Runs at source time and again on **first prompt** (`precmd` / `PROMPT_COMMAND`) 
 
 ---
 
-## `gogh/apply_persisted.sh` (tmux hook)
-
-Installed to `~/.tmux/apply-gogh-theme.sh`. Called from `tmux.conf.example` on new pane/window/session (200 ms delay).
-
-### `_wezterm_target`
-
-Returns success **only** when WezTerm OSC should be sent.
-
-1. **`_hook_hosting_terminal`** — client process walk (same idea as `terminal_detect`; duplicated here so the installed copy is self-contained without `DOTFILES_DIR`).
-2. If hosting is `alacritty` or `kitty` → **stop** (no OSC).
-3. Else consult **`_persisted_terminal`** (env → session `TERMINAL` → gogh state `terminal=`).
-
-We **removed** falling through to `~/.local.sh` grep for `wezterm` — that re-applied WezTerm themes inside Kitty/Alacritty when session env was unset.
-
-### `_apply_to_tty`
-
-Sends Gogh theme OSC to a pane TTY. Only runs when `_wezterm_target` succeeded.
-
----
-
 ## `gogh/clear_tmux_pane_colors.sh`
 
-tmux 3.6+ can store **per-pane** palette overrides via OSC 10/11/4. WezTerm hooks set those; they **stick** on Kitty/Alacritty until cleared.
+tmux 3.6+ can store **per-pane** palette overrides via OSC 10/11/4 (e.g. from fzf preview or legacy setups). Clearing before kitty/alacritty config reload avoids panes keeping stale OSC colours.
 
 **`_clear_one`:** sends OSC 104 (reset color table), 110/111 (foreground/background default), and `tmux select-pane -P default`.
 
-**Named session:** `clear_tmux_pane_colors.sh --session <name>` or `GOGH_TMUX_SESSION=<name>` — required for `tmux-start` which runs **outside** tmux (no `$TMUX`), so `--session` alone without a name was a no-op before we added this.
+**Named session:** `clear_tmux_pane_colors.sh --session <name>` or `GOGH_TMUX_SESSION=<name>` — required for `tmux-start` which runs **outside** tmux (no `$TMUX`).
+
+Used by **`reload_kitty.sh`** and **`reload_alacritty.sh`** only — not WezTerm.
 
 ---
 
@@ -165,9 +158,7 @@ Before attach:
 
 1. `sync_terminal_to_host` (from outer Kitty/Alacritty shell)
 2. `tmux set-environment -t <session> TERMINAL …`
-3. For **kitty/alacritty**: `reload_*.sh` with `GOGH_TMUX_SESSION` — clear stale WezTerm OSC on all panes and reload config
-
-Without step 3, attaching to an **existing** session kept old OSC colors on panes even after TERMINAL was fixed.
+3. For **kitty/alacritty**: `reload_*.sh` with `GOGH_TMUX_SESSION` — clear stale OSC on all panes and reload config
 
 ---
 
@@ -206,8 +197,13 @@ echo "TERMINAL=$TERMINAL  TMUX=$TMUX"
 tmux show-environment -s TERMINAL
 ```
 
-If colors are wrong in Kitty/Alacritty only inside tmux:
+If WezTerm colours look wrong:
 
-1. Run `./update.sh` (refresh `~/.tmux/apply-gogh-theme.sh`)
-2. `tmux-start` or `GOGH_TMUX_SESSION=<name> bash …/reload_kitty.sh`
-3. Confirm `update-environment "TERMINAL"` is in `~/.tmux.conf`
+1. Confirm `~/.config/wezterm/wezterm.lua` reads `scheme_name` from `colors.lua` (merge from `wezterm.lua.example` if needed).
+2. Run `colorscheme` once, or `touch ~/.config/wezterm/colors.lua`, or Ctrl+Shift+R in WezTerm.
+3. Remove legacy `~/.tmux/apply-gogh-theme.sh` hooks from `~/.tmux.conf` if still present.
+
+If colours are wrong in Kitty/Alacritty only inside tmux:
+
+1. `tmux-start` or `GOGH_TMUX_SESSION=<name> bash …/reload_kitty.sh`
+2. Confirm `update-environment "TERMINAL"` is in `~/.tmux.conf`
