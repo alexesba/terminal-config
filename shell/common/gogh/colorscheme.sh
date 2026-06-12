@@ -49,7 +49,7 @@ function colorscheme() {
   local list_script="$DOTFILES_DIR/shell/common/gogh/list.sh"
 
   local current_line current_name current_file fzf_header theme_path
-  current_line=$(bash "$current_script" "$gogh_dir" 2>/dev/null || true)
+  current_line=$(bash "$current_script" "$gogh_dir" "${TERMINAL:-}" 2>/dev/null || true)
   current_name="${current_line%%$'\t'*}"
   current_file="${current_line#*$'\t'}"
   theme_path="$gogh_dir/$current_file"

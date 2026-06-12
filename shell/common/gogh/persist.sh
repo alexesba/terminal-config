@@ -2,32 +2,16 @@
 # Persist a gogh theme so it survives new terminal windows / restarts.
 #
 # Usage: persist.sh /path/to/theme.sh <terminal>
-#        persist.sh --terminal <name>   # update terminal= only (sync / tmux-start)
+#        persist.sh --terminal <name>   # update last_active only (sync / tmux-start)
 set -u
 
-# Update terminal= in state without re-running a theme (sync_terminal_to_host / tmux-start).
-record_gogh_terminal() {
-  local term="${1:-}"
-  [ -n "$term" ] || return 0
-  local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/gogh"
-  local current="${state_dir}/current"
-  mkdir -p "$state_dir"
-  if [ ! -f "$current" ]; then
-    printf 'terminal=%s\n' "$term" >"$current"
-    return 0
-  fi
-  if grep -q '^terminal=' "$current"; then
-    grep -v '^terminal=' "$current" >"${current}.tmp"
-    printf 'terminal=%s\n' "$term" >>"${current}.tmp"
-    mv "${current}.tmp" "$current"
-  else
-    printf 'terminal=%s\n' "$term" >>"$current"
-  fi
-}
+_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=state.sh disable=SC1091
+source "$_dir/state.sh"
 
 case "${1:-}" in
   --terminal)
-    record_gogh_terminal "${2:-}"
+    gogh_state_write_last_active "${2:-}"
     exit 0
     ;;
 esac
@@ -41,23 +25,10 @@ field() {
   sed -n "s/^export $1=\"\(#[0-9A-Fa-f]\{6\}\)\".*/\1/p" "$file" | head -n1
 }
 
-# Write name=, file=, terminal= to ~/.local/state/gogh/current.
-record_current_theme() {
-  local theme="$1"
-  local term="${2:-}"
-  local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/gogh"
-  local name
-  mkdir -p "$state_dir"
-  name=$(sed -n 's/^export PROFILE_NAME="\([^"]*\)".*/\1/p' "$theme" | head -n1)
-  [ -z "$name" ] && name=$(basename "$theme" .sh)
-  {
-    echo "name=$name"
-    echo "file=$(basename "$theme")"
-    [ -n "$term" ] && echo "terminal=$term"
-  } >"${state_dir}/current"
-}
+name=$(sed -n 's/^export PROFILE_NAME="\([^"]*\)".*/\1/p' "$file" | head -n1)
+[ -z "$name" ] && name=$(basename "$file" .sh)
 
-record_current_theme "$file" "$term"
+gogh_state_write_theme "$term" "$name" "$(basename "$file")"
 
 # WezTerm: Gogh only OSC-the live pane; write colors.lua for new panes/windows.
 case "$term" in

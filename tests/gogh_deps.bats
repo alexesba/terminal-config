@@ -38,13 +38,14 @@ load test_helper
   cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
 name=Test
 file=theme.sh
+terminal=alacritty
 EOF
   cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
 #!/usr/bin/env bash
 exit 1
 EOF
   chmod +x "$TEST_HOME/gogh/installs/theme.sh"
-  run --separate-stderr env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=alacritty \
+  run --separate-stderr env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=alacritty TERMINAL_OVERRIDE=1 \
     bash "$REPO_ROOT/shell/common/gogh/apply_saved.sh"
   [ "$status" -eq 1 ]
   combined="$output$stderr"

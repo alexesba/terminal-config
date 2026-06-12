@@ -104,9 +104,9 @@ _tmux_session_terminal() {
   printf '%s\n' "$term"
 }
 
-# Which emulator to target: env TERMINAL → session TERMINAL → gogh state terminal=.
+# Which emulator to target: env TERMINAL → session TERMINAL → gogh state last_active.
 _persisted_terminal() {
-  local term state
+  local term
   if [ -n "${TERMINAL:-}" ]; then
     term="$(_normalize_session_terminal "$TERMINAL" 2>/dev/null || true)"
     if [ -n "$term" ]; then
@@ -119,9 +119,10 @@ _persisted_terminal() {
     printf '%s\n' "$term"
     return 0
   fi
-  state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
-  [ -f "$state" ] || return 1
-  term="$(sed -n 's/^terminal=//p' "$state" | head -n1)"
+  _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  # shellcheck source=state.sh disable=SC1091
+  source "$_dir/state.sh"
+  term="$(gogh_state_last_active 2>/dev/null || true)"
   term="$(_normalize_session_terminal "$term" 2>/dev/null || true)"
   [ -n "$term" ] || return 1
   printf '%s\n' "$term"
@@ -142,12 +143,15 @@ _wezterm_target() {
   [ "$term" = wezterm ]
 }
 
-# Load theme path from ~/.local/state/gogh/current into $theme.
+# Load WezTerm theme path from per-terminal JSON state into $theme.
 _load_persisted_theme() {
-  state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
-  [ -f "$state" ] || return 1
+  local theme_line
+  _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  # shellcheck source=state.sh disable=SC1091
+  source "$_dir/state.sh"
 
-  file="$(sed -n 's/^file=//p' "$state" | head -n1)"
+  theme_line="$(gogh_state_theme_for_terminal wezterm)"
+  file="${theme_line#*$'\t'}"
   [ -n "$file" ] || return 1
 
   gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
