@@ -70,35 +70,7 @@ On interactive shell startup, `rc.sh` may fetch upstream (at most once every 4 d
 
 ## Tests
 
-CI runs on every push/PR via GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
-
-- `bash -n` syntax check on all `*.sh` files
-- [shellcheck](https://www.shellcheck.net/) on install/update scripts and `lib/` (sourced `shell/` fragments are syntax-checked via bats smoke tests)
-- [bats-core](https://github.com/bats-core/bats-core) tests in `tests/` for helpers, fonts, and shell smoke tests
-
-Run locally:
-
-```bash
-brew install bats-core shellcheck   # macOS
-./scripts/test.sh
-```
-
-What is covered:
-
-| Suite | Focus |
-|---|---|
-| `tests/helpers.bats` | `link_file`, template copy/migrate, `set_env_var`, uninstall helpers, `is_colorscheme_terminal` |
-| `tests/fonts.bats` | Font substitution, `~/.local.sh` parsing, font id resolution |
-| `tests/tui.bats` | Progress bar geometry, step begin/end collapse helpers |
-| `tests/smoke.bats` | Syntax of install/update scripts; bash/zsh load `colorscheme` and `reload`; bootstrap quiet mode |
-
-Full interactive `install.sh` / `bootstrap.sh` flows are not automated — use the manual checklist below before releases.
-
-**Manual smoke checklist**
-
-1. Fresh `./install.sh` on a test machine (or VM): questions collapse cleanly, summary shows correct choices, progress steps complete; shell RC linked, terminal config copied, font substituted
-2. `./update.sh`: git pull succeeds; existing local configs not overwritten
-3. `./uninstall.sh`: symlinks removed, configs backed up to `*.uninstall.old`, Nerd Font removed if recorded
+CI runs [`./scripts/test.sh`](scripts/test.sh) on every push/PR ([workflow](.github/workflows/ci.yml)). Details, suite list, and manual smoke checklist: **[tests/README.md](tests/README.md)**.
 
 ---
 
