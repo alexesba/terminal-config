@@ -337,6 +337,16 @@ if $DO_GOGH; then
     git clone --depth 1 https://github.com/Gogh-Co/Gogh "$local_gogh_dir"
     echo -e "  ${GREEN}✓${RESET}  Gogh installed. Run ${BOLD}colorscheme${RESET} in your shell to pick a theme."
   fi
+  # shellcheck source=shell/common/gogh/deps.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
+  if gogh_python_deps_ok; then
+    echo -e "  ${GREEN}✓${RESET}  Gogh Python dependencies already installed."
+  elif install_gogh_python_deps "$local_gogh_dir"; then
+    echo -e "  ${GREEN}✓${RESET}  Gogh Python dependencies installed (Alacritty / Terminator theming)."
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Could not install Gogh Python deps — Alacritty theming may not persist."
+    gogh_python_deps_hint
+  fi
   _bootstrap_spacer
 fi
 

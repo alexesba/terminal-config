@@ -12,6 +12,8 @@ fi
 source "$DOTFILES_DIR/lib/helpers.sh"
 # shellcheck source=../../../lib/fonts.sh disable=SC1091
 source "$DOTFILES_DIR/lib/fonts.sh"
+# shellcheck source=deps.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
 
 term="${TERMINAL:-}"
 if [ -z "$term" ]; then
@@ -30,4 +32,15 @@ gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
 theme="$gogh_installs/$file"
 [ -f "$theme" ] || exit 0
 
-GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1 || true
+persist_script="$DOTFILES_DIR/shell/common/gogh/persist.sh"
+
+if ! GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1; then
+  if [ "$term" = alacritty ] && ! gogh_python_deps_ok; then
+    gogh_python_deps_hint
+  else
+    printf 'Failed to apply saved theme for %s.\n' "$term" >&2
+  fi
+  exit 1
+fi
+
+[ -f "$persist_script" ] && bash "$persist_script" "$theme" "$term"
