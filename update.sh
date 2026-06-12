@@ -75,4 +75,14 @@ remove_legacy_repo_copy "$DOTFILES_DIR/terminals/wezterm.lua" \
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
 echo ""
-echo -e "  ${DIM}Restart your shell or run: source ~/${BASH_SOURCE[0]##*/}${RESET}"
+
+if [ -t 0 ]; then
+  ask_yn "Reload shell now?"
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "  Reloading shell…"
+    exec "${SHELL:-/bin/bash}" -l
+  fi
+  echo -e "  ${DIM}Open a new tab or run: exec \$SHELL -l${RESET}"
+else
+  echo -e "  ${DIM}Restart your shell or run: exec \$SHELL -l${RESET}"
+fi
