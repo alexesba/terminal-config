@@ -2,7 +2,6 @@
 # Re-apply the persisted Gogh theme for the active TERMINAL emulator.
 #
 # Usage: apply_saved.sh
-# Respects TERMINAL in the environment, then ~/.local.sh.
 set -u
 
 if [ -z "${DOTFILES_DIR:-}" ]; then
@@ -17,6 +16,7 @@ source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
 # shellcheck source=../terminal_detect.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
 
+# Resolve target emulator: TERMINAL env → detect (unless override) → ~/.local.sh.
 term="${TERMINAL:-}"
 if [ "${TERMINAL_OVERRIDE:-}" != 1 ]; then
   detected="$(detect_terminal_emulator 2>/dev/null || true)"
@@ -53,6 +53,7 @@ fi
 
 [ -f "$persist_script" ] && bash "$persist_script" "$theme" "$term"
 
+# File-based emulators: clear tmux pane OSC overrides and reload outer config.
 if [ "$term" = alacritty ]; then
   bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
 elif [ "$term" = kitty ]; then

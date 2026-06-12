@@ -14,18 +14,22 @@ source "$DOTFILES_DIR/lib/helpers.sh"
 
 _TERMINAL_SHIPPED=(alacritty kitty wezterm)
 
+# True when stdout is a color-capable TTY (or _TERMINAL_COLOR_FORCE is set).
 _terminal_use_color() {
   [ -n "${_TERMINAL_COLOR_FORCE:-}" ] && return 0
   [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]
 }
 
+# Emit an ANSI sequence when color is enabled.
 _terminal_c() {
   _terminal_use_color || return 0
   printf '%b' "${1:-}"
 }
 
+# Reset ANSI attributes when color is enabled.
 _terminal_c_reset() { _terminal_c "${RESET:-\033[0m}"; }
 
+# Wrap $2 in ANSI color $1 when supported.
 _terminal_colored() {
   local code="$1" text="$2"
   if _terminal_use_color; then
@@ -37,6 +41,7 @@ _terminal_colored() {
   fi
 }
 
+# Print $3 left-padded/truncated to width $1, optionally with color $2.
 _terminal_cell() {
   local width=$1 code="$2" text="$3" pad
   pad=$((width - ${#text}))
@@ -49,12 +54,14 @@ _terminal_cell() {
   printf '%*s' "$pad" ''
 }
 
+# Repeat character $1 count $2 times.
 _terminal_repeat() {
   local char="$1" count="$2" i out=""
   for ((i = 0; i < count; i++)); do out+="$char"; done
   printf '%s' "$out"
 }
 
+# Config path for emulator id $1.
 _terminal_config_path() {
   case "$1" in
     alacritty) printf '%s/.config/alacritty/alacritty.toml\n' "$HOME" ;;
@@ -63,6 +70,7 @@ _terminal_config_path() {
   esac
 }
 
+# Human-readable name for emulator id $1.
 _terminal_display_name() {
   case "$1" in
     alacritty) printf 'Alacritty' ;;
@@ -72,6 +80,7 @@ _terminal_display_name() {
   esac
 }
 
+# Shorten $HOME/ prefix to ~/ for display.
 _terminal_short_path() {
   local p="$1"
   case "$p" in
@@ -80,10 +89,12 @@ _terminal_short_path() {
   esac
 }
 
+# True when emulator binary $1 is on PATH.
 _terminal_installed_p() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Status column for picker row: active, default, no config, etc.
 _terminal_status_label() {
   local term="$1" current="$2" default="$3" cfg
   cfg="$(_terminal_config_path "$term")"
@@ -102,6 +113,7 @@ _terminal_status_label() {
   fi
 }
 
+# TSV rows id|display|status|config for installed emulators only.
 _terminal_rows_tsv() {
   local current="${1:-}" default="${2:-}" term display status cfg
   for term in "${_TERMINAL_SHIPPED[@]}"; do
@@ -114,6 +126,7 @@ _terminal_rows_tsv() {
   done
 }
 
+# Set _TERMINAL_W_* column widths from TSV $1.
 _terminal_row_widths() {
   local lines="$1" w_term=8 w_stat=8 w_cfg=6
   local term display status cfg
@@ -130,11 +143,13 @@ EOF
   _TERMINAL_W_CFG=$w_cfg
 }
 
+# One aligned, optionally colored fzf column field.
 _terminal_fzf_field() {
   local width=$1 code="$2" text="$3" prefix="${4:-}"
   _terminal_cell "$width" "$code" "${prefix}${text}"
 }
 
+# Column header line for fzf table layout.
 _terminal_fzf_title_line() {
   local bold_cyan="${BOLD:-\033[1m}${CYAN:-\033[1;36m}" dim="${DIM:-\033[2m}"
   printf '  '
@@ -146,6 +161,7 @@ _terminal_fzf_title_line() {
   printf '\n'
 }
 
+# Format TSV rows as tab-separated fzf lines (● marks current terminal).
 _terminal_fzf_format_lines() {
   local lines="$1" current="$2" default="$3"
   local term display status cfg prefix green="${GREEN:-\033[1;32m}" dim="${DIM:-\033[2m}"
@@ -165,6 +181,7 @@ $lines
 EOF
 }
 
+# "Reset to default" row when session override is active.
 _terminal_fzf_reset_line() {
   local default="$1" label col1 col2 dim="${DIM:-\033[2m}"
   label="Reset to default (${default})"
@@ -173,6 +190,7 @@ _terminal_fzf_reset_line() {
   printf '%s\t%s\t\treset\n' "$col1" "$col2"
 }
 
+# Full fzf input: title, optional reset row, formatted terminal rows.
 _terminal_fzf_pipe() {
   local current="${1:-}" default="${2:-}" lines
   lines="$(_terminal_rows_tsv "$current" "$default")"
@@ -185,6 +203,7 @@ _terminal_fzf_pipe() {
   _TERMINAL_COLOR_FORCE=1 _terminal_fzf_format_lines "$lines" "$current" "$default"
 }
 
+# One-line header: current TERMINAL vs install default.
 _terminal_header() {
   local current="${1:-}" default="${2:-}" dim="${DIM:-\033[2m}" reset="${RESET:-\033[0m}"
   current="${current:-$default}"

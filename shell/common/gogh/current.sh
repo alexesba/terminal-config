@@ -9,10 +9,12 @@ state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
 name=""
 file=""
 
+# Read PROFILE_NAME from a Gogh theme file without sourcing it.
 profile_name_from_file() {
   sed -n 's/^export PROFILE_NAME="\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -n1
 }
 
+# Find theme filename in gogh_dir matching PROFILE_NAME $1.
 file_from_profile_name() {
   local want="$1" f n
   for f in "$gogh_dir"/*.sh; do

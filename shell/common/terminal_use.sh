@@ -1,7 +1,5 @@
 # Session-only TERMINAL override for colorscheme / apply_saved.
 # Install default stays in ~/.local.sh (set by install.sh).
-#
-# Architecture: shell/common/terminal-theming.md
 
 # shellcheck source=../../lib/helpers.sh disable=SC1091
 source "$DOTFILES_DIR/lib/helpers.sh"
@@ -10,14 +8,17 @@ source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=terminal_detect.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
 
+# Path to terminal_list.sh for the fzf picker.
 _terminal_list_script() {
   printf '%s/shell/common/terminal_list.sh\n' "$DOTFILES_DIR"
 }
 
+# TERMINAL from ~/.local.sh (install default).
 _terminal_default() {
   custom_export_value "$(local_sh_path)" TERMINAL || true
 }
 
+# Config file path for a supported emulator id.
 _terminal_config_path() {
   case "$1" in
     alacritty) printf '%s/.config/alacritty/alacritty.toml\n' "$HOME" ;;
@@ -26,6 +27,7 @@ _terminal_config_path() {
   esac
 }
 
+# Print use-terminal usage.
 _use_terminal_help() {
   cat <<EOF
 Usage: use-terminal [reset|detect|sync|default|alacritty|kitty|wezterm|apply] [apply]
@@ -47,6 +49,7 @@ tmux.conf.example) — no use-terminal per pane needed.
 EOF
 }
 
+# Set TERMINAL + TERMINAL_OVERRIDE for this shell; optionally re-apply saved theme.
 _use_terminal_activate() {
   local term="$1" apply="$2" default="$3" cfg
   cfg="$(_terminal_config_path "$term")"
@@ -68,6 +71,7 @@ _use_terminal_activate() {
   fi
 }
 
+# fzf menu: pick alacritty|kitty|wezterm or reset to install default.
 _use_terminal_menu() {
   local default current selection list_script header lines
   list_script="$(_terminal_list_script)"
@@ -119,10 +123,9 @@ _use_terminal_menu() {
   esac
 }
 
-# Match TERMINAL to the emulator hosting this shell (no-op when disabled/overridden).
-# Also updates tmux session TERMINAL so hooks and new panes see the outer emulator.
+# Match TERMINAL to the hosting emulator; update tmux session env when inside tmux.
+# Respects TERMINAL_OVERRIDE and TERMINAL_AUTO_DETECT=0 unless $1=1 (use-terminal detect|sync).
 sync_terminal_to_host() {
-  # Optional first arg "1" = explicit use-terminal detect/sync (honored even when auto-detect is off).
   local force="${1:-0}"
   if [ "$force" != 1 ] && [ "${TERMINAL_AUTO_DETECT:-1}" = 0 ]; then
     return 0
@@ -165,6 +168,7 @@ sync_terminal_to_host() {
   fi
 }
 
+# User command: pick, detect, sync, or override TERMINAL for this shell session.
 use-terminal() {
   local default term apply=false list_script
   default="$(_terminal_default)"
@@ -266,8 +270,8 @@ use-terminal() {
   _use_terminal_activate "$term" "$apply" "$default"
 }
 
+# precmd/PROMPT_COMMAND hook: retry sync until TERMINAL matches detect, then unregister.
 _terminal_run_deferred_sync() {
-  # tmux client info may be unavailable during .zshrc; retry until TERMINAL matches detect.
   local detected=""
   sync_terminal_to_host 2>/dev/null || true
   detected="$(detect_terminal_emulator 2>/dev/null || true)"
@@ -285,6 +289,7 @@ _terminal_run_deferred_sync() {
   fi
 }
 
+# Register _terminal_run_deferred_sync on first prompt (zsh precmd / bash PROMPT_COMMAND).
 _terminal_schedule_deferred_sync() {
   if [ -n "${ZSH_VERSION:-}" ]; then
     autoload -Uz add-zsh-hook 2>/dev/null || return 0

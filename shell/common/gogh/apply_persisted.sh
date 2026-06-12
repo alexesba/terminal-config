@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Re-apply the persisted Gogh theme to tmux panes (WezTerm only).
-#
-# Installed as ~/.tmux/apply-gogh-theme.sh (see update.sh). Hooks must NOT send
-# WezTerm OSC inside Kitty/Alacritty — see _wezterm_target and terminal-theming.md.
+# Installed as ~/.tmux/apply-gogh-theme.sh (see update.sh).
 #
 # Usage:
 #   apply_persisted.sh              — apply to stdout (interactive shell)
@@ -10,6 +8,7 @@
 #   apply_persisted.sh --session    — all panes in the current tmux session
 set -u
 
+# Sanitize TERMINAL values (same rules as terminal_detect _normalize_detected_terminal).
 _normalize_session_terminal() {
   local raw="${1:-}" stripped
   [ -n "$raw" ] || return 1
@@ -29,20 +28,24 @@ _normalize_session_terminal() {
   return 1
 }
 
+# Process command name for PID $1 (hook-local copy; standalone installed script).
 _hook_process_comm() {
   ps -o comm= -p "$1" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }
 
+# Parent PID for $1.
 _hook_parent_pid() {
   ps -o ppid= -p "$1" 2>/dev/null | awk 'NF { print $1; exit }'
 }
 
+# Lowercase basename without .app (Alacritty.app → alacritty).
 _hook_normalize_name() {
   local base="${1##*/}"
   base="${base%.app}"
   printf '%s' "$base" | tr '[:upper:]' '[:lower:]'
 }
 
+# Walk parent chain from PID $1 until an emulator is found.
 _hook_from_pid() {
   local pid="$1" ppid comm base
   [ -n "$pid" ] || return 1
@@ -63,8 +66,7 @@ _hook_from_pid() {
   return 1
 }
 
-# Outer emulator hosting this tmux client (works in run-shell hooks without TMUX).
-# Duplicated from terminal_detect client walk so ~/.tmux/apply-gogh-theme.sh stays standalone.
+# Outer emulator for this tmux client (duplicated from terminal_detect for standalone hook).
 _hook_hosting_terminal() {
   command -v tmux >/dev/null 2>&1 || return 1
 
@@ -89,6 +91,7 @@ _hook_hosting_terminal() {
   return 1
 }
 
+# TERMINAL from tmux session environment (normalized).
 _tmux_session_terminal() {
   command -v tmux >/dev/null 2>&1 || return 1
   local session term
@@ -101,6 +104,7 @@ _tmux_session_terminal() {
   printf '%s\n' "$term"
 }
 
+# Which emulator to target: env TERMINAL → session TERMINAL → gogh state terminal=.
 _persisted_terminal() {
   local term state
   if [ -n "${TERMINAL:-}" ]; then
@@ -123,10 +127,9 @@ _persisted_terminal() {
   printf '%s\n' "$term"
 }
 
+# Return 0 only when WezTerm OSC should be sent.
+# Checks outer host first — never send WezTerm OSC inside kitty/alacritty (wrong pane colors).
 _wezterm_target() {
-  # Never apply WezTerm OSC when the outer terminal is kitty or alacritty, even if
-  # ~/.local.sh / gogh state still say wezterm (common with tmux hooks).
-  # Do not infer wezterm from ~/.local.sh alone — that caused wrong tmux pane colors.
   local term hosting
   hosting="$(_hook_hosting_terminal 2>/dev/null || true)"
   hosting="$(_normalize_session_terminal "$hosting" 2>/dev/null || true)"
@@ -139,6 +142,7 @@ _wezterm_target() {
   [ "$term" = wezterm ]
 }
 
+# Load theme path from ~/.local/state/gogh/current into $theme.
 _load_persisted_theme() {
   state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
   [ -f "$state" ] || return 1
@@ -152,6 +156,7 @@ _load_persisted_theme() {
   return 0
 }
 
+# Send persisted theme OSC to pane TTY $1 (WezTerm only; caller checks _wezterm_target).
 _apply_to_tty() {
   local pane_tty="$1"
   [ -e "$pane_tty" ] || return 0
@@ -173,10 +178,12 @@ _apply_to_tty() {
   fi
 }
 
+# Apply persisted theme to stdout (interactive WezTerm, not a tmux pane).
 _apply_to_stdout() {
   GOGH_NONINTERACTIVE=1 TERMINAL=wezterm bash "$theme" >/dev/null 2>&1 || true
 }
 
+# Apply persisted theme OSC to every pane in the current tmux session.
 _apply_tmux_session() {
   command -v tmux >/dev/null 2>&1 || return 0
   [ -n "${TMUX:-}" ] || return 0

@@ -9,6 +9,7 @@
 # shellcheck source=helpers.sh disable=SC1091
 source "$DOTFILES_DIR/lib/helpers.sh"
 
+# Fetch upstream at most every 4 days; print hint when repo is behind (skips dirty trees).
 terminal_config_update_check() {
   case "${TERMINAL_CONFIG_UPDATE_CHECK:-1}" in
     0|false|False|FALSE|no|NO|off|OFF) return 0 ;;

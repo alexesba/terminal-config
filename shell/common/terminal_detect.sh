@@ -2,11 +2,9 @@
 # Detect the outer terminal emulator hosting this shell (alacritty / kitty / wezterm).
 #
 # Usage: detect_terminal_emulator   — print name or exit 1
-#
-# Design notes (detection order, tmux pitfalls): shell/common/terminal-theming.md
 
+# Return process command name for PID $1 (comm=, else ucomm= on macOS GUI apps).
 _terminal_process_comm() {
-  # macOS GUI apps often lack comm=; ucomm= is the fallback.
   local comm
   comm="$(ps -o comm= -p "$1" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
   if [ -n "$comm" ] && [ "$comm" != "-" ]; then
@@ -16,18 +14,20 @@ _terminal_process_comm() {
   ps -o ucomm= -p "$1" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }
 
+# Return parent PID for $1, or empty when unavailable.
 _terminal_parent_pid() {
   ps -o ppid= -p "$1" 2>/dev/null | awk 'NF { print $1; exit }'
 }
 
+# Normalize a process name to lowercase basename without .app suffix.
 _terminal_normalize_name() {
   local base="${1##*/}"
   base="${base%.app}"
   printf '%s' "$base" | tr '[:upper:]' '[:lower:]'
 }
 
-# Accept only gogh-supported names; recover from corrupted tmux session values
-# (e.g. "alacritty"; export TERMINAL; from a bad eval).
+# Map raw TERMINAL/session values to alacritty|kitty|wezterm; reject garbage
+# (e.g. "alacritty"; export TERMINAL; from a bad tmux eval).
 _normalize_detected_terminal() {
   local raw="${1:-}" stripped
   [ -n "$raw" ] || return 1
@@ -56,8 +56,8 @@ _normalize_detected_terminal() {
   return 1
 }
 
+# Walk from PID $1 toward init until an emulator binary is found in the chain.
 _detect_terminal_from_pid() {
-  # Walk parent chain until we find alacritty|kitty|wezterm (skips tmux, zsh, etc.).
   local pid="$1" ppid comm base
   [ -n "$pid" ] || return 1
   while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
@@ -77,8 +77,8 @@ _detect_terminal_from_pid() {
   return 1
 }
 
+# Detect from emulator-specific env vars (reliable outside tmux; often absent in panes).
 _detect_terminal_env() {
-  # Fast path outside tmux; env vars often missing inside tmux panes.
   if [ -n "${KITTY_WINDOW_ID:-}" ]; then
     printf 'kitty'
     return 0
@@ -102,8 +102,8 @@ _detect_terminal_env() {
   return 1
 }
 
+# Inside tmux: walk #{client_pid} first, then other attached clients.
 _detect_terminal_client_walk() {
-  # Prefer #{client_pid} for this pane's client, then other attached clients.
   command -v tmux >/dev/null 2>&1 || return 1
 
   local client_pid detected current_client
@@ -128,8 +128,8 @@ _detect_terminal_client_walk() {
   return 1
 }
 
+# Last-resort tmux fallback: session TERMINAL (often stale from ~/.local.sh via update-environment).
 _detect_terminal_session_env() {
-  # Last resort in tmux — session TERMINAL is often stale (wezterm from ~/.local.sh).
   [ -n "${TMUX:-}" ] || return 1
   command -v tmux >/dev/null 2>&1 || return 1
 
@@ -140,10 +140,12 @@ _detect_terminal_session_env() {
   printf '%s\n' "$normalized"
 }
 
+# Walk parent chain from the current shell PID ($$).
 _detect_terminal_parents() {
   _detect_terminal_from_pid "$$"
 }
 
+# Normalize a detector's raw output; print name or return 1.
 _detect_terminal_try() {
   local raw="$1" normalized
   [ -n "$raw" ] || return 1
@@ -152,8 +154,9 @@ _detect_terminal_try() {
   printf '%s\n' "$normalized"
 }
 
+# Print alacritty|kitty|wezterm for the outer emulator, or exit 1.
+# tmux order: client walk → env → parent walk → session TERMINAL (last resort).
 detect_terminal_emulator() {
-  # Order documented in shell/common/terminal-theming.md
   local detected
 
   if [ -n "${TMUX:-}" ]; then

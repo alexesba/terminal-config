@@ -1,8 +1,8 @@
 # Terminal detection & tmux theming
 
-How `colorscheme`, `use-terminal`, and tmux hooks decide **which emulator** gets a Gogh theme, and why Kitty/Alacritty panes inside tmux sometimes needed extra care.
-
-See also: [README.md](../../README.md) (user-facing commands), [shell/README.md](../README.md) (layout).
+**Developer documentation** — how detection, theming, and tmux hooks work internally.
+End-user commands live in the root [README.md](../../README.md). Function-level notes
+are in the script sources (`terminal_detect.sh`, `terminal_use.sh`, `gogh/*`, etc.).
 
 ---
 
