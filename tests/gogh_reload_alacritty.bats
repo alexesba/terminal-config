@@ -7,12 +7,12 @@ load test_helper
   mkdir -p "$(dirname "$cfg")"
   echo 'live_config_reload = true' >"$cfg"
   local before after
-  before="$(stat -f '%m' "$cfg" 2>/dev/null || stat -c '%Y' "$cfg")"
+  before="$(file_mtime "$cfg")"
   sleep 1
   run env HOME="$TEST_HOME" XDG_CONFIG_HOME="$TEST_HOME/.config" \
     bash "$REPO_ROOT/shell/common/gogh/reload_alacritty.sh"
   [ "$status" -eq 0 ]
-  after="$(stat -f '%m' "$cfg" 2>/dev/null || stat -c '%Y' "$cfg")"
+  after="$(file_mtime "$cfg")"
   [ "$after" -ge "$before" ]
 }
 

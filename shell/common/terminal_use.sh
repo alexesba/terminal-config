@@ -77,8 +77,11 @@ _use_terminal_menu() {
   fi
 
   header="$(_TERMINAL_COLOR_FORCE=1 bash "$list_script" header "$current" "$default")"
+  local fzf_input
+  fzf_input="$(bash "$list_script" fzf-pipe "$current" "$default")" || return 1
+  [ -n "$fzf_input" ] || return 1
   selection="$(
-    bash "$list_script" fzf-pipe "$current" "$default" | FZF_DEFAULT_OPTS='--layout=default --no-preview' fzf \
+    printf '%s\n' "$fzf_input" | FZF_DEFAULT_OPTS='--layout=default --no-preview' fzf \
       --ansi \
       --no-sort \
       --header="$header" \

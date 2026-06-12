@@ -44,8 +44,9 @@ EOF
 exit 1
 EOF
   chmod +x "$TEST_HOME/gogh/installs/theme.sh"
-  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=alacritty \
+  run --separate-stderr env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=alacritty \
     bash "$REPO_ROOT/shell/common/gogh/apply_saved.sh"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"requirements.txt"* || "$output" == *"Failed to apply saved theme"* ]]
+  combined="$output$stderr"
+  [[ "$combined" == *"requirements.txt"* || "$combined" == *"Failed to apply saved theme"* ]]
 }

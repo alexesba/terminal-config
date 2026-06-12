@@ -12,3 +12,12 @@ setup() {
   # shellcheck source=../lib/tui.sh disable=SC1091
   source "$REPO_ROOT/lib/tui.sh"
 }
+
+# Portable file mtime (GNU stat uses -c; BSD/macOS uses -f).
+file_mtime() {
+  if stat --version >/dev/null 2>&1; then
+    stat -c '%Y' "$1"
+  else
+    stat -f '%m' "$1"
+  fi
+}

@@ -3,7 +3,11 @@
 load test_helper
 
 _setup_terminal_bins() {
-  mkdir -p "$TEST_HOME/bin" "$TEST_HOME/.config/kitty" "$TEST_HOME/.config/wezterm"
+  mkdir -p "$TEST_HOME/bin" \
+    "$TEST_HOME/.config/alacritty" \
+    "$TEST_HOME/.config/kitty" \
+    "$TEST_HOME/.config/wezterm"
+  : >"$TEST_HOME/.config/alacritty/alacritty.toml"
   : >"$TEST_HOME/.config/kitty/kitty.conf"
   : >"$TEST_HOME/.config/wezterm/wezterm.lua"
   for bin in alacritty kitty wezterm; do
@@ -93,10 +97,12 @@ EOF
   mkdir -p "$TEST_HOME/bin"
   cat >"$TEST_HOME/bin/fzf" <<'EOF'
 #!/usr/bin/env bash
-echo kitty
+cat >/dev/null
+printf 'kitty'
 EOF
   chmod +x "$TEST_HOME/bin/fzf"
   run bash -c '
+    set +o pipefail 2>/dev/null || true
     export HOME="'"$TEST_HOME"'"
     export DOTFILES_DIR="'"$REPO_ROOT"'"
     export PATH="'"$TEST_HOME/bin:$PATH"'"
@@ -121,8 +127,19 @@ EOF
   chmod +x "$TEST_HOME/gogh/installs/theme.sh"
   marker="$TEST_HOME/gogh-applied-kitty"
   rm -f "$marker"
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/bin/pkill" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  cat >"$TEST_HOME/bin/killall" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$TEST_HOME/bin/pkill" "$TEST_HOME/bin/killall"
   run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=kitty \
     GOGH_APPLY_MARKER="$marker" \
+    PATH="$TEST_HOME/bin:$PATH" \
     bash "$REPO_ROOT/shell/common/gogh/apply_saved.sh"
   [ "$status" -eq 0 ]
   [ -f "$marker" ]
