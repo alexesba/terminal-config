@@ -171,3 +171,60 @@ EOF
   [[ "$output" != *should-not-run* ]]
   [[ "$output" != *tmux-should-not-run* ]]
 }
+
+@test "apply_persisted --session skips when use-terminal overrides to alacritty" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local.sh" <<'EOF'
+export TERMINAL=wezterm
+EOF
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-a"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "$pane_tty"
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=alacritty TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" --session
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}
+
+@test "apply_persisted --session skips when persisted terminal is alacritty (tmux hook)" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local.sh" <<'EOF'
+export TERMINAL=wezterm
+EOF
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=alacritty
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-a"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "$pane_tty"
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" --session
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}

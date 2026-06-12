@@ -48,6 +48,7 @@ _use_terminal_activate() {
 
   export TERMINAL="$term"
   export TERMINAL_OVERRIDE=1
+  bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$term" 2>/dev/null || true
   printf 'TERMINAL=%s for this shell (default: %s). colorscheme will target %s.\n' \
     "$term" "$default" "$term"
   printf 'Run: use-terminal reset\n'
@@ -96,6 +97,7 @@ _use_terminal_menu() {
     reset)
       export TERMINAL="$default"
       unset TERMINAL_OVERRIDE
+      bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$default" 2>/dev/null || true
       printf 'TERMINAL=%s (from ~/.local.sh)\n' "$default"
       ;;
     *)
@@ -124,6 +126,7 @@ use-terminal() {
     reset|default)
       export TERMINAL="$default"
       unset TERMINAL_OVERRIDE
+      bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$default" 2>/dev/null || true
       printf 'TERMINAL=%s (from ~/.local.sh)\n' "$default"
       return 0
       ;;

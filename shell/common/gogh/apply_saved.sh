@@ -44,3 +44,9 @@ if ! GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1; then
 fi
 
 [ -f "$persist_script" ] && bash "$persist_script" "$theme" "$term"
+
+if [ "$term" = alacritty ]; then
+  bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
+elif [ "$term" = kitty ]; then
+  bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true
+fi
