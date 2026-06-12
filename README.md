@@ -158,7 +158,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 ### Configuration
 
 - **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
-- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override detection.
+- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override detection. Use **`use-terminal`** in a shell session to point `colorscheme` at another emulator temporarily (`use-terminal kitty apply`, then `use-terminal reset`).
 
 Run `colorscheme update` (or `colorscheme --update`) to `git pull` the Gogh checkout when new themes are added upstream.
 

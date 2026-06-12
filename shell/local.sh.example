@@ -27,6 +27,7 @@
 # ── Terminal emulator (used by gogh / colorscheme to target the right app) ────
 # install.sh replaces the {{TERMINAL}} placeholder below with your terminal
 # choice (alacritty/kitty/wezterm) and uncomments it. Edit by hand to override.
+# For a temporary switch in one shell: use-terminal kitty apply  (use-terminal reset)
 # export TERMINAL={{TERMINAL}}
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────

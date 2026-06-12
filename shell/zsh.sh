@@ -1,4 +1,5 @@
 source "$DOTFILES_DIR/shell/common/functions.sh"
+source "$DOTFILES_DIR/shell/common/terminal_use.sh"
 source "$DOTFILES_DIR/shell/common/gogh/colorscheme.sh"
 source "$DOTFILES_DIR/shell/common/fzf/open.sh"
 source "$DOTFILES_DIR/shell/zsh/bindings.sh"
