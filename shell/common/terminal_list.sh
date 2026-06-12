@@ -189,9 +189,14 @@ _terminal_header() {
   local current="${1:-}" default="${2:-}" dim="${DIM:-\033[2m}" reset="${RESET:-\033[0m}"
   current="${current:-$default}"
   default="${default:-wezterm}"
-  printf 'Target: %s%s%s%s  Default: %s%s%s' \
-    "$dim" "$current" "$reset" \
-    "$dim" "$default" "$reset"
+  if _terminal_use_color || [ -n "${_TERMINAL_COLOR_FORCE:-}" ]; then
+    # helpers.sh stores DIM/RESET as \033 sequences — use %b so fzf --ansi renders them.
+    printf 'Target: %b%s%b  Default: %b%s%b' \
+      "$dim" "$current" "$reset" \
+      "$dim" "$default" "$reset"
+  else
+    printf 'Target: %s  Default: %s' "$current" "$default"
+  fi
 }
 
 case "${1:-}" in

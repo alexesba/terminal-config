@@ -75,7 +75,7 @@ _use_terminal_menu() {
     return 1
   fi
 
-  header="$(bash "$list_script" header "$current" "$default")"
+  header="$(_TERMINAL_COLOR_FORCE=1 bash "$list_script" header "$current" "$default")"
   selection="$(
     bash "$list_script" fzf-pipe "$current" "$default" | FZF_DEFAULT_OPTS='--layout=default --no-preview' fzf \
       --ansi \
