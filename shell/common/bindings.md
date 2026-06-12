@@ -3,11 +3,11 @@
 ```
 Command          Description
 ──────────────────────────────────────────────────────────────────
-help             Unified menu — edit configs, bindings, colorscheme, …
-config           Edit config files only
-bindings         Show this list
-colorscheme      Fuzzy-pick and apply a Gogh theme
-use-terminal     Switch colorscheme target terminal
+`help`           Unified menu — edit configs, bindings, colorscheme, …
+`config`         Edit config files only
+`bindings`       Show this list
+`colorscheme`    Fuzzy-pick and apply a Gogh theme
+`use-terminal`   Switch colorscheme target terminal
 ```
 
 # Key bindings
