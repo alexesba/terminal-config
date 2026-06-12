@@ -20,6 +20,7 @@ shell/
 │   ├── nvmrc.sh          # load-nvmrc() body
 │   └── gogh/
 │       ├── colorscheme.sh
+│       ├── apply_persisted.sh   # also installed as ~/.tmux/apply-gogh-theme.sh
 │       ├── preview.sh
 │       └── persist.sh
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)

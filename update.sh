@@ -45,6 +45,7 @@ install_config_from_template "$DOTFILES_DIR" \
 mkdir -p "${HOME}/.tmux"
 install -m 755 "$DOTFILES_DIR/lib/tmux-activity-spinner.sh" "${HOME}/.tmux/activity-spinner.sh"
 install -m 755 "$DOTFILES_DIR/lib/tmux-clear-resurrect-when-empty.sh" "${HOME}/.tmux/clear-resurrect-when-empty.sh"
+install -m 755 "$DOTFILES_DIR/shell/common/gogh/apply_persisted.sh" "${HOME}/.tmux/apply-gogh-theme.sh"
 remove_legacy_repo_copy "$DOTFILES_DIR/tmux.conf" "${HOME}/.tmux.conf"
 
 migrate_alacritty_yaml_config
