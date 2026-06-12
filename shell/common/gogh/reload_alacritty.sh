@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Nudge Alacritty to reload after Gogh writes alacritty.toml (whole window, including
-# panes outside tmux). Clears tmux per-pane OSC overrides first.
+# Nudge Alacritty to reload after Gogh writes alacritty.toml. Clears tmux per-pane
+# OSC first. Pass GOGH_TMUX_SESSION when outside tmux (tmux-start does this).
 set -u
 
 _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

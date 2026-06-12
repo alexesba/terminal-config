@@ -14,8 +14,16 @@ source "$DOTFILES_DIR/lib/helpers.sh"
 source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=deps.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
+# shellcheck source=../terminal_detect.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
 
 term="${TERMINAL:-}"
+if [ "${TERMINAL_OVERRIDE:-}" != 1 ]; then
+  detected="$(detect_terminal_emulator 2>/dev/null || true)"
+  if [ -n "$detected" ] && is_colorscheme_terminal "$detected"; then
+    term="$detected"
+  fi
+fi
 if [ -z "$term" ]; then
   term="$(custom_export_value "$(local_sh_path)" TERMINAL || true)"
 fi

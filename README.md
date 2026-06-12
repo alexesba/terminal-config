@@ -158,16 +158,22 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 ### Switching terminal emulators (session only)
 
-`install.sh` records one default in `~/.local.sh` (`TERMINAL=wezterm`, etc.). To try another installed emulator without editing that file, run **`use-terminal`** — an fzf menu (same style as `tmux-switch`) listing only binaries found on your `PATH`:
+`install.sh` records one default in `~/.local.sh` (`TERMINAL=wezterm`, etc.). **Auto-detect** (on by default) sets `TERMINAL` to the emulator hosting each shell — Kitty window, Alacritty tab, WezTerm pane — even when `~/.local.sh` names another default. That runs when an interactive shell starts, before `colorscheme`, and when **`tmux-start`** runs (new tmux panes inherit the session `TERMINAL` via `update-environment` in `tmux.conf.example`). Set `TERMINAL_AUTO_DETECT=0` in `~/.local.sh` to disable.
+
+To override manually for one shell, run **`use-terminal`** — an fzf menu (same style as `tmux-switch`) listing only binaries found on your `PATH`:
 
 ```bash
 use-terminal              # pick Alacritty / Kitty / WezTerm
+use-terminal detect       # detect hosting emulator and apply (same as sync)
+use-terminal sync         # re-run auto-detect now
 use-terminal kitty apply  # switch + re-apply saved Gogh theme
 use-terminal reset        # restore install default from ~/.local.sh
 use-terminal status       # current target vs default (no menu)
 ```
 
-The override applies to **this shell only**; `colorscheme` and `apply_saved.sh` follow the selected `TERMINAL`. Run `./update.sh` once if a config template is missing under `~/.config/`.
+Manual picks set `TERMINAL_OVERRIDE=1` until `use-terminal reset`. `colorscheme` and `apply_saved.sh` follow the effective `TERMINAL`. Run `./update.sh` once if a config template is missing under `~/.config/`.
+
+**Maintainers:** detection order, tmux hook behaviour, and design decisions are documented in [shell/common/terminal-theming.md](shell/common/terminal-theming.md).
 
 ### Configuration
 

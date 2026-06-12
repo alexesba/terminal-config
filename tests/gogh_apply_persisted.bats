@@ -90,14 +90,15 @@ EOF
   grep -q $'\033]11;#F7F7F7\007' "$pane_tty"
 }
 
-@test "apply_persisted detects wezterm from local.sh for tmux hook mode" {
-  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs"
+@test "apply_persisted hook applies when session TERMINAL is wezterm" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
   cat >"$TEST_HOME/.local.sh" <<'EOF'
 export TERMINAL=wezterm
 EOF
   cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
 name=Test
 file=theme.sh
+terminal=wezterm
 EOF
   cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -106,10 +107,77 @@ EOF
   chmod +x "$TEST_HOME/gogh/installs/theme.sh"
   pane_tty="$TEST_HOME/fake-pane-tty2"
   : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf 'testsess\n'
+    ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${4:-}" = "-s" ] && [ "${5:-}" = "TERMINAL" ]; then
+      printf 'TERMINAL=wezterm\n'
+    fi
+    ;;
+  list-clients)
+    printf '424242\n'
+    ;;
+esac
+EOF
+  cat >"$TEST_HOME/bin/ps" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-o" ] && [ "$2" = "comm=" ] && [ "$4" = "424242" ]; then
+  printf 'wezterm\n'
+elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
+  printf '1\n'
+fi
+EOF
+  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
   run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
   [ "$status" -eq 0 ]
   [ "$(cat "$pane_tty")" = "applied" ]
+}
+
+@test "apply_persisted hook skips when client host is kitty despite state wezterm" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=wezterm
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'applied'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/fake-pane-kitty-host"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf '88888\n'
+    ;;
+  list-clients)
+    printf '88888\n'
+    ;;
+esac
+EOF
+  cat >"$TEST_HOME/bin/ps" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-o" ] && [ "$2" = "comm=" ] && [ "$4" = "88888" ]; then
+  printf 'kitty\n'
+elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
+  printf '1\n'
+fi
+EOF
+  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
+  [ "$status" -eq 0 ]
+  [ ! -s "$pane_tty" ]
 }
 
 @test "apply_persisted is a no-op without saved state" {
@@ -225,6 +293,76 @@ EOF
   run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
     PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" --session
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}
+
+@test "apply_persisted pane hook skips when tmux session TERMINAL is alacritty despite state wezterm" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=wezterm
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-hook"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf 'testsess\n'
+    ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${3:-}" = "testsess" ] && [ "${4:-}" = "-s" ] && [ "${5:-}" = "TERMINAL" ]; then
+      printf 'TERMINAL=alacritty\n'
+    fi
+    ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}
+
+@test "apply_persisted skips when tmux session TERMINAL is corrupted alacritty garbage" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=wezterm
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-hook2"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf 'testsess\n'
+    ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${3:-}" = "testsess" ] && [ "${4:-}" = "-s" ] && [ "${5:-}" = "TERMINAL" ]; then
+      printf 'TERMINAL="alacritty"; export TERMINAL;\n'
+    fi
+    ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
   [ "$status" -eq 0 ]
   ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
 }

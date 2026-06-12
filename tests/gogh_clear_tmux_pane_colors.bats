@@ -31,6 +31,35 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "clear_tmux_pane_colors clears a named session outside tmux" {
+  local pane_tty="$TEST_HOME/pane-named"
+  : >"$pane_tty"
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  list-panes)
+    printf '%s\n' '%0'
+    ;;
+  display-message)
+    printf '%s\n' "$TEST_PANE_TTY"
+    ;;
+  select-pane)
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" TMUX= TEST_PANE_TTY="$pane_tty" \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/clear_tmux_pane_colors.sh" --session testsess
+  [ "$status" -eq 0 ]
+  grep -q $'\033]104\007' "$pane_tty"
+}
+
 @test "reload_kitty clears tmux pane OSC before signaling kitty" {
   local pane_tty="$TEST_HOME/pane-a"
   : >"$pane_tty"
