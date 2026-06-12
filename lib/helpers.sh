@@ -150,6 +150,10 @@ source \"$src\"
   echo -e "  ${GREEN}✓${RESET}  $dest installed (sources rc.sh; other tools may append below)."
 }
 
+if [ -z "${DOTFILES_DIR:-}" ]; then
+  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+
 # shellcheck source=../shell/common/reload.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/reload.sh"
 
