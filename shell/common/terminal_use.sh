@@ -1,5 +1,7 @@
 # Session-only TERMINAL override for colorscheme / apply_saved.
 # Install default stays in ~/.local.sh (set by install.sh).
+#
+# Architecture: shell/common/terminal-theming.md
 
 # shellcheck source=../../lib/helpers.sh disable=SC1091
 source "$DOTFILES_DIR/lib/helpers.sh"
@@ -118,8 +120,13 @@ _use_terminal_menu() {
 }
 
 # Match TERMINAL to the emulator hosting this shell (no-op when disabled/overridden).
+# Also updates tmux session TERMINAL so hooks and new panes see the outer emulator.
 sync_terminal_to_host() {
-  [ "${TERMINAL_AUTO_DETECT:-1}" != 0 ] || return 0
+  # Optional first arg "1" = explicit use-terminal detect/sync (honored even when auto-detect is off).
+  local force="${1:-0}"
+  if [ "$force" != 1 ] && [ "${TERMINAL_AUTO_DETECT:-1}" = 0 ]; then
+    return 0
+  fi
   [ "${TERMINAL_OVERRIDE:-}" != 1 ] || return 0
 
   local detected default current cfg
@@ -198,7 +205,7 @@ use-terminal() {
           return $?
           ;;
       esac
-      sync_terminal_to_host
+      sync_terminal_to_host 1
       detected="$(detect_terminal_emulator 2>/dev/null || true)"
       if [ -z "$detected" ]; then
         printf 'could not detect hosting terminal\n' >&2
@@ -214,7 +221,7 @@ use-terminal() {
       ;;
     sync)
       local detected=""
-      sync_terminal_to_host
+      sync_terminal_to_host 1
       detected="$(detect_terminal_emulator 2>/dev/null || true)"
       printf 'TERMINAL=%s  default=%s' "${TERMINAL:-$default}" "$default"
       [ -n "$detected" ] && printf '  detected=%s' "$detected"
@@ -260,6 +267,7 @@ use-terminal() {
 }
 
 _terminal_run_deferred_sync() {
+  # tmux client info may be unavailable during .zshrc; retry until TERMINAL matches detect.
   local detected=""
   sync_terminal_to_host 2>/dev/null || true
   detected="$(detect_terminal_emulator 2>/dev/null || true)"

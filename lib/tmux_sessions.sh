@@ -198,6 +198,8 @@ tmux_attach_session() {
 }
 
 _tmux_sync_session_terminal() {
+  # Before attach: detect outer emulator, set session TERMINAL, fix stale pane OSC
+  # for Kitty/Alacritty (see shell/common/terminal-theming.md).
   local session="$1"
   type sync_terminal_to_host >/dev/null 2>&1 && sync_terminal_to_host 2>/dev/null || true
   [ -n "${TERMINAL:-}" ] || return 0

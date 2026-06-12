@@ -18,15 +18,20 @@ shell/
 │   ├── fzf/
 │   │   └── open.sh       # Ctrl-O / Ctrl-F file finder (Telescope-style)
 │   ├── nvmrc.sh          # load-nvmrc() body
-│   ├── terminal_use.sh   # use-terminal — fzf picker + session TERMINAL override
+│   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
+│   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL
 │   ├── terminal_list.sh  # rows / fzf formatting for use-terminal
+│   ├── terminal-theming.md  # architecture: detection order, tmux hooks, why bash
 │   └── gogh/
 │       ├── colorscheme.sh
 │       ├── apply_persisted.sh   # WezTerm tmux hook; installed as ~/.tmux/apply-gogh-theme.sh
 │       ├── apply_saved.sh       # re-apply saved theme for current TERMINAL
+│       ├── clear_tmux_pane_colors.sh  # strip tmux per-pane OSC palette overrides
 │       ├── deps.sh              # Gogh Python deps (Alacritty theming)
 │       ├── preview.sh
-│       └── persist.sh
+│       ├── persist.sh
+│       ├── reload_kitty.sh      # clear pane OSC + SIGUSR1 Kitty
+│       └── reload_alacritty.sh  # clear pane OSC + touch alacritty.toml
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)
 │   ├── bindings.sh       # Ctrl-O / Ctrl-F → fzf_then_open_in_editor
 │   ├── ps1.sh + themes/
@@ -51,6 +56,12 @@ Startup loads personal files in this order (see `../rc.sh` and `aliases.sh`):
 **`~/.local.sh` vs `~/.bash_aliases`:** env vars and theme belong in `~/.local.sh`. Alias overrides belong in `~/.bash_aliases` (or below the wrapper in your rc file) because `~/.local.sh` is sourced *before* repo aliases — a conflicting alias there would be overwritten by `aliases/default.sh`.
 
 Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on first run). `update.sh` migrates legacy `shell/custom.sh` and `~/.custom.sh` automatically.
+
+## Terminal detection & tmux theming
+
+For **why** detection runs in a particular order, how tmux hooks avoid applying WezTerm OSC inside Kitty/Alacritty, and a debugging checklist, see **[shell/common/terminal-theming.md](common/terminal-theming.md)**.
+
+User-facing commands (`use-terminal`, `colorscheme`, env vars) are documented in the [root README](../README.md#switching-terminal-emulators-session-only).
 
 ## Zsh history
 

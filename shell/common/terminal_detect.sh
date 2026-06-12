@@ -2,9 +2,11 @@
 # Detect the outer terminal emulator hosting this shell (alacritty / kitty / wezterm).
 #
 # Usage: detect_terminal_emulator   — print name or exit 1
-# Walks past tmux/screen to the outer emulator when possible.
+#
+# Design notes (detection order, tmux pitfalls): shell/common/terminal-theming.md
 
 _terminal_process_comm() {
+  # macOS GUI apps often lack comm=; ucomm= is the fallback.
   local comm
   comm="$(ps -o comm= -p "$1" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
   if [ -n "$comm" ] && [ "$comm" != "-" ]; then
@@ -55,6 +57,7 @@ _normalize_detected_terminal() {
 }
 
 _detect_terminal_from_pid() {
+  # Walk parent chain until we find alacritty|kitty|wezterm (skips tmux, zsh, etc.).
   local pid="$1" ppid comm base
   [ -n "$pid" ] || return 1
   while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do
@@ -75,6 +78,7 @@ _detect_terminal_from_pid() {
 }
 
 _detect_terminal_env() {
+  # Fast path outside tmux; env vars often missing inside tmux panes.
   if [ -n "${KITTY_WINDOW_ID:-}" ]; then
     printf 'kitty'
     return 0
@@ -99,6 +103,7 @@ _detect_terminal_env() {
 }
 
 _detect_terminal_client_walk() {
+  # Prefer #{client_pid} for this pane's client, then other attached clients.
   command -v tmux >/dev/null 2>&1 || return 1
 
   local client_pid detected current_client
@@ -124,6 +129,7 @@ _detect_terminal_client_walk() {
 }
 
 _detect_terminal_session_env() {
+  # Last resort in tmux — session TERMINAL is often stale (wezterm from ~/.local.sh).
   [ -n "${TMUX:-}" ] || return 1
   command -v tmux >/dev/null 2>&1 || return 1
 
@@ -147,6 +153,7 @@ _detect_terminal_try() {
 }
 
 detect_terminal_emulator() {
+  # Order documented in shell/common/terminal-theming.md
   local detected
 
   if [ -n "${TMUX:-}" ]; then

@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # Re-apply the persisted Gogh theme to tmux panes (WezTerm only).
 #
-# WezTerm themes via OSC are per-pane and session-only; new tmux splits need OSC
-# sent to #{pane_tty}. Kitty and Alacritty write config files instead — new tmux
-# panes inherit colours from the outer terminal, so this script is a no-op when
-# TERMINAL is not wezterm (see tmux.conf.example hooks).
+# Installed as ~/.tmux/apply-gogh-theme.sh (see update.sh). Hooks must NOT send
+# WezTerm OSC inside Kitty/Alacritty — see _wezterm_target and terminal-theming.md.
 #
 # Usage:
 #   apply_persisted.sh              — apply to stdout (interactive shell)
@@ -66,6 +64,7 @@ _hook_from_pid() {
 }
 
 # Outer emulator hosting this tmux client (works in run-shell hooks without TMUX).
+# Duplicated from terminal_detect client walk so ~/.tmux/apply-gogh-theme.sh stays standalone.
 _hook_hosting_terminal() {
   command -v tmux >/dev/null 2>&1 || return 1
 
@@ -127,6 +126,7 @@ _persisted_terminal() {
 _wezterm_target() {
   # Never apply WezTerm OSC when the outer terminal is kitty or alacritty, even if
   # ~/.local.sh / gogh state still say wezterm (common with tmux hooks).
+  # Do not infer wezterm from ~/.local.sh alone — that caused wrong tmux pane colors.
   local term hosting
   hosting="$(_hook_hosting_terminal 2>/dev/null || true)"
   hosting="$(_normalize_session_terminal "$hosting" 2>/dev/null || true)"

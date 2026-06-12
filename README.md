@@ -164,7 +164,7 @@ To override manually for one shell, run **`use-terminal`** — an fzf menu (same
 
 ```bash
 use-terminal              # pick Alacritty / Kitty / WezTerm
-use-terminal detect       # print the hosting emulator (if detected)
+use-terminal detect       # detect hosting emulator and apply (same as sync)
 use-terminal sync         # re-run auto-detect now
 use-terminal kitty apply  # switch + re-apply saved Gogh theme
 use-terminal reset        # restore install default from ~/.local.sh
@@ -172,6 +172,8 @@ use-terminal status       # current target vs default (no menu)
 ```
 
 Manual picks set `TERMINAL_OVERRIDE=1` until `use-terminal reset`. `colorscheme` and `apply_saved.sh` follow the effective `TERMINAL`. Run `./update.sh` once if a config template is missing under `~/.config/`.
+
+**Maintainers:** detection order, tmux hook behaviour, and design decisions are documented in [shell/common/terminal-theming.md](shell/common/terminal-theming.md).
 
 ### Configuration
 
