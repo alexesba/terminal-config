@@ -1,6 +1,13 @@
 # Shared Ctrl-O / Ctrl-F file finder for bash and zsh.
 fzf_then_open_in_editor() {
-  local file preview_cmd
+  local file preview_cmd editor_name prompt
+
+  # shellcheck source=../fzf_prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  prompt=$(_fzf_icon_prompt search)
+
+  editor_name="${EDITOR:-nvim}"
+  editor_name="${editor_name##*/}"
 
   if command -v bat &>/dev/null; then
     # Preview must not read stdin — it shares the TTY with fzf and steals keystrokes.
@@ -23,8 +30,9 @@ fzf_then_open_in_editor() {
       --min-height=10 \
       --margin=0,4% \
       --border=rounded \
-      --header='Files' \
-      --prompt='> ' \
+      --border-label=$'\033[1;36m files \033[0m' \
+      --header='Enter opens in '"$editor_name"' · Esc cancels' \
+      --prompt="$prompt" \
       --preview-window='right:58%:border-left' \
       --preview="$preview_cmd" \
       --bind='ctrl-/:toggle-preview'

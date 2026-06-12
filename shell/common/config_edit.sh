@@ -46,7 +46,11 @@ config_open_file() {
 }
 
 config_edit() {
-  local list_script selection preview_cmd editor editor_name
+  local list_script selection preview_cmd editor_name prompt
+
+  # shellcheck source=shell/common/fzf_prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  prompt=$(_fzf_icon_prompt gear)
 
   command -v fzf >/dev/null 2>&1 || {
     printf 'fzf not found — install via ./bootstrap.sh --fzf\n' >&2
@@ -71,11 +75,12 @@ config_edit() {
       --min-height=10 \
       --margin=0,4% \
       --border=rounded \
+      --border-label=$'\033[1;36m config \033[0m' \
       --delimiter=$'\t' \
       --with-nth=4 \
       --accept-nth=2 \
       --header='Settings — pick a config file · Enter opens in '"$editor_name"' · Esc cancels' \
-      --prompt='config> ' \
+      --prompt="$prompt" \
       --preview-window='right:55%:border-left' \
       --preview="$preview_cmd" \
       --bind='ctrl-/:toggle-preview'
