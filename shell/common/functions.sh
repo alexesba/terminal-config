@@ -1,3 +1,6 @@
+# shellcheck source=reload.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/reload.sh"
+
 source "$DOTFILES_DIR/lib/tmux_sessions.sh"
 
 function restore_db {

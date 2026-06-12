@@ -150,6 +150,9 @@ source \"$src\"
   echo -e "  ${GREEN}✓${RESET}  $dest installed (sources rc.sh; other tools may append below)."
 }
 
+# shellcheck source=../shell/common/reload.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/reload.sh"
+
 # Remove a shell RC wrapper or symlink managed by this repo.
 # Usage: uninstall_shell_rc_if_mine <dotfiles_dir> <dest>
 uninstall_shell_rc_if_mine() {

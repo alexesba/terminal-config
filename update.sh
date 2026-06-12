@@ -79,10 +79,15 @@ echo ""
 if [ -t 0 ]; then
   ask_yn "Reload shell now?"
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "  Reloading shell…"
-    exec "${SHELL:-/bin/bash}" -l
+    if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+      echo -e "  Reloading shell…"
+      reload_interactive_shell
+    else
+      echo -e "  Run ${BOLD}reload${RESET} in your shell to pick up changes."
+      echo -e "  ${DIM}(./update.sh runs in a subshell — use reload in your interactive session.)${RESET}"
+    fi
   fi
-  echo -e "  ${DIM}Open a new tab or run: exec \$SHELL -l${RESET}"
+  echo -e "  ${DIM}Or open a new terminal tab.${RESET}"
 else
-  echo -e "  ${DIM}Restart your shell or run: exec \$SHELL -l${RESET}"
+  echo -e "  ${DIM}Run ${BOLD}reload${RESET} or open a new terminal tab.${RESET}"
 fi

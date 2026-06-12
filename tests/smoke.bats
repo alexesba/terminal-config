@@ -57,11 +57,11 @@ load test_helper
   [ "$status" -eq 0 ]
 }
 
-@test "bash shell chain defines reload alias" {
+@test "bash shell chain defines reload" {
   run bash --noprofile --norc -c "
     export DOTFILES_DIR='$REPO_ROOT'
     source '$REPO_ROOT/shell/bash.sh'
-    alias reload
+    declare -f reload >/dev/null
   "
   [ "$status" -eq 0 ]
 }
@@ -75,11 +75,11 @@ load test_helper
   [ "$status" -eq 0 ]
 }
 
-@test "zsh shell chain defines reload alias" {
+@test "zsh shell chain defines reload" {
   run zsh -fc "
     export DOTFILES_DIR='$REPO_ROOT'
     source '$REPO_ROOT/shell/zsh.sh'
-    alias reload
+    whence reload
   "
   [ "$status" -eq 0 ]
 }

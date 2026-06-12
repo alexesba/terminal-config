@@ -39,12 +39,7 @@ else
   alias dns-clean="sudo killall -HUP mDNSResponder"
 fi
 
-# Re-source the rc file for whichever shell is running
-if [ -n "$ZSH_VERSION" ]; then
-  alias reload='source ~/.zshrc'
-else
-  alias reload='source ~/.bashrc'
-fi
+# Re-source the rc file for whichever shell is running (see shell/common/reload.sh).
 
 alias gcoft='git branch -a| fzf | xargs git checkout -t'
 alias gcof='git branch -a| fzf | xargs git checkout'
