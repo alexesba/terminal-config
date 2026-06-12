@@ -4,7 +4,8 @@
 #   gogh_python_deps_ok          — exit 0 when imports work
 #   install_gogh_python_deps     — pip install --user -r requirements.txt
 #   gogh_python_deps_hint        — print install command to stderr
-set -u
+#
+# Do not use set -u here — colorscheme sources this file into an interactive shell.
 
 gogh_python_deps_ok() {
   command -v python3 >/dev/null 2>&1 || return 1
@@ -40,3 +41,21 @@ install_gogh_python_deps() {
 
   python3 -m pip install --user -r "$req"
 }
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  case "${1:-}" in
+    ensure)
+      if gogh_python_deps_ok; then
+        exit 0
+      fi
+      install_gogh_python_deps
+      ;;
+    hint)
+      gogh_python_deps_hint
+      ;;
+    *)
+      printf 'Usage: %s ensure|hint\n' "${0##*/}" >&2
+      exit 1
+      ;;
+  esac
+fi

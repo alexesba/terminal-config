@@ -78,10 +78,8 @@ function colorscheme() {
 
   [ -z "$selection" ] && return
   if [ "${TERMINAL:-}" = alacritty ]; then
-    # shellcheck source=deps.sh disable=SC1091
-    source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
-    if ! gogh_python_deps_ok && ! install_gogh_python_deps; then
-      gogh_python_deps_hint
+    if ! bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" ensure; then
+      bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" hint >&2
       return 1
     fi
   fi
