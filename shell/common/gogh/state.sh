@@ -7,7 +7,7 @@
 #   ~/.local/state/gogh/last_active → alacritty | kitty | wezterm
 #
 # Legacy ~/.local/state/gogh/current (flat or JSON) is migrated on first use.
-# Sourced by persist.sh, current.sh, apply_saved.sh, apply_persisted.sh.
+# Sourced by persist.sh, current.sh, apply_saved.sh.
 set -u
 
 GOGH_STATE_TERMINALS=(alacritty kitty wezterm)

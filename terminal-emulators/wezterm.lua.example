@@ -24,20 +24,53 @@ local config = {
   })
 }
 
--- Persisted gogh theme written by the `colorscheme` shell function. Loaded by
--- absolute path (config dir) rather than require(), so it resolves correctly
--- even though this file is symlinked from the dotfiles repo. Registered on the
--- reload watch list so picking a scheme updates open windows too.
+-- Persisted Gogh theme from `colorscheme` → ~/.config/wezterm/colors.lua.
+-- Config reload (watch list) updates every pane — parent shell, tmux, splits,
+-- and window padding — without per-pane OSC escape sequences.
+local GOGH_SCHEME = 'Gogh Active'
 local colors_path = wezterm.config_dir .. '/colors.lua'
 wezterm.add_to_config_reload_watch_list(colors_path)
-local f = io.open(colors_path, 'r')
-if f then
+
+local function gogh_background_layer(color)
+  return {
+    {
+      source = { Color = color },
+      width = '100%',
+      height = '100%',
+    },
+  }
+end
+
+local function load_gogh_colors()
+  local f = io.open(colors_path, 'r')
+  if not f then
+    return nil
+  end
   f:close()
   local ok, colors = pcall(dofile, colors_path)
   if ok and type(colors) == 'table' then
-    config.colors = colors
-    config.color_scheme = nil
+    return colors
   end
+  return nil
 end
+
+local colors = load_gogh_colors()
+if colors then
+  config.color_schemes = {
+    [GOGH_SCHEME] = colors,
+  }
+  config.color_scheme = GOGH_SCHEME
+  config.background = gogh_background_layer(colors.background)
+end
+
+wezterm.on('window-config-reloaded', function(window)
+  local effective = window:effective_config()
+  local bg = effective.colors and effective.colors.background
+  if bg then
+    window:set_config_overrides({
+      background = gogh_background_layer(bg),
+    })
+  end
+end)
 
 return config

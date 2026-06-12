@@ -30,7 +30,7 @@ name=$(sed -n 's/^export PROFILE_NAME="\([^"]*\)".*/\1/p' "$file" | head -n1)
 
 gogh_state_write_theme "$term" "$name" "$(basename "$file")"
 
-# WezTerm: Gogh only OSC-the live pane; write colors.lua for new panes/windows.
+# WezTerm: write colors.lua; config reload applies palette to all panes (no OSC).
 case "$term" in
   wezterm)
     cfg="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}"

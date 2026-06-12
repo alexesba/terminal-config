@@ -44,19 +44,22 @@ theme="$gogh_installs/$file"
 
 persist_script="$DOTFILES_DIR/shell/common/gogh/persist.sh"
 
-if ! GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1; then
-  if [ "$term" = alacritty ] && ! gogh_python_deps_ok; then
-    gogh_python_deps_hint
-  else
-    printf 'Failed to apply saved theme for %s.\n' "$term" >&2
+if [ "$term" != wezterm ]; then
+  if ! GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1; then
+    if [ "$term" = alacritty ] && ! gogh_python_deps_ok; then
+      gogh_python_deps_hint
+    else
+      printf 'Failed to apply saved theme for %s.\n' "$term" >&2
+    fi
+    exit 1
   fi
-  exit 1
 fi
 
 [ -f "$persist_script" ] && bash "$persist_script" "$theme" "$term"
 
-# File-based emulators: clear tmux pane OSC overrides and reload outer config.
-if [ "$term" = alacritty ]; then
+if [ "$term" = wezterm ]; then
+  bash "$DOTFILES_DIR/shell/common/gogh/reload_wezterm.sh" 2>/dev/null || true
+elif [ "$term" = alacritty ]; then
   bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
 elif [ "$term" = kitty ]; then
   bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true
