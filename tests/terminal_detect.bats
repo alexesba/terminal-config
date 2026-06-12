@@ -27,16 +27,7 @@ load test_helper
 }
 
 @test "detect_terminal_emulator returns failure when unknown" {
-  mkdir -p "$TEST_HOME/bin"
-  cat >"$TEST_HOME/bin/ps" <<'EOF'
-#!/usr/bin/env bash
-if [ "$1" = "-o" ] && [ "$2" = "comm=" ]; then
-  printf 'bash\n'
-elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
-  printf '1\n'
-fi
-EOF
-  chmod +x "$TEST_HOME/bin/ps"
+  mock_ps_no_emulator
   run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 1 ]
@@ -111,15 +102,8 @@ case "$1" in
     ;;
 esac
 EOF
-  cat >"$TEST_HOME/bin/ps" <<'EOF'
-#!/usr/bin/env bash
-if [ "$1" = "-o" ] && [ "$2" = "comm=" ]; then
-  printf 'bash\n'
-elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
-  printf '1\n'
-fi
-EOF
-  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
+  mock_ps_no_emulator
+  chmod +x "$TEST_HOME/bin/tmux"
   # env -i + ps mock: reach session TERMINAL fallback, not hosting emulator env/parent walk.
   run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" TMUX=/tmp/test \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
