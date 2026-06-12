@@ -71,20 +71,18 @@ help_menu() {
 }
 
 help() {
-  if [ -n "${BASH_VERSION:-}" ] && [ $# -gt 0 ]; then
-    case "$1" in
+  if [[ -n ${BASH_VERSION:-} && $# -gt 0 ]]; then
+    case $1 in
       -h|--help)
         _help_usage
         return 0
         ;;
-      *)
-        builtin help "$@"
-        return $?
-        ;;
     esac
+    builtin help "$@"
+    return
   fi
 
-  case "${1:-}" in
+  case ${1:-} in
     -h|--help)
       _help_usage
       return 0

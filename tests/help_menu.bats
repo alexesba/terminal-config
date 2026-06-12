@@ -43,9 +43,10 @@ load test_helper
 @test "bash help delegates to builtin when args given" {
   run bash --noprofile --norc -c "
     export DOTFILES_DIR='$REPO_ROOT'
-    source '$REPO_ROOT/shell/bash.sh'
-    help read 2>&1 | head -n1
+    source '$REPO_ROOT/shell/common/help_menu.sh'
+    help read
   "
   [ "$status" -eq 0 ]
-  [[ "$output" =~ ^read: ]]
+  [[ "$output" == *read* ]]
+  [[ "$output" != *'fzf not found'* ]]
 }
