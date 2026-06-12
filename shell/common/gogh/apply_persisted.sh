@@ -12,14 +12,57 @@
 #   apply_persisted.sh --session    — all panes in the current tmux session
 set -u
 
+_normalize_session_terminal() {
+  local raw="${1:-}" stripped
+  [ -n "$raw" ] || return 1
+  case "$raw" in
+    alacritty|kitty|wezterm) printf '%s' "$raw"; return 0 ;;
+  esac
+  stripped="$(printf '%s' "$raw" | tr -d '"' | sed 's/;.*//; s/^[[:space:]]*//; s/[[:space:]]*$//' \
+    | tr '[:upper:]' '[:lower:]')"
+  case "$stripped" in
+    alacritty|kitty|wezterm) printf '%s' "$stripped"; return 0 ;;
+  esac
+  case "$raw" in
+    *alacritty*) printf 'alacritty'; return 0 ;;
+    *kitty*) printf 'kitty'; return 0 ;;
+    *wezterm*) printf 'wezterm'; return 0 ;;
+  esac
+  return 1
+}
+
+_tmux_session_terminal() {
+  command -v tmux >/dev/null 2>&1 || return 1
+  local session term
+  session="$(tmux display-message -p '#S' 2>/dev/null)" || return 1
+  [ -n "$session" ] || return 1
+  term="$(tmux show-environment -t "$session" -s TERMINAL 2>/dev/null | sed -n 's/^TERMINAL=//p' | head -n1)"
+  [ -n "$term" ] || return 1
+  term="$(_normalize_session_terminal "$term" 2>/dev/null || true)"
+  [ -n "$term" ] || return 1
+  printf '%s\n' "$term"
+}
+
 _persisted_terminal() {
+  local term state
   if [ -n "${TERMINAL:-}" ]; then
-    printf '%s\n' "$TERMINAL"
+    term="$(_normalize_session_terminal "$TERMINAL" 2>/dev/null || true)"
+    if [ -n "$term" ]; then
+      printf '%s\n' "$term"
+      return 0
+    fi
+  fi
+  term="$(_tmux_session_terminal 2>/dev/null || true)"
+  if [ -n "$term" ]; then
+    printf '%s\n' "$term"
     return 0
   fi
-  local state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
+  state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
   [ -f "$state" ] || return 1
-  sed -n 's/^terminal=//p' "$state" | head -n1
+  term="$(sed -n 's/^terminal=//p' "$state" | head -n1)"
+  term="$(_normalize_session_terminal "$term" 2>/dev/null || true)"
+  [ -n "$term" ] || return 1
+  printf '%s\n' "$term"
 }
 
 _wezterm_target() {

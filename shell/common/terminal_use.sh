@@ -5,6 +5,8 @@
 source "$DOTFILES_DIR/lib/helpers.sh"
 # shellcheck source=../../lib/fonts.sh disable=SC1091
 source "$DOTFILES_DIR/lib/fonts.sh"
+# shellcheck source=terminal_detect.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
 
 _terminal_list_script() {
   printf '%s/shell/common/terminal_list.sh\n' "$DOTFILES_DIR"
@@ -24,16 +26,22 @@ _terminal_config_path() {
 
 _use_terminal_help() {
   cat <<EOF
-Usage: use-terminal [reset|default|alacritty|kitty|wezterm|apply] [apply]
+Usage: use-terminal [reset|detect|sync|default|alacritty|kitty|wezterm|apply] [apply]
 
   use-terminal                 Fuzzy-pick an installed terminal (requires fzf)
   use-terminal status          Show current target and install default
+  use-terminal detect          Detect hosting emulator and set TERMINAL
+  use-terminal detect --print  Print detected name only (no change)
+  use-terminal detect --export Print: export TERMINAL=<name>  (for eval)
+  use-terminal sync            Same as use-terminal detect
   use-terminal kitty           Point colorscheme at Kitty for this shell only
   use-terminal reset           Restore TERMINAL from ~/.local.sh
   use-terminal kitty apply     Switch and re-apply the saved Gogh theme
 
-Install default is unchanged in ~/.local.sh. Run update.sh once if a terminal
-config is missing (~/.config/<app>/…).
+When TERMINAL_AUTO_DETECT is not 0 (default), interactive shells, colorscheme,
+and tmux-start auto-match TERMINAL to the emulator hosting the window. Inside
+tmux, new panes inherit the session TERMINAL (see update-environment in
+tmux.conf.example) — no use-terminal per pane needed.
 EOF
 }
 
@@ -109,6 +117,47 @@ _use_terminal_menu() {
   esac
 }
 
+# Match TERMINAL to the emulator hosting this shell (no-op when disabled/overridden).
+sync_terminal_to_host() {
+  [ "${TERMINAL_AUTO_DETECT:-1}" != 0 ] || return 0
+  [ "${TERMINAL_OVERRIDE:-}" != 1 ] || return 0
+
+  local detected default current cfg
+  detected="$(detect_terminal_emulator 2>/dev/null || true)"
+  [ -n "$detected" ] || return 0
+  is_colorscheme_terminal "$detected" || return 0
+
+  cfg="$(_terminal_config_path "$detected")"
+  if [ -n "$cfg" ] && [ ! -f "$cfg" ] && [ "${TERMINAL_AUTO_DETECT_VERBOSE:-}" = 1 ]; then
+    printf 'note: %s config missing (%s); run ./update.sh if colorscheme fails\n' \
+      "$detected" "$cfg" >&2
+  fi
+
+  default="$(_terminal_default)"
+  default="${default:-wezterm}"
+  current="${TERMINAL:-$default}"
+
+  if [ -n "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then
+    local session session_term="" session_normalized=""
+    session="$(tmux display-message -p '#S' 2>/dev/null || true)"
+    if [ -n "$session" ]; then
+      session_term="$(tmux show-environment -t "$session" -s TERMINAL 2>/dev/null | sed -n 's/^TERMINAL=//p' | head -n1)"
+      session_normalized="$(_normalize_detected_terminal "$session_term" 2>/dev/null || true)"
+      if [ "$session_normalized" != "$detected" ]; then
+        tmux set-environment -t "$session" TERMINAL "$detected" 2>/dev/null || true
+      fi
+    fi
+  fi
+
+  [ "$detected" = "$current" ] && return 0
+
+  export TERMINAL="$detected"
+  bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$detected" 2>/dev/null || true
+  if [ "${TERMINAL_AUTO_DETECT_VERBOSE:-}" = 1 ]; then
+    printf 'TERMINAL=%s (auto-detected; default: %s)\n' "$detected" "$default"
+  fi
+}
+
 use-terminal() {
   local default term apply=false list_script
   default="$(_terminal_default)"
@@ -120,10 +169,56 @@ use-terminal() {
       return 0
       ;;
     status)
-      printf 'TERMINAL=%s  default=%s\n' "${TERMINAL:-$default}" "$default"
-      if [ "${TERMINAL_OVERRIDE:-}" = 1 ] || [ "${TERMINAL:-}" != "$default" ]; then
-        printf 'Session override active — run: use-terminal reset\n'
+      local detected=""
+      detected="$(detect_terminal_emulator 2>/dev/null || true)"
+      printf 'TERMINAL=%s  default=%s' "${TERMINAL:-$default}" "$default"
+      [ -n "$detected" ] && printf '  detected=%s' "$detected"
+      printf '\n'
+      if [ "${TERMINAL_OVERRIDE:-}" = 1 ]; then
+        printf 'Manual override active — run: use-terminal reset\n'
+      elif [ -n "$detected" ] && [ "$detected" != "${TERMINAL:-$default}" ]; then
+        printf 'Run: use-terminal sync\n'
       fi
+      return 0
+      ;;
+    detect)
+      local detected="" cfg=""
+      case "${2:-}" in
+        --export)
+          detected="$(detect_terminal_emulator 2>/dev/null || true)"
+          if [ -z "$detected" ]; then
+            printf 'could not detect hosting terminal\n' >&2
+            return 1
+          fi
+          printf 'export TERMINAL=%s\n' "$detected"
+          return 0
+          ;;
+        --print|--dry-run)
+          detect_terminal_emulator
+          return $?
+          ;;
+      esac
+      sync_terminal_to_host
+      detected="$(detect_terminal_emulator 2>/dev/null || true)"
+      if [ -z "$detected" ]; then
+        printf 'could not detect hosting terminal\n' >&2
+        return 1
+      fi
+      printf 'detected: %s\n' "$detected"
+      printf 'TERMINAL=%s  default=%s\n' "${TERMINAL:-$default}" "$default"
+      cfg="$(_terminal_config_path "$detected")"
+      if [ -n "$cfg" ] && [ ! -f "$cfg" ]; then
+        printf 'Config missing: %s — run ./update.sh\n' "$cfg"
+      fi
+      return 0
+      ;;
+    sync)
+      local detected=""
+      sync_terminal_to_host
+      detected="$(detect_terminal_emulator 2>/dev/null || true)"
+      printf 'TERMINAL=%s  default=%s' "${TERMINAL:-$default}" "$default"
+      [ -n "$detected" ] && printf '  detected=%s' "$detected"
+      printf '\n'
       return 0
       ;;
     reset|default)
@@ -163,3 +258,44 @@ use-terminal() {
 
   _use_terminal_activate "$term" "$apply" "$default"
 }
+
+_terminal_run_deferred_sync() {
+  local detected=""
+  sync_terminal_to_host 2>/dev/null || true
+  detected="$(detect_terminal_emulator 2>/dev/null || true)"
+  if [ -n "$detected" ] && [ "$detected" = "${TERMINAL:-}" ]; then
+    if [ -n "${ZSH_VERSION:-}" ]; then
+      add-zsh-hook -d precmd _terminal_run_deferred_sync 2>/dev/null || true
+    elif [ -n "${BASH_VERSION:-}" ]; then
+      unset -f _terminal_run_deferred_sync 2>/dev/null || true
+      if [ -n "${PROMPT_COMMAND:-}" ]; then
+        PROMPT_COMMAND="${PROMPT_COMMAND//_terminal_run_deferred_sync;}"
+        PROMPT_COMMAND="${PROMPT_COMMAND//;_terminal_run_deferred_sync}"
+        PROMPT_COMMAND="${PROMPT_COMMAND//_terminal_run_deferred_sync}"
+      fi
+    fi
+  fi
+}
+
+_terminal_schedule_deferred_sync() {
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    autoload -Uz add-zsh-hook 2>/dev/null || return 0
+    add-zsh-hook precmd _terminal_run_deferred_sync 2>/dev/null || true
+  elif [ -n "${BASH_VERSION:-}" ]; then
+    case "${PROMPT_COMMAND:-}" in
+      *_terminal_run_deferred_sync*) ;;
+      *)
+        PROMPT_COMMAND="_terminal_run_deferred_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+        ;;
+    esac
+  fi
+}
+
+# Auto-match TERMINAL when an interactive shell loads (again on first prompt —
+# tmux panes sometimes lack TMUX / client info until the shell is fully up).
+case "$-" in
+  *i*)
+    sync_terminal_to_host 2>/dev/null || true
+    _terminal_schedule_deferred_sync
+    ;;
+esac

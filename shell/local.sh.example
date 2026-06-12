@@ -29,6 +29,8 @@
 # choice (alacritty/kitty/wezterm) and uncomments it. Edit by hand to override.
 # For a temporary switch in one shell: use-terminal  (fzf menu; use-terminal reset)
 # Or: use-terminal kitty apply
+# Auto-detect hosting emulator on shell start / colorscheme (default on): TERMINAL_AUTO_DETECT=1
+# export TERMINAL_AUTO_DETECT=0
 # export TERMINAL={{TERMINAL}}
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────

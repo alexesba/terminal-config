@@ -228,3 +228,73 @@ EOF
   [ "$status" -eq 0 ]
   ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
 }
+
+@test "apply_persisted pane hook skips when tmux session TERMINAL is alacritty despite state wezterm" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=wezterm
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-hook"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf 'testsess\n'
+    ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${3:-}" = "testsess" ] && [ "${4:-}" = "-s" ] && [ "${5:-}" = "TERMINAL" ]; then
+      printf 'TERMINAL=alacritty\n'
+    fi
+    ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}
+
+@test "apply_persisted skips when tmux session TERMINAL is corrupted alacritty garbage" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+terminal=wezterm
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_tty="$TEST_HOME/pane-hook2"
+  : >"$pane_tty"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  display-message)
+    printf 'testsess\n'
+    ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${3:-}" = "testsess" ] && [ "${4:-}" = "-s" ] && [ "${5:-}" = "TERMINAL" ]; then
+      printf 'TERMINAL="alacritty"; export TERMINAL;\n'
+    fi
+    ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL= TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" "$pane_tty"
+  [ "$status" -eq 0 ]
+  ! grep -q $'\033]11;#aabbcc\007' "$pane_tty"
+}

@@ -3,6 +3,7 @@
 bats_require_minimum_version 1.5.0
 
 setup() {
+  export TERMINAL_AUTO_DETECT=0
   export TEST_HOME="${BATS_TEST_TMPDIR}/home"
   mkdir -p "$TEST_HOME"
   export HOME="$TEST_HOME"

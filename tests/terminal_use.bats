@@ -71,6 +71,70 @@ EOF
   [ "$output" = "kitty|1" ]
 }
 
+@test "use-terminal detect --export prints eval line" {
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  list-clients) printf '%s\n' "77777" ;;
+esac
+EOF
+  cat >"$TEST_HOME/bin/ps" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-o" ] && [ "$2" = "comm=" ] && [ "$4" = "77777" ]; then
+  printf 'kitty\n'
+elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
+  printf '1\n'
+fi
+EOF
+  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" TMUX=/tmp/test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash -c '
+    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    use-terminal detect --export
+  '
+  [ "$status" -eq 0 ]
+  [ "$output" = "export TERMINAL=kitty" ]
+}
+
+@test "use-terminal detect sets TERMINAL from tmux client walk" {
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local.sh" <<'EOF'
+export TERMINAL=wezterm
+EOF
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  list-clients) printf '%s\n' "66666" ;;
+  display-message) printf 'testsess\n' ;;
+  show-environment)
+    if [ "${2:-}" = "-t" ] && [ "${4:-}" = "-s" ]; then
+      printf 'TERMINAL=wezterm\n'
+    fi
+    ;;
+esac
+EOF
+  cat >"$TEST_HOME/bin/ps" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-o" ] && [ "$2" = "comm=" ] && [ "$4" = "66666" ]; then
+  printf 'Alacritty\n'
+elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
+  printf '1\n'
+fi
+EOF
+  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" TMUX=/tmp/test \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash -c '
+    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    use-terminal detect >/dev/null
+    printf "%s" "$TERMINAL"
+  '
+  [ "$status" -eq 0 ]
+  [ "$output" = "alacritty" ]
+}
+
 @test "use-terminal fails when config template is missing" {
   cat >"$TEST_HOME/.local.sh" <<'EOF'
 export TERMINAL=wezterm

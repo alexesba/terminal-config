@@ -30,6 +30,8 @@ function colorscheme() {
       ;;
   esac
 
+  sync_terminal_to_host 2>/dev/null || true
+
   # GOGH_DIR points at the Gogh repo root (matches bootstrap.sh); themes live in
   # its installs/ subdirectory.
   local gogh_dir="$gogh_root/installs"

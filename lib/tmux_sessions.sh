@@ -197,6 +197,16 @@ tmux_attach_session() {
   fi
 }
 
+_tmux_sync_session_terminal() {
+  local session="$1"
+  type sync_terminal_to_host >/dev/null 2>&1 && sync_terminal_to_host 2>/dev/null || true
+  [ -n "${TERMINAL:-}" ] || return 0
+  tmux set-environment -t "$session" TERMINAL "$TERMINAL" 2>/dev/null || true
+  if [ -n "${DOTFILES_DIR:-}" ] && [ -f "$DOTFILES_DIR/shell/common/gogh/persist.sh" ]; then
+    bash "$DOTFILES_DIR/shell/common/gogh/persist.sh" --terminal "$TERMINAL" 2>/dev/null || true
+  fi
+}
+
 function tmux-start {
   local tmux_dirname tmux_app
   _tmux_require || return
@@ -214,8 +224,10 @@ function tmux-start {
   if ! tmux has-session -t "$tmux_app" 2>/dev/null; then
     echo "No Session found.  Creating and configuring."
     tmux new-session -d -s "$tmux_app" -c "$tmux_dirname" || return
+    _tmux_sync_session_terminal "$tmux_app"
   else
     echo "Session found.  Connecting."
+    _tmux_sync_session_terminal "$tmux_app"
   fi
 
   tmux_attach_session "$tmux_app"

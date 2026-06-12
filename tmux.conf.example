@@ -45,6 +45,10 @@ if-shell "uname | grep -q Darwin" 'set-option -g default-shell /bin/zsh'
 set -g default-terminal "tmux-256color"
 set-option -sa terminal-overrides ',xterm-256color:RGB'
 
+# Pass TERMINAL into new panes (set by tmux-start / sync_terminal_to_host) so
+# colorscheme targets the outer emulator without use-terminal in every pane.
+set-option -g update-environment "TERMINAL"
+
 # Optional: forward DCS passthrough sequences (e.g. OSC 52, image protocols) to
 # the outer terminal. Gogh colours in tmux 3.6+ use OSC 10/11/4 handled by tmux
 # per pane via ~/.tmux/apply-gogh-theme.sh hooks — not via allow-passthrough.
