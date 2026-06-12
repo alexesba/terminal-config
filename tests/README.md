@@ -28,6 +28,8 @@ Shared setup lives in `test_helper.bash` (`TEST_HOME`, `REPO_ROOT`, helpers like
 | File | Focus |
 |---|---|
 | `helpers.bats` | `link_file`, template copy/migrate, `set_env_var`, uninstall helpers, `is_colorscheme_terminal` |
+| `config_edit.bats` | Config picker rows, bindings help, shell chain |
+| `help_menu.bats` | Unified `help` menu rows, bash builtin delegation |
 | `fonts.bats` | Font substitution, `~/.local.sh` parsing, font id resolution |
 | `tui.bats` | Install TUI progress bar and step collapse helpers |
 | `smoke.bats` | Syntax of install/update scripts; bash/zsh load `colorscheme` and `reload`; bootstrap quiet mode |

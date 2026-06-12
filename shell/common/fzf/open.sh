@@ -31,9 +31,9 @@ fzf_then_open_in_editor() {
   )" </dev/tty || return
 
   [ -n "$file" ] || return
-  ${EDITOR:-nvim} "$file"
+  "${EDITOR:-nvim}" "$file"
 
-  if [ -n "${ZSH_VERSION:-}" ]; then
+  if [[ -n "${ZSH_VERSION:-}" && -n "${WIDGET:-}" ]]; then
     zle reset-prompt
   fi
 }
