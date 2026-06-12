@@ -152,8 +152,8 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 
 | Terminal | How the pick persists |
 |---|---|
-| **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. |
-| **WezTerm** | Gogh themes the current pane via OSC; `colorscheme` also writes `~/.config/wezterm/colors.lua` (new WezTerm panes/windows). Inside tmux 3.6+, hooks on `after-split-window`, `after-new-window`, and `after-new-session` run `~/.tmux/apply-gogh-theme.sh` to re-apply OSC per pane (see `tmux.conf.example`). |
+| **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. Inside tmux, new panes inherit those colours from the outer terminal — no extra hooks needed. |
+| **WezTerm** | Gogh themes the current pane via OSC; `colorscheme` also writes `~/.config/wezterm/colors.lua` (new WezTerm panes/windows). Inside tmux, new panes do not read `colors.lua`; with tmux 3.6+, hooks in `tmux.conf.example` run `~/.tmux/apply-gogh-theme.sh` (WezTerm only) to re-apply OSC per pane. |
 
 ### Configuration
 

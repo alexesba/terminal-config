@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Re-apply the persisted Gogh theme (WezTerm OSC sequences).
+# Re-apply the persisted Gogh theme to tmux panes (WezTerm only).
+#
+# WezTerm themes via OSC are per-pane and session-only; new tmux splits need OSC
+# sent to #{pane_tty}. Kitty and Alacritty write config files instead — new tmux
+# panes inherit colours from the outer terminal, so this script is a no-op when
+# TERMINAL is not wezterm (see tmux.conf.example hooks).
 #
 # Usage:
 #   apply_persisted.sh              — apply to stdout (interactive shell)
-#   apply_persisted.sh /dev/ttysNN  — apply to a tmux pane tty (after-new-pane hook)
+#   apply_persisted.sh /dev/ttysNN  — apply to a tmux pane tty (tmux hook)
 set -u
 
 pane_tty="${1:-}"
