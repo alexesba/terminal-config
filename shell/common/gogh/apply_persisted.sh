@@ -9,9 +9,8 @@
 # Usage:
 #   apply_persisted.sh              — apply to stdout (interactive shell)
 #   apply_persisted.sh /dev/ttysNN  — apply to a tmux pane tty (tmux hook)
+#   apply_persisted.sh --session    — all panes in the current tmux session
 set -u
-
-pane_tty="${1:-}"
 
 _wezterm_target() {
   [ "${TERMINAL:-}" = wezterm ] && return 0
@@ -19,28 +18,23 @@ _wezterm_target() {
   [ -f "$local_sh" ] && grep -qE '^[[:space:]]*export TERMINAL=(wezterm|"wezterm")' "$local_sh"
 }
 
-if [ -n "$pane_tty" ]; then
-  [ -e "$pane_tty" ] || exit 0
-  _wezterm_target || exit 0
-else
-  [ -t 1 ] || [ -n "${GOGH_APPLY_PERSISTED_FORCE:-}" ] || exit 0
-  if [ "${TERM:-dumb}" = dumb ] && [ -z "${GOGH_APPLY_PERSISTED_FORCE:-}" ]; then
-    exit 0
-  fi
-  _wezterm_target || exit 0
-fi
+_load_persisted_theme() {
+  state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
+  [ -f "$state" ] || return 1
 
-state="${GOGH_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/gogh/current}"
-[ -f "$state" ] || exit 0
+  file="$(sed -n 's/^file=//p' "$state" | head -n1)"
+  [ -n "$file" ] || return 1
 
-file="$(sed -n 's/^file=//p' "$state" | head -n1)"
-[ -n "$file" ] || exit 0
+  gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
+  theme="$gogh_installs/$file"
+  [ -f "$theme" ] || return 1
+  return 0
+}
 
-gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
-theme="$gogh_installs/$file"
-[ -f "$theme" ] || exit 0
+_apply_to_tty() {
+  local pane_tty="$1"
+  [ -e "$pane_tty" ] || return 0
 
-if [ -n "$pane_tty" ]; then
   gogh_root="${GOGH_DIR:-$HOME/src/gogh}"
   apply_script="$gogh_root/apply-colors.sh"
   if [ -f "$apply_script" ] && grep -q '^export BACKGROUND_COLOR=' "$theme"; then
@@ -56,6 +50,48 @@ if [ -n "$pane_tty" ]; then
   else
     TERMINAL=wezterm bash "$theme" >"$pane_tty" 2>/dev/null || true
   fi
-else
+}
+
+_apply_to_stdout() {
   GOGH_NONINTERACTIVE=1 TERMINAL=wezterm bash "$theme" >/dev/null 2>&1 || true
+}
+
+_apply_tmux_session() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  [ -n "${TMUX:-}" ] || return 0
+  _wezterm_target || return 0
+  _load_persisted_theme || return 0
+
+  local tty
+  while IFS= read -r tty; do
+    [ -n "$tty" ] && _apply_to_tty "$tty"
+  done < <(tmux list-panes -s -F '#{pane_tty}')
+}
+
+case "${1:-}" in
+  --session)
+    _apply_tmux_session
+    exit 0
+    ;;
+esac
+
+pane_tty="${1:-}"
+
+if [ -n "$pane_tty" ]; then
+  [ -e "$pane_tty" ] || exit 0
+  _wezterm_target || exit 0
+else
+  [ -t 1 ] || [ -n "${GOGH_APPLY_PERSISTED_FORCE:-}" ] || exit 0
+  if [ "${TERM:-dumb}" = dumb ] && [ -z "${GOGH_APPLY_PERSISTED_FORCE:-}" ]; then
+    exit 0
+  fi
+  _wezterm_target || exit 0
+fi
+
+_load_persisted_theme || exit 0
+
+if [ -n "$pane_tty" ]; then
+  _apply_to_tty "$pane_tty"
+else
+  _apply_to_stdout
 fi

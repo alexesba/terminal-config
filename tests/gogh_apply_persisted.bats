@@ -117,3 +117,57 @@ EOF
     bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh"
   [ "$status" -eq 0 ]
 }
+
+@test "apply_persisted --session writes to every pane in tmux session" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '\033]11;#aabbcc\007'
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  pane_a="$TEST_HOME/pane-a"
+  pane_b="$TEST_HOME/pane-b"
+  : >"$pane_a"
+  : >"$pane_b"
+  cat >"$TEST_HOME/bin/tmux" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "$pane_a" "$pane_b"
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=wezterm TMUX=/tmp/tmux-test \
+    PATH="$TEST_HOME/bin:$PATH" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" --session
+  [ "$status" -eq 0 ]
+  grep -q $'\033]11;#aabbcc\007' "$pane_a"
+  grep -q $'\033]11;#aabbcc\007' "$pane_b"
+}
+
+@test "apply_persisted --session skips when not inside tmux" {
+  mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs" "$TEST_HOME/bin"
+  cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'
+name=Test
+file=theme.sh
+EOF
+  cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
+#!/usr/bin/env bash
+echo should-not-run >&2
+exit 1
+EOF
+  chmod +x "$TEST_HOME/gogh/installs/theme.sh"
+  cat >"$TEST_HOME/bin/tmux" <<'EOF'
+#!/usr/bin/env bash
+echo tmux-should-not-run >&2
+exit 1
+EOF
+  chmod +x "$TEST_HOME/bin/tmux"
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=wezterm TMUX= \
+    PATH="$TEST_HOME/bin:$PATH" \
+    bash "$REPO_ROOT/shell/common/gogh/apply_persisted.sh" --session
+  [ "$status" -eq 0 ]
+  [[ "$output" != *should-not-run* ]]
+  [[ "$output" != *tmux-should-not-run* ]]
+}
