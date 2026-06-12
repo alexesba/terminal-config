@@ -23,27 +23,6 @@ Personal dotfiles for zsh/bash — robbyrussell-style prompt, theme system, sens
 
 ---
 
-## What's included
-
-| Area | Files |
-|---|---|
-| **Shell prompt** | `shell/{zsh,bash}/ps1.sh` — theme loaders; `shell/{zsh,bash}/themes/` |
-| **Aliases** | `shell/aliases/default.sh` — git, vim, open, navigation (always loaded) |
-| **History** | 1 million entries, timestamps, deduplication |
-| **NVM** | Auto-switches Node version on `cd` via `.nvmrc` |
-| **rbenv** | Ruby version management |
-| **Python venv** | Auto-activates `./venv` on `cd` |
-| **tig** | Git text-mode browser (`alias tig` in aliases) |
-| **FZF** | Fuzzy file finder with `rg`/`bat` preview |
-| **zsh-autosuggestions** | History + completion suggestions as you type |
-| **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` (no auto-restore on startup; closing all sessions clears the save) |
-| **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
-| **Color schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
-| **Terminal switch** | `use-terminal` — fzf menu to target `colorscheme` at another installed emulator for this shell |
-| **WSL support** | Clipboard, `open` alias, package manager detection |
-
----
-
 ## Requirements
 
 - **macOS**: [Homebrew](https://brew.sh) installed
@@ -82,12 +61,6 @@ cd ~/Projects/terminal-config
 Pulls the latest changes and refreshes managed shell RC wrappers (and any legacy symlinks still pointing into this repo). Safe to run at any time.
 
 On interactive shell startup, `rc.sh` may fetch upstream (at most once every 4 days) and print a one-line hint when this repo is behind — run `./update.sh` to catch up. Disable with `export TERMINAL_CONFIG_UPDATE_CHECK=0` in `~/.local.sh`.
-
----
-
-## Tests
-
-CI runs [`./scripts/test.sh`](scripts/test.sh) on every push/PR ([workflow](.github/workflows/ci.yml)). Details, suite list, and manual smoke checklist: **[tests/README.md](tests/README.md)**.
 
 ---
 
@@ -171,6 +144,47 @@ For extra aliases only, you can also use a local `~/.bash_aliases` file (not in 
 
 ---
 
+## Fonts
+
+When you pick a terminal emulator during `./install.sh`, you also choose a **Nerd Font** (default: **Caskaydia Cove Nerd Font Propo**). The installer:
+
+1. Installs the font via Homebrew (`brew install --cask font-…`) on macOS, or downloads from [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) on Linux
+2. Substitutes `{{FONT_FAMILY}}` in the copied terminal config with your choice
+3. Records `TERMINAL_FONT` and `TERMINAL_FONT_ID` in `~/.local.sh` (used on re-run and by `uninstall.sh`)
+
+Reinstall a font standalone:
+
+```bash
+./bootstrap.sh --font=caskaydia
+```
+
+Available IDs: `caskaydia`, `jetbrains`, `fira`, `hack`.
+
+On WSL, install fonts on the Windows side for GUI terminals.
+
+---
+
+## What's included
+
+| Area | Files |
+|---|---|
+| **Shell prompt** | `shell/{zsh,bash}/ps1.sh` — theme loaders; `shell/{zsh,bash}/themes/` |
+| **Aliases** | `shell/aliases/default.sh` — git, vim, open, navigation (always loaded) |
+| **History** | 1 million entries, timestamps, deduplication |
+| **NVM** | Auto-switches Node version on `cd` via `.nvmrc` |
+| **rbenv** | Ruby version management |
+| **Python venv** | Auto-activates `./venv` on `cd` |
+| **tig** | Git text-mode browser (`alias tig` in aliases) |
+| **FZF** | Fuzzy file finder with `rg`/`bat` preview |
+| **zsh-autosuggestions** | History + completion suggestions as you type |
+| **tmux** | `tmux.conf.example` — copied to `~/.tmux.conf` (no auto-restore on startup; closing all sessions clears the save) |
+| **Terminal emulators** | `terminal-emulators/*.example` — copied to `~/.config/` (not symlinked) |
+| **Color schemes** | `colorscheme` — fuzzy-pick 250+ Gogh themes with a live preview |
+| **Terminal switch** | `use-terminal` — fzf menu to target `colorscheme` at another installed emulator for this shell |
+| **WSL support** | Clipboard, `open` alias, package manager detection |
+
+---
+
 ## Tools installed by bootstrap
 
 | Tool | Flag | Purpose |
@@ -204,23 +218,9 @@ Run standalone:
 
 ---
 
-## Fonts
+## Tests
 
-When you pick a terminal emulator during `./install.sh`, you also choose a **Nerd Font** (default: **Caskaydia Cove Nerd Font Propo**). The installer:
-
-1. Installs the font via Homebrew (`brew install --cask font-…`) on macOS, or downloads from [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) on Linux
-2. Substitutes `{{FONT_FAMILY}}` in the copied terminal config with your choice
-3. Records `TERMINAL_FONT` and `TERMINAL_FONT_ID` in `~/.local.sh` (used on re-run and by `uninstall.sh`)
-
-Reinstall a font standalone:
-
-```bash
-./bootstrap.sh --font=caskaydia
-```
-
-Available IDs: `caskaydia`, `jetbrains`, `fira`, `hack`.
-
-On WSL, install fonts on the Windows side for GUI terminals.
+CI runs [`./scripts/test.sh`](scripts/test.sh) on every push/PR ([workflow](.github/workflows/ci.yml)). Details, suite list, and manual smoke checklist: **[tests/README.md](tests/README.md)**.
 
 ---
 
