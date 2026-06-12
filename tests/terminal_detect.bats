@@ -111,8 +111,17 @@ case "$1" in
     ;;
 esac
 EOF
-  chmod +x "$TEST_HOME/bin/tmux"
-  run env TMUX=/tmp/test PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+  cat >"$TEST_HOME/bin/ps" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-o" ] && [ "$2" = "comm=" ]; then
+  printf 'bash\n'
+elif [ "$1" = "-o" ] && [ "$2" = "ppid=" ]; then
+  printf '1\n'
+fi
+EOF
+  chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
+  # env -i + ps mock: reach session TERMINAL fallback, not hosting emulator env/parent walk.
+  run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" TMUX=/tmp/test \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]
