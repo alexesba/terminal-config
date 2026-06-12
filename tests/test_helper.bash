@@ -1,5 +1,7 @@
 # Shared setup for terminal-config bats tests.
 
+bats_require_minimum_version 1.5.0
+
 setup() {
   export TEST_HOME="${BATS_TEST_TMPDIR}/home"
   mkdir -p "$TEST_HOME"
