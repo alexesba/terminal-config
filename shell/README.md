@@ -17,6 +17,12 @@ shell/
 │   ├── fzf.sh            # FZF defaults (rg, bat preview for Ctrl-T)
 │   ├── fzf/
 │   │   └── open.sh       # Ctrl-O / Ctrl-F file finder (Telescope-style)
+│   ├── config_edit.sh    # config — edit config files (also: help)
+│   ├── config_list.sh    # rows for config picker
+│   ├── help_menu.sh      # help — unified fzf menu (configs, bindings, colorscheme, …)
+│   ├── help_list.sh      # rows for help menu
+│   ├── bindings_menu.sh  # bindings — key binding reference only
+│   ├── bindings_help.sh  # binding list text for bindings menu
 │   ├── nvmrc.sh          # load-nvmrc() body
 │   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
 │   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL
@@ -33,11 +39,11 @@ shell/
 │       ├── reload_kitty.sh      # clear pane OSC + SIGUSR1 Kitty
 │       └── reload_alacritty.sh  # clear pane OSC + touch alacritty.toml
 ├── bash/                 # Bash-only (PROMPT_COMMAND, readline, etc.)
-│   ├── bindings.sh       # Ctrl-O / Ctrl-F → fzf_then_open_in_editor
+│   ├── bindings.sh       # Ctrl-O/F file finder
 │   ├── ps1.sh + themes/
 │   └── …
 └── zsh/                  # Zsh-only (vcs_info, zle, chpwd hooks, etc.)
-    ├── bindings.sh       # Ctrl-O / Ctrl-F → fzf_then_open_in_editor
+    ├── bindings.sh       # Ctrl-O/F file finder
     ├── ps1.sh + themes/
     └── …
 ```
@@ -56,6 +62,10 @@ Startup loads personal files in this order (see `../rc.sh` and `aliases.sh`):
 **`~/.local.sh` vs `~/.bash_aliases`:** env vars and theme belong in `~/.local.sh`. Alias overrides belong in `~/.bash_aliases` (or below the wrapper in your rc file) because `~/.local.sh` is sourced *before* repo aliases — a conflicting alias there would be overwritten by `aliases/default.sh`.
 
 Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on first run). `update.sh` migrates legacy `shell/custom.sh` and `~/.custom.sh` automatically.
+
+**Quick edit:** run **`help`** for a unified fzf menu — edit config files, show key bindings, pick a color scheme, or switch terminal. Shortcuts: `config`, `bindings`, `colorscheme`, `use-terminal`.
+
+Optional terminal maps (see `terminal-emulators/*.example`): Kitty **Alt+/** or Alacritty **Alt+/** runs `help`. Avoid Ctrl+S (flow control), Ctrl+H (backspace), and Ctrl+B (tmux prefix).
 
 ## Terminal detection & tmux theming (developers)
 

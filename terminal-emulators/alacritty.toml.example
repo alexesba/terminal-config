@@ -74,11 +74,6 @@ key = "K"
 mods = "Alt"
 
 [[keyboard.bindings]]
-chars = "\u001Bh"
-key = "H"
-mods = "Alt"
-
-[[keyboard.bindings]]
 chars = "\u001Bl"
 key = "L"
 mods = "Alt"
@@ -92,6 +87,12 @@ mods = "Alt"
 chars = "\u001Bn"
 key = "N"
 mods = "Alt"
+
+# Dotfiles — run at the shell prompt (macOS Option otherwise types special chars)
+[[keyboard.bindings]]
+key = "Slash"
+mods = "Alt"
+chars = "help\r"
 
 [general]
 live_config_reload = true

@@ -9,11 +9,9 @@ fzf_then_open_in_editor() {
     preview_cmd='head -60 {} </dev/null'
   fi
 
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    emulate -L zsh
-    setopt localoptions pipefail 2>/dev/null
-    zle -I
-  fi
+  # shellcheck source=../fzf_prepare.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf_prepare.sh"
+  _fzf_prepare_tty
 
   file="$(
     FZF_DEFAULT_OPTS= eval "${FZF_DEFAULT_COMMAND:-find . -type f}" | fzf \

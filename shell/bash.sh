@@ -1,7 +1,11 @@
 source "$DOTFILES_DIR/shell/common/functions.sh"
 source "$DOTFILES_DIR/shell/common/terminal_use.sh"
 source "$DOTFILES_DIR/shell/common/gogh/colorscheme.sh"
+source "$DOTFILES_DIR/shell/common/config_edit.sh"
+source "$DOTFILES_DIR/shell/common/bindings_menu.sh"
+source "$DOTFILES_DIR/shell/common/help_menu.sh"
 source "$DOTFILES_DIR/shell/common/fzf/open.sh"
+export -f fzf_then_open_in_editor config_edit config_open_file show_bindings help_menu 2>/dev/null || true
 source "$DOTFILES_DIR/shell/bash/bindings.sh"
 source "$DOTFILES_DIR/shell/common/fzf.sh"
 source "$DOTFILES_DIR/shell/bash/nvm.sh"

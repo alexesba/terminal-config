@@ -24,6 +24,10 @@ else
   unset _src _dir
 fi
 
+# Disable Ctrl+S/Ctrl+Q flow control on the shell TTY (otherwise Ctrl+S freezes the terminal).
+# shellcheck source=shell/common/tty.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/tty.sh"
+
 # Machine-local env and secrets (optional). Seeded by install.sh from shell/local.sh.example;
 # rc.sh sources ~/.local.sh when present, before loader.sh (themes, TERMINAL, …).
 _local="${HOME}/.local.sh"
