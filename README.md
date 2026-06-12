@@ -130,13 +130,13 @@ export ZSH_THEME="robbyrussell"   # ➜  project git:(main) ✗
 export ZSH_THEME="classic"        # full path + branch + timestamp RPROMPT
 ```
 
-Themes live in `shell/zsh/themes/` (zsh, via native `vcs_info`) and `shell/bash/themes/` (bash, via `PROMPT_COMMAND`), and the two are kept visually in sync. To create your own, copy an existing theme for your shell and it will be picked up automatically. See `shell/README.md` for the full layout.
+Themes live in `shell/zsh/themes/` and `shell/bash/themes/`. Copy an existing theme file to create your own.
 
 ---
 
 ## Color schemes
 
-Run `colorscheme` to fuzzy-pick a terminal color scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). The preview fills the top half of the window; the theme list and prompt sit below. Each preview is a mock terminal window painted in the theme's own colors, with the 16-color palette and key hex values underneath:
+Run `colorscheme` to fuzzy-pick a terminal color scheme from the [Gogh](https://github.com/Gogh-Co/Gogh) collection (250+ themes). The preview fills the top half of the window; the theme list and prompt sit below.
 
 ```bash
 colorscheme
@@ -145,44 +145,24 @@ colorscheme update    # pull latest Gogh themes (~/src/gogh by default)
 
 ![colorscheme picker with live preview](doc/screenshots/colorscheme.png)
 
-Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* each theme, so scrolling never repaints your terminal — only your final pick is applied.
+Press <kbd>Enter</kbd> to apply the highlighted theme. Scrolling the list does not change your terminal — only your final pick is applied.
 
-### How it's applied and persisted
+Themes target the terminal emulator you're running in (Alacritty, Kitty, or WezTerm — chosen at install). New windows and tabs keep the theme after you pick one. If Alacritty theming fails, run `pip install --user -r ~/src/gogh/requirements.txt` (or re-run `./install.sh` / `./bootstrap.sh --gogh`).
 
-`colorscheme` targets the emulator named in the `TERMINAL` environment variable, which `install.sh` sets from your terminal choice (`alacritty` / `kitty` / `wezterm`). You can override it in `~/.local.sh` — the value must be a name [Gogh recognizes](https://github.com/Gogh-Co/Gogh) (e.g. `gnome-terminal`, `konsole`, `foot`), not just the three emulators this repo ships config templates for.
-
-| Terminal | How the pick persists |
-|---|---|
-| **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. Inside tmux, new panes inherit those colours from the outer terminal — no extra hooks needed. **Alacritty** needs Gogh's Python deps (`pip install --user -r ~/src/gogh/requirements.txt`); `install.sh` / `bootstrap.sh --gogh` installs them automatically. |
-| **WezTerm** | Gogh themes the current pane via OSC; `colorscheme` also writes `~/.config/wezterm/colors.lua` (new WezTerm panes/windows). Inside tmux, new panes do not read `colors.lua`; with tmux 3.6+, hooks in `tmux.conf.example` run `~/.tmux/apply-gogh-theme.sh` (WezTerm only) on new splits, and `colorscheme` re-applies OSC to every pane in the session after you pick a theme. |
-
-### Switching terminal emulators (session only)
-
-`install.sh` records one default in `~/.local.sh` (`TERMINAL=wezterm`, etc.). **Auto-detect** (on by default) sets `TERMINAL` to the emulator hosting each shell — Kitty window, Alacritty tab, WezTerm pane — even when `~/.local.sh` names another default. That runs when an interactive shell starts, before `colorscheme`, and when **`tmux-start`** runs (new tmux panes inherit the session `TERMINAL` via `update-environment` in `tmux.conf.example`). Set `TERMINAL_AUTO_DETECT=0` in `~/.local.sh` to disable.
-
-To override manually for one shell, run **`use-terminal`** — an fzf menu (same style as `tmux-switch`) listing only binaries found on your `PATH`:
+**Switch emulator for this session** — when you have more than one installed, or auto-detect picked the wrong one:
 
 ```bash
 use-terminal              # pick Alacritty / Kitty / WezTerm
-use-terminal detect       # detect hosting emulator and apply (same as sync)
-use-terminal sync         # re-run auto-detect now
-use-terminal kitty apply  # switch + re-apply saved Gogh theme
+use-terminal detect       # detect hosting emulator and apply
+use-terminal sync         # re-run auto-detect
+use-terminal kitty apply  # switch + re-apply saved theme
 use-terminal reset        # restore install default from ~/.local.sh
-use-terminal status       # current target vs default (no menu)
+use-terminal status       # current target vs default
 ```
 
-Manual picks set `TERMINAL_OVERRIDE=1` until `use-terminal reset`. `colorscheme` and `apply_saved.sh` follow the effective `TERMINAL`. Run `./update.sh` once if a config template is missing under `~/.config/`.
+Auto-detect is on by default. Disable with `export TERMINAL_AUTO_DETECT=0` in `~/.local.sh`.
 
-**Maintainers:** detection order, tmux hook behaviour, and design decisions are documented in [shell/common/terminal-theming.md](shell/common/terminal-theming.md).
-
-### Configuration
-
-- **`GOGH_DIR`** — Gogh repo root (defaults to `~/src/gogh`; themes are read from `installs/`).
-- **`TERMINAL`** — managed by `install.sh`; set it manually in `~/.local.sh` to override the install default permanently. For a temporary switch, use **`use-terminal`** (see above).
-
-Run `colorscheme update` (or `colorscheme --update`) to `git pull` the Gogh checkout when new themes are added upstream.
-
-Install the Gogh themes via `./bootstrap.sh --gogh` (or pick Gogh during `./install.sh`).
+Optional in `~/.local.sh`: `TERMINAL` (install default), `GOGH_DIR` (Gogh checkout, default `~/src/gogh`). Install Gogh via `./bootstrap.sh --gogh` or during `./install.sh`.
 
 ---
 

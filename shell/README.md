@@ -57,11 +57,10 @@ Startup loads personal files in this order (see `../rc.sh` and `aliases.sh`):
 
 Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on first run). `update.sh` migrates legacy `shell/custom.sh` and `~/.custom.sh` automatically.
 
-## Terminal detection & tmux theming
+## Terminal detection & tmux theming (developers)
 
-For **why** detection runs in a particular order, how tmux hooks avoid applying WezTerm OSC inside Kitty/Alacritty, and a debugging checklist, see **[shell/common/terminal-theming.md](common/terminal-theming.md)**.
-
-User-facing commands (`use-terminal`, `colorscheme`, env vars) are documented in the [root README](../README.md#switching-terminal-emulators-session-only).
+Implementation overview and debugging checklist. Per-function behaviour is documented
+in the source files. End-user usage is in the [root README](../README.md#color-schemes).
 
 ## Zsh history
 

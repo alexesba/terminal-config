@@ -2,15 +2,18 @@
 
 load test_helper
 
+# Env-based detection tests use env -i so local TMUX / parent process chains
+# (Kitty, WezTerm, etc.) do not override the vars under test — CI is already clean.
+
 @test "detect_terminal_emulator reads KITTY_WINDOW_ID" {
-  run env KITTY_WINDOW_ID=1 WEZTERM_PANE= ALACRITTY_SOCKET= \
+  run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" KITTY_WINDOW_ID=1 \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "kitty" ]
 }
 
 @test "detect_terminal_emulator reads WEZTERM_PANE" {
-  run env WEZTERM_PANE=0 KITTY_WINDOW_ID= ALACRITTY_SOCKET= \
+  run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" WEZTERM_PANE=0 \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "wezterm" ]
@@ -24,7 +27,8 @@ load test_helper
 }
 
 @test "detect_terminal_emulator returns failure when unknown" {
-  run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" \
+  mock_ps_no_emulator
+  run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 1 ]
 }
@@ -98,8 +102,10 @@ case "$1" in
     ;;
 esac
 EOF
+  mock_ps_no_emulator
   chmod +x "$TEST_HOME/bin/tmux"
-  run env TMUX=/tmp/test PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+  # env -i + ps mock: reach session TERMINAL fallback, not hosting emulator env/parent walk.
+  run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" TMUX=/tmp/test \
     bash "$REPO_ROOT/shell/common/terminal_detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]

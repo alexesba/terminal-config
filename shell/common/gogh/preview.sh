@@ -9,7 +9,7 @@ set -u
 file="${1:-}"
 [ -f "$file" ] || { printf 'No preview available\n'; exit 0; }
 
-# Extract a "#RRGGBB" value for a given exported variable without executing the file.
+# Parse "#RRGGBB" from theme export $1 without executing the file.
 field() {
   sed -n "s/^export $1=\"\(#[0-9A-Fa-f]\{6\}\)\".*/\1/p" "$file" | head -n1
 }
@@ -29,7 +29,7 @@ done
 
 reset=$'\e[0m'
 
-# "#RRGGBB" -> "R;G;B"
+# Convert "#RRGGBB" to "R;G;B" for true-color SGR sequences.
 rgb() {
   local h=${1#\#}
   printf '%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
@@ -38,7 +38,8 @@ rgb() {
 bgseq=$(rgb "$bg")
 fgseq=$(rgb "$fg")
 on=$'\e['"48;2;${bgseq}m"$'\e['"38;2;${fgseq}m"   # paint theme bg + theme fg
-fgc() { printf '\e[38;2;%sm' "$(rgb "$1")"; }     # raw escape: switch fg to a palette color
+# Set foreground to palette color $1 (true-color SGR).
+fgc() { printf '\e[38;2;%sm' "$(rgb "$1")"; }
 
 # fzf sets FZF_PREVIEW_COLUMNS / FZF_PREVIEW_LINES for the preview pane.
 pane_cols=${FZF_PREVIEW_COLUMNS:-80}
@@ -55,14 +56,14 @@ SWATCH_W=$(((pane_cols * 62 / 100 - 10) / 8))
 ((SWATCH_W > 11)) && SWATCH_W=11
 SWATCH_H=2
 
-# Visible width of a rendered line (strip ANSI escapes).
+# String length ignoring ANSI escape sequences.
 visible_len() {
   local plain
   plain=$(printf '%s' "$1" | sed $'s/\x1b\\[[0-9;]*m//g')
   printf '%s' "${#plain}"
 }
 
-# Print one centered line in the preview pane.
+# Center a line within FZF_PREVIEW_COLUMNS.
 print_centered() {
   local line="$1" lpad
   lpad=$(((pane_cols - $(visible_len "$line")) / 2))
@@ -70,6 +71,7 @@ print_centered() {
   printf '%*s%s\n' "$lpad" "" "$line"
 }
 
+# Draw mock terminal window + palette swatches; output via stdout for fzf preview.
 _render_preview() {
   local hr dot arr bold
   local c_red c_grn c_yel c_blu c_mag c_cyn

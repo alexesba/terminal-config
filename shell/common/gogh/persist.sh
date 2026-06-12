@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # Persist a gogh theme so it survives new terminal windows / restarts.
 #
-# Gogh applies WezTerm themes only via live escape sequences (session-only).
-# This writes the theme's colours to a machine-local file that wezterm.lua
-# loads, so the scheme sticks. WezTerm auto-reloads when this file changes.
-#
 # Usage: persist.sh /path/to/theme.sh <terminal>
-#        persist.sh --terminal <name>   # session target for tmux hooks (no theme file)
+#        persist.sh --terminal <name>   # update terminal= only (sync / tmux-start)
 set -u
 
+# Update terminal= in state without re-running a theme (sync_terminal_to_host / tmux-start).
 record_gogh_terminal() {
   local term="${1:-}"
   [ -n "$term" ] || return 0
@@ -39,10 +36,12 @@ file="${1:-}"
 term="${2:-}"
 [ -f "$file" ] || exit 0
 
+# Parse "#RRGGBB" from theme export without sourcing the script.
 field() {
   sed -n "s/^export $1=\"\(#[0-9A-Fa-f]\{6\}\)\".*/\1/p" "$file" | head -n1
 }
 
+# Write name=, file=, terminal= to ~/.local/state/gogh/current.
 record_current_theme() {
   local theme="$1"
   local term="${2:-}"
@@ -60,6 +59,7 @@ record_current_theme() {
 
 record_current_theme "$file" "$term"
 
+# WezTerm: Gogh only OSC-the live pane; write colors.lua for new panes/windows.
 case "$term" in
   wezterm)
     cfg="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}"
@@ -86,7 +86,7 @@ case "$term" in
     } >"$out"
     ;;
   *)
-    # kitty / alacritty: gogh already writes their config files, so they persist.
+    # kitty / alacritty: gogh already writes their config files.
     :
     ;;
 esac

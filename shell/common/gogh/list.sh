@@ -9,16 +9,19 @@
 # Reads "display<TAB>file" lines from stdin.
 set -u
 
+# Parse a color export from theme file $1.
 theme_field() {
   local theme="$1" var="$2"
   sed -n "s/^export ${var}=\"\(#[0-9A-Fa-f]\{6\}\)\".*/\1/p" "$theme" | head -n1
 }
 
+# "#RRGGBB" → "R;G;B" for true-color SGR.
 rgb() {
   local h=${1#\#}
   printf '%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
 }
 
+# Paint $2 with theme $1 background/foreground for fzf header.
 colorize_label() {
   local theme="$1" label="$2"
   local bg fg bgseq fgseq reset bold

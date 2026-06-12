@@ -1,3 +1,4 @@
+# Print colorscheme usage text.
 _colorscheme_help() {
   cat <<EOF
 Usage: colorscheme [-h|--help] [update|--update]
@@ -9,6 +10,7 @@ Alias: color_scheme (-h and --help show this message)
 EOF
 }
 
+# fzf picker: sync TERMINAL, apply Gogh theme, persist, sync tmux panes, reload config emulators.
 function colorscheme() {
   local gogh_root="${GOGH_DIR:-$HOME/src/gogh}"
   local update_script="$DOTFILES_DIR/shell/common/gogh/update.sh"
@@ -100,4 +102,5 @@ function colorscheme() {
   fi
 }
 
+# Alias for colorscheme().
 color_scheme() { colorscheme "$@"; }

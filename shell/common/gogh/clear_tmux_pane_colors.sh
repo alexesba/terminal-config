@@ -3,8 +3,7 @@
 # (kitty, alacritty) inherit config reloads for the whole pane, not just
 # lines drawn after the reload.
 #
-# WezTerm hooks set OSC 10/11/4 per pane; those overrides persist until cleared.
-# See shell/common/terminal-theming.md
+# WezTerm hooks set OSC 10/11/4 per pane; overrides persist until cleared.
 #
 # Usage:
 #   clear_tmux_pane_colors.sh --session              # current tmux session (requires TMUX)
@@ -13,7 +12,7 @@
 set -u
 
 _clear_one() {
-  # OSC 104 = reset color table; 110/111 = fg/bg default; -P default clears tmux palette.
+  # OSC 104/110/111 reset palette; tmux select-pane -P default clears tmux-side state.
   local pane_id="$1" tty="$2"
   [ -n "$tty" ] && [ -e "$tty" ] && \
     printf '\033]104\007\033]110\007\033]111\007' >"$tty" 2>/dev/null || true
@@ -22,8 +21,8 @@ _clear_one() {
   fi
 }
 
+# Clear OSC overrides on all panes in session $1 (or GOGH_TMUX_SESSION / current $TMUX).
 _sync_session() {
-  # Named session (or GOGH_TMUX_SESSION) works from tmux-start before attach (no $TMUX).
   local session="${1:-}" pane_id tty
   command -v tmux >/dev/null 2>&1 || return 0
 
