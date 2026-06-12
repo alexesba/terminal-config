@@ -1,7 +1,7 @@
 # tmux.conf — personal tmux configuration
 #
 # Copy tmux.conf.example → ~/.tmux.conf via install.sh (local file, not in repo).
-# Also copies lib/tmux-activity-spinner.sh → ~/.tmux/activity-spinner.sh for tab spinners.
+# Also copies helper scripts into ~/.tmux/ (activity spinner, gogh theme hook, …).
 
 set -sg escape-time 0
 
@@ -44,6 +44,11 @@ set-option -g focus-events on
 if-shell "uname | grep -q Darwin" 'set-option -g default-shell /bin/zsh'
 set -g default-terminal "tmux-256color"
 set-option -sa terminal-overrides ',xterm-256color:RGB'
+
+# Optional: forward DCS passthrough sequences (e.g. OSC 52, image protocols) to
+# the outer terminal. Gogh colours in tmux 3.6+ use OSC 10/11/4 handled by tmux
+# per pane via ~/.tmux/apply-gogh-theme.sh hooks — not via allow-passthrough.
+set -g allow-passthrough on
 
 set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q' # this is for the cursor shape
 
@@ -109,6 +114,11 @@ set -g @resurrect-capture-pane-contents 'on'
 # Drop the resurrect snapshot when the last session closes so closed panes
 # stay closed (even for manual prefix + Ctrl-r restore).
 set-hook -g session-closed 'run-shell "~/.tmux/clear-resurrect-when-empty.sh"'
+
+# Re-apply the saved Gogh theme to each new pane (WezTerm + colorscheme).
+set-hook -g after-split-window 'run-shell -d 200 "~/.tmux/apply-gogh-theme.sh #{pane_tty}"'
+set-hook -g after-new-window 'run-shell -d 200 "~/.tmux/apply-gogh-theme.sh #{pane_tty}"'
+set-hook -g after-new-session 'run-shell -d 200 "~/.tmux/apply-gogh-theme.sh #{pane_tty}"'
 
 # Initialize TPM — must stay at the very bottom of tmux.conf
 run '~/.tmux/plugins/tpm/tpm'

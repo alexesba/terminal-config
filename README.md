@@ -153,7 +153,7 @@ Press <kbd>Enter</kbd> to apply the highlighted theme. The preview only *reads* 
 | Terminal | How the pick persists |
 |---|---|
 | **Kitty / Alacritty** | Gogh writes the colors into their config files, so new windows keep the theme. |
-| **WezTerm** | Gogh only themes the current session via escape sequences, so `colorscheme` also writes the palette to `~/.config/wezterm/colors.lua`. Your local `~/.config/wezterm/wezterm.lua` (copied from `wezterm.lua.example`) loads that file and registers it for auto-reload — the pick applies to open windows and survives new ones. Delete `colors.lua` to revert to the default `color_scheme`. |
+| **WezTerm** | Gogh themes the current pane via OSC; `colorscheme` also writes `~/.config/wezterm/colors.lua` (new WezTerm panes/windows). Inside tmux 3.6+, hooks on `after-split-window`, `after-new-window`, and `after-new-session` run `~/.tmux/apply-gogh-theme.sh` to re-apply OSC per pane (see `tmux.conf.example`). |
 
 ### Configuration
 
