@@ -46,7 +46,7 @@ config_open_file() {
 }
 
 config_edit() {
-  local list_script selection preview_cmd editor_name prompt
+  local list_script preview_script selection editor_name prompt
 
   # shellcheck source=shell/common/fzf_prompts.sh disable=SC1091
   source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
@@ -58,14 +58,9 @@ config_edit() {
   }
 
   list_script="$DOTFILES_DIR/shell/common/config_list.sh"
+  preview_script="$DOTFILES_DIR/shell/common/config_preview.sh"
   editor_name="${EDITOR:-nvim}"
   editor_name="${editor_name##*/}"
-
-  if command -v bat &>/dev/null; then
-    preview_cmd='bat --style=numbers --color=always --paging=never --line-range 1:40 {} 2>/dev/null || head -40 {}'
-  else
-    preview_cmd='head -40 {}'
-  fi
 
   selection="$(
     bash "$list_script" rows | fzf \
@@ -82,7 +77,7 @@ config_edit() {
       --header='Settings — pick a config file · Enter opens in '"$editor_name"' · Esc cancels' \
       --prompt="$prompt" \
       --preview-window='right:55%:border-left' \
-      --preview="$preview_cmd" \
+      --preview="bash '$preview_script' {2} {3}" \
       --bind='ctrl-/:toggle-preview'
   )" </dev/tty || return 0
 
