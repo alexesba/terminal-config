@@ -5,18 +5,18 @@
 set -u
 
 if [ -z "${DOTFILES_DIR:-}" ]; then
-  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 fi
 
-# shellcheck source=fzf_rows.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/fzf_rows.sh"
+# shellcheck source=../fzf/rows.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/fzf/rows.sh"
 
 _help_collect_rows() {
   _help_collect_row "Show key bindings" "bindings" "Keyboard shortcuts for this dotfiles setup"
   _help_collect_row "Color scheme" "colorscheme" "Fuzzy-pick and apply a Gogh theme"
   _help_collect_row "Switch terminal" "use-terminal" "Point colorscheme at alacritty, kitty, or wezterm"
 
-  bash "$DOTFILES_DIR/shell/common/config_list.sh" rows | while IFS=$'\t' read -r label path hint _display; do
+  bash "$DOTFILES_DIR/shell/common/menus/config_list.sh" rows | while IFS=$'\t' read -r label path hint _display; do
     [ -n "$label" ] || continue
     _help_collect_row "Edit - $label" "edit:$path" "$hint"
   done

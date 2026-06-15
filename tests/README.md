@@ -57,4 +57,4 @@ Shared setup lives in `test_helper.bash` (`TEST_HOME`, `REPO_ROOT`, helpers like
 
 Detection tests use **`env -i`** and mocked `tmux` / `ps` so they pass when run inside Kitty, Alacritty, or WezTerm (CI has no hosting emulator). See `mock_ps_no_emulator` in `test_helper.bash`.
 
-Implementation notes for terminal theming: [`shell/common/terminal-theming.md`](../shell/common/terminal-theming.md).
+Implementation notes for terminal theming: [`shell/common/terminal/theming.md`](../shell/common/terminal/theming.md).

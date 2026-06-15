@@ -48,8 +48,8 @@ config_open_file() {
 config_edit() {
   local list_script preview_script selection editor_name prompt
 
-  # shellcheck source=shell/common/fzf_prompts.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  # shellcheck source=../fzf/prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf/prompts.sh"
   prompt=$(_fzf_icon_prompt gear)
 
   command -v fzf >/dev/null 2>&1 || {
@@ -57,8 +57,8 @@ config_edit() {
     return 1
   }
 
-  list_script="$DOTFILES_DIR/shell/common/config_list.sh"
-  preview_script="$DOTFILES_DIR/shell/common/config_preview.sh"
+  list_script="$DOTFILES_DIR/shell/common/menus/config_list.sh"
+  preview_script="$DOTFILES_DIR/shell/common/menus/config_preview.sh"
   editor_name="${EDITOR:-nvim}"
   editor_name="${editor_name##*/}"
 

@@ -14,22 +14,29 @@ shell/
 │   ├── functions.sh      # sources lib/tmux_sessions.sh; restore_db
 │   ├── dircolors.sh
 │   ├── rbenv.sh
-│   ├── fzf.sh            # FZF defaults (rg, bat preview for Ctrl-T)
 │   ├── fzf/
+│   │   ├── defaults.sh   # FZF env (rg, bat preview for Ctrl-T)
+│   │   ├── prompts.sh    # Nerd Font icons for fzf prompts
+│   │   ├── rows.sh       # tabular row formatting for fzf menus
 │   │   └── open.sh       # Ctrl-O / Ctrl-F file finder (Telescope-style)
-│   ├── config_edit.sh    # config — edit config files (also: help)
-│   ├── config_list.sh    # rows for config picker
-│   ├── help_menu.sh      # help — unified fzf menu (configs, bindings, colorscheme, …)
-│   ├── help_list.sh      # rows for help menu
-│   ├── bindings_menu.sh  # bindings — show bindings.md via bat
-│   ├── bindings_help.sh  # prints bindings.md (for scripts/tests)
-│   ├── bindings.md       # key binding reference (source of truth)
-│   ├── display.sh        # top-aligned markdown display (bindings)
+│   ├── menus/
+│   │   ├── config_edit.sh    # config — edit config files (also: help)
+│   │   ├── config_list.sh    # rows for config picker
+│   │   ├── config_preview.sh # fzf preview for config files
+│   │   ├── help_menu.sh      # help — unified fzf menu
+│   │   ├── help_list.sh      # rows for help menu
+│   │   └── help_preview.sh   # fzf preview for help rows
+│   ├── bindings/
+│   │   ├── menu.sh       # bindings — show bindings.md via bat
+│   │   ├── help.sh       # prints bindings.md (for scripts/tests)
+│   │   ├── bindings.md   # key binding reference (source of truth)
+│   │   └── display.sh    # top-aligned markdown display
+│   ├── terminal/
+│   │   ├── detect.sh     # detect hosting emulator (alacritty / kitty / wezterm)
+│   │   ├── use.sh        # use-terminal — fzf picker + auto-sync TERMINAL
+│   │   ├── list.sh       # rows / fzf formatting for use-terminal
+│   │   └── theming.md    # architecture: detection, theming, why bash
 │   ├── nvmrc.sh          # load-nvmrc() body
-│   ├── terminal_detect.sh # detect hosting emulator (alacritty / kitty / wezterm)
-│   ├── terminal_use.sh   # use-terminal — fzf picker + auto-sync TERMINAL
-│   ├── terminal_list.sh  # rows / fzf formatting for use-terminal
-│   ├── terminal-theming.md  # architecture: detection, theming, why bash
 │   └── gogh/
 │       ├── colorscheme.sh
 │       ├── apply_saved.sh       # re-apply saved theme for current TERMINAL
@@ -69,7 +76,7 @@ Copy `shell/local.sh.example` → `~/.local.sh` (or let `install.sh` do it on fi
 ## Terminal detection & tmux theming (developers)
 
 Implementation overview, **`use-terminal` command reference**, and debugging checklist:
-**[shell/common/terminal-theming.md](common/terminal-theming.md)**. Per-function notes are in the script sources.
+**[shell/common/terminal/theming.md](common/terminal/theming.md)**. Per-function notes are in the script sources.
 End-user `colorscheme` usage is in the [root README](../README.md#color-schemes).
 
 ## Zsh history

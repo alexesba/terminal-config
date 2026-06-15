@@ -39,8 +39,8 @@ _help_run_action() {
 help_menu() {
   local list_script preview_script selection prompt
 
-  # shellcheck source=shell/common/fzf_prompts.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  # shellcheck source=../fzf/prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf/prompts.sh"
   prompt=$(_fzf_icon_prompt help)
 
   command -v fzf >/dev/null 2>&1 || {
@@ -49,8 +49,8 @@ help_menu() {
     return 1
   }
 
-  list_script="$DOTFILES_DIR/shell/common/help_list.sh"
-  preview_script="$DOTFILES_DIR/shell/common/help_preview.sh"
+  list_script="$DOTFILES_DIR/shell/common/menus/help_list.sh"
+  preview_script="$DOTFILES_DIR/shell/common/menus/help_preview.sh"
 
   selection="$(
     bash "$list_script" rows | fzf \

@@ -4,7 +4,7 @@ load test_helper
 
 @test "config_list always includes local.sh and bash_aliases" {
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" \
-    bash "$REPO_ROOT/shell/common/config_list.sh" rows
+    bash "$REPO_ROOT/shell/common/menus/config_list.sh" rows
   [ "$status" -eq 0 ]
   [[ "$output" == *$'Shell env & theme\t'"$TEST_HOME/.local.sh"* ]]
   [[ "$output" == *$'Alias overrides\t'"$TEST_HOME/.bash_aliases"* ]]
@@ -14,14 +14,14 @@ load test_helper
   mkdir -p "$TEST_HOME"
   touch "$TEST_HOME/.tmux.conf"
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" \
-    bash "$REPO_ROOT/shell/common/config_list.sh" rows
+    bash "$REPO_ROOT/shell/common/menus/config_list.sh" rows
   [ "$status" -eq 0 ]
   [[ "$output" == *$'tmux\t'"$TEST_HOME/.tmux.conf"* ]]
 }
 
 @test "config_list omits missing optional configs" {
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" \
-    bash "$REPO_ROOT/shell/common/config_list.sh" rows
+    bash "$REPO_ROOT/shell/common/menus/config_list.sh" rows
   [ "$status" -eq 0 ]
   [[ "$output" != *"alacritty.toml"* ]]
 }
@@ -29,18 +29,18 @@ load test_helper
 @test "config_preview prints file contents for existing path" {
   local cfg="$TEST_HOME/.local.sh"
   printf 'export TERMINAL=wezterm\n' >"$cfg"
-  run env PATH="/usr/bin:/bin" bash "$REPO_ROOT/shell/common/config_preview.sh" "$cfg" "Shell env"
+  run env PATH="/usr/bin:/bin" bash "$REPO_ROOT/shell/common/menus/config_preview.sh" "$cfg" "Shell env"
   [ "$status" -eq 0 ]
   [[ "$output" == *'export TERMINAL=wezterm'* ]]
 }
 
 @test "config_edit uses config_preview in fzf" {
-  grep -q 'config_preview.sh' "$REPO_ROOT/shell/common/config_edit.sh"
-  grep -q "' {2} {3}" "$REPO_ROOT/shell/common/config_edit.sh"
+  grep -q 'config_preview.sh' "$REPO_ROOT/shell/common/menus/config_edit.sh"
+  grep -q "' {2} {3}" "$REPO_ROOT/shell/common/menus/config_edit.sh"
 }
 
 @test "bindings_help lists help and file finder shortcuts" {
-  run bash "$REPO_ROOT/shell/common/bindings_help.sh"
+  run bash "$REPO_ROOT/shell/common/bindings/help.sh"
   [ "$status" -eq 0 ]
   [[ "$output" == *'`help`'* ]]
   [[ "$output" == *'Not used'* ]]
@@ -72,7 +72,7 @@ EOF
     export DOTFILES_DIR='$REPO_ROOT'
     export EDITOR=nvim
     export PATH='$TEST_HOME/bin:/usr/bin:/bin'
-    source '$REPO_ROOT/shell/common/config_edit.sh'
+    source '$REPO_ROOT/shell/common/menus/config_edit.sh'
     config_open_file '$TEST_HOME/local-target.sh'
   "
   [ "$status" -eq 0 ]

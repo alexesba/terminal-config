@@ -13,8 +13,8 @@ source "$DOTFILES_DIR/lib/helpers.sh"
 source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=deps.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
-# shellcheck source=../terminal_detect.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
+# shellcheck source=../terminal/detect.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/terminal/detect.sh"
 
 # Resolve target emulator: TERMINAL env → detect (unless override) → ~/.local.sh.
 term="${TERMINAL:-}"

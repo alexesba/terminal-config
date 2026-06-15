@@ -7,21 +7,21 @@ load test_helper
 
 @test "detect_terminal_emulator reads KITTY_WINDOW_ID" {
   run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" KITTY_WINDOW_ID=1 \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "kitty" ]
 }
 
 @test "detect_terminal_emulator reads WEZTERM_PANE" {
   run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" WEZTERM_PANE=0 \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "wezterm" ]
 }
 
 @test "detect_terminal_emulator reads ALACRITTY_SOCKET" {
   run env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" ALACRITTY_SOCKET=/tmp/alacritty \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]
 }
@@ -29,7 +29,7 @@ load test_helper
 @test "detect_terminal_emulator returns failure when unknown" {
   mock_ps_no_emulator
   run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 1 ]
 }
 
@@ -56,7 +56,7 @@ fi
 EOF
   chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
   run env TMUX=/tmp/test PATH="$TEST_HOME/bin:/usr/bin:/bin" \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]
 }
@@ -84,7 +84,7 @@ fi
 EOF
   chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
   run env TMUX=/tmp/test WEZTERM_PANE=0 PATH="$TEST_HOME/bin:/usr/bin:/bin" \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "kitty" ]
 }
@@ -106,7 +106,7 @@ EOF
   chmod +x "$TEST_HOME/bin/tmux"
   # env -i + ps mock: reach session TERMINAL fallback, not hosting emulator env/parent walk.
   run env -i HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" TMUX=/tmp/test \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]
 }
@@ -137,7 +137,7 @@ fi
 EOF
   chmod +x "$TEST_HOME/bin/tmux" "$TEST_HOME/bin/ps"
   run env TMUX=/tmp/test PATH="$TEST_HOME/bin:/usr/bin:/bin" \
-    bash "$REPO_ROOT/shell/common/terminal_detect.sh"
+    bash "$REPO_ROOT/shell/common/terminal/detect.sh"
   [ "$status" -eq 0 ]
   [ "$output" = "alacritty" ]
 }
@@ -153,7 +153,7 @@ EOF
     export DOTFILES_DIR="'"$REPO_ROOT"'"
     export TERMINAL_AUTO_DETECT=1
     export KITTY_WINDOW_ID=1
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     sync_terminal_to_host
     printf "%s" "$TERMINAL"
   '
@@ -167,7 +167,7 @@ EOF
   run env -i HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" PATH="/usr/bin:/bin" \
     TERM=dumb TERMINAL_AUTO_DETECT=1 TERMINAL=wezterm ALACRITTY_SOCKET=/tmp/alacritty.sock \
     bash -c '
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     sync_terminal_to_host
     printf "%s" "$TERMINAL"
   '
@@ -184,7 +184,7 @@ EOF
     export DOTFILES_DIR="'"$REPO_ROOT"'"
     export TERMINAL_AUTO_DETECT=1
     export KITTY_WINDOW_ID=1
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     sync_terminal_to_host
     printf "%s" "$TERMINAL"
   '
@@ -202,7 +202,7 @@ EOF
     export TERMINAL=wezterm
     export TERMINAL_OVERRIDE=1
     export KITTY_WINDOW_ID=1
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     sync_terminal_to_host
     printf "%s" "$TERMINAL"
   '

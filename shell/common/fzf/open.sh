@@ -2,8 +2,8 @@
 fzf_then_open_in_editor() {
   local file preview_cmd editor_name prompt
 
-  # shellcheck source=../fzf_prompts.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  # shellcheck source=../fzf/prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf/prompts.sh"
   prompt=$(_fzf_icon_prompt search)
 
   editor_name="${EDITOR:-nvim}"

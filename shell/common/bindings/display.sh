@@ -36,7 +36,12 @@ _show_markdown_top_center() {
   if [ -t 0 ] && [ -r /dev/tty ]; then
     printf '\n'
     printf '%*s%s' "$margin" '' 'Press any key to continue…' >/dev/tty
-    read -r -n 1 -s </dev/tty 2>/dev/null || true
+    # bash: read -n 1 reads one char; zsh: -n is line count — use read -k 1 instead.
+    if [ -n "${ZSH_VERSION:-}" ]; then
+      read -k 1 -s </dev/tty 2>/dev/null || true
+    else
+      read -r -n 1 -s </dev/tty 2>/dev/null || true
+    fi
     printf '\n' >/dev/tty
   fi
 }

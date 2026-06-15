@@ -243,7 +243,7 @@ if $DO_FZF; then
   else
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     # Non-interactive: enable key-bindings + completion, but don't touch rc files
-    # (this repo's shell/common/fzf.sh already sources ~/.fzf.{bash,zsh}).
+    # (this repo's shell/common/fzf/defaults.sh already sources ~/.fzf.{bash,zsh}).
     ~/.fzf/install --key-bindings --completion --no-update-rc
   fi
   _bootstrap_spacer
