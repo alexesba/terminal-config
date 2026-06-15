@@ -7,7 +7,7 @@
 set -u
 
 if [ -z "${DOTFILES_DIR:-}" ]; then
-  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 fi
 # shellcheck source=../../lib/helpers.sh disable=SC1091
 source "$DOTFILES_DIR/lib/helpers.sh"

@@ -5,11 +5,11 @@
 set -u
 
 if [ -z "${DOTFILES_DIR:-}" ]; then
-  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 fi
 
-# shellcheck source=fzf_rows.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/fzf_rows.sh"
+# shellcheck source=../fzf/rows.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/fzf/rows.sh"
 
 _config_collect_row() {
   local label="$1" path="$2" hint="${3:-}" force="${4:-}"

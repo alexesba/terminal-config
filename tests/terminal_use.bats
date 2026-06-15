@@ -20,7 +20,7 @@ _setup_terminal_bins() {
   _setup_terminal_bins
   rm -f "$TEST_HOME/bin/alacritty"
   run env HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" \
-    bash "$REPO_ROOT/shell/common/terminal_list.sh" rows wezterm wezterm
+    bash "$REPO_ROOT/shell/common/terminal/list.sh" rows wezterm wezterm
   [ "$status" -eq 0 ]
   [[ "$output" == *"kitty|"* ]]
   [[ "$output" == *"wezterm|"* ]]
@@ -30,7 +30,7 @@ _setup_terminal_bins() {
 @test "terminal_list fzf-pipe emits ansi colors when piped" {
   _setup_terminal_bins
   run env HOME="$TEST_HOME" PATH="$TEST_HOME/bin:$PATH" \
-    bash "$REPO_ROOT/shell/common/terminal_list.sh" fzf-pipe kitty wezterm
+    bash "$REPO_ROOT/shell/common/terminal/list.sh" fzf-pipe kitty wezterm
   [ "$status" -eq 0 ]
   [[ "$output" == *$'\033[1;36m'* ]]
   [[ "$output" == *$'\033[1;32m'* ]]
@@ -44,7 +44,7 @@ EOF
   run bash -c '
     export HOME="'"$TEST_HOME"'"
     export DOTFILES_DIR="'"$REPO_ROOT"'"
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     export TERMINAL=kitty
     export TERMINAL_OVERRIDE=1
     use-terminal reset >/dev/null
@@ -63,7 +63,7 @@ EOF
   run bash -c '
     export HOME="'"$TEST_HOME"'"
     export DOTFILES_DIR="'"$REPO_ROOT"'"
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     use-terminal kitty >/dev/null
     printf "%s|%s" "$TERMINAL" "${TERMINAL_OVERRIDE:-}"
   '
@@ -91,7 +91,7 @@ EOF
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" TMUX=/tmp/test \
     PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash -c '
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     use-terminal detect --export
   '
   [ "$status" -eq 0 ]
@@ -127,7 +127,7 @@ EOF
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" TMUX=/tmp/test \
     PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash -c '
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     use-terminal detect >/dev/null
     printf "%s" "$TERMINAL"
   '
@@ -146,7 +146,7 @@ EOF
     export HOME="'"$TEST_HOME"'"
     export DOTFILES_DIR="'"$REPO_ROOT"'"
     export PATH="'"$TEST_HOME/bin:$PATH"'"
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     use-terminal alacritty
   '
   [ "$status" -eq 1 ]
@@ -170,7 +170,7 @@ EOF
     export HOME="'"$TEST_HOME"'"
     export DOTFILES_DIR="'"$REPO_ROOT"'"
     export PATH="'"$TEST_HOME/bin:$PATH"'"
-    source "$DOTFILES_DIR/shell/common/terminal_use.sh"
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
     use-terminal >/dev/null
     printf "%s" "$TERMINAL"
   '
@@ -202,7 +202,7 @@ EOF
 exit 0
 EOF
   chmod +x "$TEST_HOME/bin/pkill" "$TEST_HOME/bin/killall"
-  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=kitty \
+  run env HOME="$TEST_HOME" GOGH_DIR="$TEST_HOME/gogh" TERMINAL=kitty TERMINAL_OVERRIDE=1 \
     GOGH_APPLY_MARKER="$marker" \
     PATH="$TEST_HOME/bin:$PATH" \
     bash "$REPO_ROOT/shell/common/gogh/apply_saved.sh"

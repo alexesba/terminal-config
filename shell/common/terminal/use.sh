@@ -5,12 +5,12 @@
 source "$DOTFILES_DIR/lib/helpers.sh"
 # shellcheck source=../../lib/fonts.sh disable=SC1091
 source "$DOTFILES_DIR/lib/fonts.sh"
-# shellcheck source=terminal_detect.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/terminal_detect.sh"
+# shellcheck source=detect.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/terminal/detect.sh"
 
 # Path to terminal_list.sh for the fzf picker.
 _terminal_list_script() {
-  printf '%s/shell/common/terminal_list.sh\n' "$DOTFILES_DIR"
+  printf '%s/shell/common/terminal/list.sh\n' "$DOTFILES_DIR"
 }
 
 # TERMINAL from ~/.local.sh (install default).
@@ -75,8 +75,8 @@ _use_terminal_activate() {
 _use_terminal_menu() {
   local default current selection list_script header lines prompt
 
-  # shellcheck source=fzf_prompts.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/fzf_prompts.sh"
+  # shellcheck source=../fzf/prompts.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/fzf/prompts.sh"
   prompt=$(_fzf_icon_prompt terminal)
 
   list_script="$(_terminal_list_script)"

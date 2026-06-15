@@ -2,7 +2,7 @@
 
 **Developer documentation** — how detection, theming, and tmux hooks work internally.
 End-user commands live in the root [README.md](../../README.md). Function-level notes
-are in the script sources (`terminal_detect.sh`, `terminal_use.sh`, `gogh/*`, etc.).
+are in the script sources (`terminal/detect.sh`, `terminal/use.sh`, `gogh/*`, etc.).
 
 ---
 
@@ -43,8 +43,8 @@ sync_terminal_to_host()      ← export TERMINAL; tmux set-environment TERMINAL
 
 | File | Role |
 |---|---|
-| `terminal_detect.sh` | Detect hosting emulator (`alacritty` / `kitty` / `wezterm`) |
-| `terminal_use.sh` | `use-terminal` command; `sync_terminal_to_host`; auto-sync on shell start |
+| `terminal/detect.sh` | Detect hosting emulator (`alacritty` / `kitty` / `wezterm`) |
+| `terminal/use.sh` | `use-terminal` command; `sync_terminal_to_host`; auto-sync on shell start |
 | `gogh/persist.sh` | Write theme state + `colors.lua` for WezTerm |
 | `gogh/reload_kitty.sh` | Clear tmux pane OSC, then `SIGUSR1` Kitty |
 | `gogh/reload_alacritty.sh` | Clear tmux pane OSC, then `touch` alacritty.toml |
@@ -67,7 +67,7 @@ Config reload updates **all panes** (parent shell, tmux panes, new splits, margi
 
 ---
 
-## `terminal_detect.sh`
+## `terminal/detect.sh`
 
 ### `detect_terminal_emulator`
 
@@ -92,7 +92,7 @@ Uses `ps comm=` with `ucomm=` fallback on macOS where GUI apps sometimes report 
 
 ---
 
-## `terminal_use.sh`
+## `terminal/use.sh`
 
 ### When you need `use-terminal`
 

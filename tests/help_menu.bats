@@ -4,7 +4,7 @@ load test_helper
 
 @test "help_list includes actions and edit rows" {
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" \
-    bash "$REPO_ROOT/shell/common/help_list.sh" rows
+    bash "$REPO_ROOT/shell/common/menus/help_list.sh" rows
   [ "$status" -eq 0 ]
   [[ "$output" == *$'Show key bindings\tbindings\t'* ]]
   [[ "$output" == *$'Color scheme\tcolorscheme\t'* ]]
@@ -13,7 +13,7 @@ load test_helper
 }
 
 @test "bindings_help documents help command" {
-  run bash "$REPO_ROOT/shell/common/bindings_help.sh"
+  run bash "$REPO_ROOT/shell/common/bindings/help.sh"
   [ "$status" -eq 0 ]
   [[ "$output" == *'`help`'* ]]
   [[ "$output" == *'Ctrl+O'* ]]
@@ -43,7 +43,7 @@ load test_helper
 @test "bash help delegates to builtin when args given" {
   run bash --noprofile --norc -c "
     export DOTFILES_DIR='$REPO_ROOT'
-    source '$REPO_ROOT/shell/common/help_menu.sh'
+    source '$REPO_ROOT/shell/common/menus/help_menu.sh'
     help read
   "
   [ "$status" -eq 0 ]

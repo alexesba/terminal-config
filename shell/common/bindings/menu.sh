@@ -1,4 +1,4 @@
-# Show terminal-config key bindings (shell/common/bindings.md via bat).
+# Show terminal-config key bindings (shell/common/bindings/bindings.md via bat).
 #
 #   bindings          — display bindings reference
 #   bindings --help
@@ -19,9 +19,9 @@ EOF
 }
 
 show_bindings() {
-  local bindings_md="$DOTFILES_DIR/shell/common/bindings.md"
+  local bindings_md="$DOTFILES_DIR/shell/common/bindings/bindings.md"
 
-  # shellcheck source=shell/common/display.sh disable=SC1091
-  source "$DOTFILES_DIR/shell/common/display.sh"
+  # shellcheck source=display.sh disable=SC1091
+  source "$DOTFILES_DIR/shell/common/bindings/display.sh"
   _show_markdown_top_center "$bindings_md"
 }

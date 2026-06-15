@@ -80,7 +80,7 @@ After `./install.sh` links your shell RC, these functions load from `rc.sh`. Int
 |---|---|
 | `help` | Unified fzf menu — edit configs, show bindings, run `colorscheme`, or `use-terminal` |
 | `config` | fzf picker for local dotfiles only (`~/.local.sh`, `~/.tmux.conf`, terminal configs, Gogh color files, …) |
-| `bindings` | Show keyboard shortcuts (`shell/common/bindings.md`) |
+| `bindings` | Show keyboard shortcuts (`shell/common/bindings/bindings.md`) |
 | `colorscheme` | Fuzzy-pick and apply a [Gogh](https://github.com/Gogh-Co/Gogh) theme — see [Color schemes](#color-schemes) |
 | `use-terminal` | Point `colorscheme` at another installed emulator for this shell (or auto-detect the hosting window) |
 | `reload` | Re-source `~/.zshrc` or `~/.bashrc` to pick up config changes |
