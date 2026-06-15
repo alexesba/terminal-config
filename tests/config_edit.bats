@@ -26,6 +26,19 @@ load test_helper
   [[ "$output" != *"alacritty.toml"* ]]
 }
 
+@test "config_preview prints file contents for existing path" {
+  local cfg="$TEST_HOME/.local.sh"
+  printf 'export TERMINAL=wezterm\n' >"$cfg"
+  run env PATH="/usr/bin:/bin" bash "$REPO_ROOT/shell/common/config_preview.sh" "$cfg" "Shell env"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'export TERMINAL=wezterm'* ]]
+}
+
+@test "config_edit uses config_preview in fzf" {
+  grep -q 'config_preview.sh' "$REPO_ROOT/shell/common/config_edit.sh"
+  grep -q "' {2} {3}" "$REPO_ROOT/shell/common/config_edit.sh"
+}
+
 @test "bindings_help lists help and file finder shortcuts" {
   run bash "$REPO_ROOT/shell/common/bindings_help.sh"
   [ "$status" -eq 0 ]
