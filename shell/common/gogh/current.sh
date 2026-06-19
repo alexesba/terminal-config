@@ -8,8 +8,11 @@ gogh_dir="${1:-${GOGH_DIR:-$HOME/src/gogh}/installs}"
 term="${2:-${TERMINAL:-}}"
 
 _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_dotfiles="${DOTFILES_DIR:-$(cd "$_dir/../../.." && pwd)}"
 # shellcheck source=state.sh disable=SC1091
 source "$_dir/state.sh"
+# shellcheck source=../../../lib/helpers.sh disable=SC1091
+source "$_dotfiles/lib/helpers.sh"
 
 name=""
 file=""
@@ -46,7 +49,8 @@ read_config_for_terminal() {
   local t="$1"
   case "$t" in
     wezterm)
-      local wezterm_colors="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}/colors.lua"
+      local wezterm_colors
+      wezterm_colors="$(wezterm_config_dir)/colors.lua"
       if [ -f "$wezterm_colors" ]; then
         file=$(sed -n 's/^-- Source theme: //p' "$wezterm_colors" | head -n1)
         name=$(sed -n 's/^  scheme_name = "\([^"]*\)",\?$/\1/p' "$wezterm_colors" | head -n1)

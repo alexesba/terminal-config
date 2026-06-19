@@ -16,6 +16,21 @@ _setup_terminal_bins() {
   done
 }
 
+@test "terminal_list rows includes wezterm when hosted in WezTerm" {
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WEZTERM_PANE=1 PATH="/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/terminal/list.sh" rows wezterm wezterm
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"wezterm|"* ]]
+}
+
+@test "terminal_list rows includes wezterm on WSL without Linux binary" {
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WSL_DISTRO_NAME=Ubuntu PATH="/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/terminal/list.sh" rows wezterm wezterm
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"wezterm|"* ]]
+  [[ "$output" != *"kitty|"* ]]
+}
+
 @test "terminal_list rows lists only installed terminals" {
   _setup_terminal_bins
   rm -f "$TEST_HOME/bin/alacritty"
@@ -153,6 +168,25 @@ EOF
   [[ "$output" == *"Config not found"* ]]
 }
 
+@test "use-terminal menu works on WSL with WezTerm only" {
+  mkdir -p "$TEST_HOME/bin"
+  cat >"$TEST_HOME/bin/fzf" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+printf 'wezterm'
+EOF
+  chmod +x "$TEST_HOME/bin/fzf"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WSL_DISTRO_NAME=Ubuntu \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
+    bash -c '
+    source "$DOTFILES_DIR/shell/common/terminal/use.sh"
+    use-terminal >/dev/null
+    printf "%s" "$TERMINAL"
+  '
+  [ "$status" -eq 0 ]
+  [ "$output" = "wezterm" ]
+}
+
 @test "use-terminal menu picks terminal via fzf" {
   _setup_terminal_bins
   cat >"$TEST_HOME/.local.sh" <<'EOF'
@@ -185,6 +219,11 @@ name=Test
 file=theme.sh
 terminal=kitty
 EOF
+  cat >"$TEST_HOME/gogh/apply-colors.sh" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$TEST_HOME/gogh/apply-colors.sh"
   cat >"$TEST_HOME/gogh/installs/theme.sh" <<'EOF'
 #!/usr/bin/env bash
 touch "${GOGH_APPLY_MARKER}"

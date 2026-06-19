@@ -349,10 +349,106 @@ remove_legacy_repo_copy() {
 
 # Returns 0 (true) when running inside WSL (Windows Subsystem for Linux).
 is_wsl() {
+  [ -n "${WSL_DISTRO_NAME:-}" ] && return 0
   grep -qi microsoft /proc/version 2>/dev/null
 }
 
-# Sets or updates an `export VAR="value"` line in a target file, idempotently.
+# Windows username for /mnt/c/Users/<name> (WSL only).
+wsl_windows_user() {
+  command -v cmd.exe >/dev/null 2>&1 || return 1
+  cmd.exe /c 'echo %USERNAME%' 2>/dev/null | tr -d '\r\n'
+}
+
+# Mounted Windows user profile, e.g. /mnt/c/Users/alexesba (WSL only).
+wsl_windows_home() {
+  local user="${1:-}"
+  [ -d /mnt/c/Users ] || return 1
+  if [ -z "$user" ]; then
+    user="$(wsl_windows_user 2>/dev/null || true)"
+  fi
+  if [ -n "$user" ] && [ -d "/mnt/c/Users/$user" ]; then
+    printf '/mnt/c/Users/%s\n' "$user"
+    return 0
+  fi
+  return 1
+}
+
+# Directory where WezTerm reads wezterm.lua / colors.lua.
+# Override with WEZTERM_CONFIG_DIR in ~/.local.sh.
+# On WSL, defaults to the Windows profile when not set.
+wezterm_config_dir() {
+  if [ -n "${WEZTERM_CONFIG_DIR:-}" ]; then
+    printf '%s\n' "$WEZTERM_CONFIG_DIR"
+    return 0
+  fi
+
+  if is_wsl; then
+    local win_home
+    win_home="$(wsl_windows_home 2>/dev/null || true)"
+    if [ -n "$win_home" ]; then
+      if [ -f "$win_home/.config/wezterm/wezterm.lua" ] || [ -f "$win_home/.config/wezterm/colors.lua" ]; then
+        printf '%s/.config/wezterm\n' "$win_home"
+        return 0
+      fi
+      if [ -f "$win_home/.wezterm.lua" ]; then
+        printf '%s\n' "$win_home"
+        return 0
+      fi
+      printf '%s/.config/wezterm\n' "$win_home"
+      return 0
+    fi
+  fi
+
+  printf '%s/.config/wezterm\n' "$HOME"
+}
+
+# True when this shell is hosted inside WezTerm (including WSL panes).
+hosting_wezterm_p() {
+  [ -n "${WEZTERM_PANE:-}" ] || [ -n "${WEZTERM_EXECUTABLE:-}" ] || [ "${TERM_PROGRAM:-}" = WezTerm ]
+}
+
+# True when a WezTerm config or generated colors.lua exists (Linux or WSL Windows mount).
+wezterm_config_present_p() {
+  local dir
+  dir="$(wezterm_config_dir)"
+  [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ] || [ -f "$dir/colors.lua" ]
+}
+
+# Config file path for alacritty|kitty|wezterm (for display and existence checks).
+terminal_emulator_config_path() {
+  case "$1" in
+    alacritty) printf '%s/.config/alacritty/alacritty.toml\n' "$HOME" ;;
+    kitty)     printf '%s/.config/kitty/kitty.conf\n' "$HOME" ;;
+    wezterm)
+      local dir
+      dir="$(wezterm_config_dir)"
+      if [ -f "$dir/.wezterm.lua" ]; then
+        printf '%s/.wezterm.lua\n' "$dir"
+      else
+        printf '%s/wezterm.lua\n' "$dir"
+      fi
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# True when emulator $1 is available for use-terminal / colorscheme.
+terminal_emulator_installed_p() {
+  case "$1" in
+    wezterm)
+      command -v wezterm >/dev/null 2>&1 && return 0
+      hosting_wezterm_p && return 0
+      wezterm_config_present_p && return 0
+      # WezTerm is a Windows app on WSL — no Linux binary required.
+      is_wsl && return 0
+      return 1
+      ;;
+    alacritty|kitty)
+      command -v "$1" >/dev/null 2>&1
+      ;;
+    *) return 1 ;;
+  esac
+}
 # Replaces an existing export of the same VAR — including a commented-out
 # placeholder like `# export VAR=...` left by the template — otherwise appends.
 # Usage: set_env_var <file> <VAR> <value>

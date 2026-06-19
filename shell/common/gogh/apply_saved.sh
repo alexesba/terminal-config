@@ -13,16 +13,13 @@ source "$DOTFILES_DIR/lib/helpers.sh"
 source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=deps.sh disable=SC1091
 source "$DOTFILES_DIR/shell/common/gogh/deps.sh"
-# shellcheck source=../terminal/detect.sh disable=SC1091
-source "$DOTFILES_DIR/shell/common/terminal/detect.sh"
+# shellcheck source=paths.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/gogh/paths.sh"
 
-# Resolve target emulator: TERMINAL env → detect (unless override) → ~/.local.sh.
+# Resolve target emulator: TERMINAL env → gogh_resolve_terminal (unless override) → ~/.local.sh.
 term="${TERMINAL:-}"
 if [ "${TERMINAL_OVERRIDE:-}" != 1 ]; then
-  detected="$(detect_terminal_emulator 2>/dev/null || true)"
-  if [ -n "$detected" ] && is_colorscheme_terminal "$detected"; then
-    term="$detected"
-  fi
+  term="$(gogh_resolve_terminal)"
 fi
 if [ -z "$term" ]; then
   term="$(custom_export_value "$(local_sh_path)" TERMINAL || true)"
@@ -38,14 +35,15 @@ theme_line="$(gogh_state_theme_for_terminal "$term")"
 file="${theme_line#*$'\t'}"
 [ -n "$file" ] || exit 0
 
-gogh_installs="${GOGH_DIR:-$HOME/src/gogh}/installs"
+gogh_installs="$(gogh_installs_dir)"
 theme="$gogh_installs/$file"
 [ -f "$theme" ] || exit 0
 
+gogh_root="$(gogh_repo_root)"
 persist_script="$DOTFILES_DIR/shell/common/gogh/persist.sh"
 
 if [ "$term" != wezterm ]; then
-  if ! GOGH_NONINTERACTIVE=1 TERMINAL="$term" bash "$theme" >/dev/null 2>&1; then
+  if ! GOGH_NONINTERACTIVE=1 gogh_apply_theme_script "$gogh_root" "$theme" "$term" >/dev/null 2>&1; then
     if [ "$term" = alacritty ] && ! gogh_python_deps_ok; then
       gogh_python_deps_hint
     else

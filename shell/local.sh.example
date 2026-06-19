@@ -32,6 +32,10 @@
 # Auto-detect hosting emulator on shell start / colorscheme (default on): TERMINAL_AUTO_DETECT=1
 # export TERMINAL_AUTO_DETECT=0
 # export TERMINAL={{TERMINAL}}
+#
+# WSL + WezTerm on Windows: colorscheme auto-targets wezterm when WEZTERM_PANE is set.
+# Optional — force Windows WezTerm config path (default: auto /mnt/c/Users/<you>/.config/wezterm):
+# export WEZTERM_CONFIG_DIR="/mnt/c/Users/<you>/.config/wezterm"
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────
 # export TERMINAL_FONT={{TERMINAL_FONT}}

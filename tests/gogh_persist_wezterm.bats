@@ -49,12 +49,12 @@ EOF
 }
 
 @test "colorscheme skips gogh OSC apply for wezterm" {
-  grep -q '\[ "${TERMINAL:-}" != wezterm \]' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
+  grep -q '\[ "$term" != wezterm \]' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
   ! grep -q 'reload_wezterm.sh' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
   ! grep -q 'apply_persisted' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
 }
 
-@test "colorscheme applies gogh themes with bash not sh" {
-  ! grep -q 'sh "$gogh_dir/$selection"' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
-  grep -q 'bash "$gogh_dir/$selection"' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
+@test "colorscheme applies gogh themes via gogh_apply_theme_script" {
+  grep -q 'gogh_apply_theme_script' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
+  grep -q 'GOGH_APPLY_SCRIPT' "$REPO_ROOT/shell/common/gogh/paths.sh"
 }
