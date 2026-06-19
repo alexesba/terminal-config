@@ -19,7 +19,14 @@ EOF
   printf '%s\n' "$root"
 }
 
-@test "gogh_resolve_terminal prefers wezterm when WEZTERM_PANE is set" {
+@test "gogh_resolve_terminal prefers hosting terminal over TERMINAL env" {
+  run env DOTFILES_DIR="$REPO_ROOT" TERMINAL=wezterm KITTY_WINDOW_ID=1 bash -c \
+    'source "$DOTFILES_DIR/shell/common/gogh/paths.sh"; gogh_resolve_terminal'
+  [ "$status" -eq 0 ]
+  [ "$output" = "kitty" ]
+}
+
+@test "gogh_resolve_terminal prefers wezterm when only WEZTERM_PANE is set" {
   run env DOTFILES_DIR="$REPO_ROOT" TERMINAL=kitty WEZTERM_PANE=1 bash -c \
     'source "$DOTFILES_DIR/shell/common/gogh/paths.sh"; gogh_resolve_terminal'
   [ "$status" -eq 0 ]
@@ -60,6 +67,26 @@ EOF
   '
   [ "$status" -eq 0 ]
   [ "$output" = "$TEST_HOME/win/.config/wezterm" ]
+}
+
+@test "gogh_apply_theme_script exports KITTY_CONFIG_DIRECTORY on WSL" {
+  local root
+  root="$(setup_gogh_repo)"
+  mkdir -p "$TEST_HOME/win/.config/kitty"
+  touch "$TEST_HOME/win/.config/kitty/kitty.conf"
+  cat >"$root/installs/demo.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'kitty_dir=%s\n' "${KITTY_CONFIG_DIRECTORY:-}"
+exit 0
+EOF
+  chmod +x "$root/installs/demo.sh"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" GOGH_DIR="$root" WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$DOTFILES_DIR/shell/common/gogh/paths.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    gogh_apply_theme_script "$(gogh_repo_root)" "$(gogh_installs_dir)/demo.sh" kitty
+  '
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"kitty_dir=$TEST_HOME/win/.config/kitty"* ]]
 }
 
 @test "persist.sh writes colors.lua to wezterm_config_dir on WSL" {

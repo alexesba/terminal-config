@@ -381,17 +381,46 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "configure_wsl_wezterm_local_sh writes TERMINAL and WEZTERM_CONFIG_DIR" {
-  mkdir -p "$TEST_HOME/win/.config/wezterm"
+@test "configure_wsl_terminals_local_sh writes paths for detected Windows terminals" {
+  mkdir -p "$TEST_HOME/win/.config/kitty" \
+    "$TEST_HOME/win/AppData/Roaming/alacritty" \
+    "$TEST_HOME/win/.config/wezterm"
+  touch "$TEST_HOME/win/.config/kitty/kitty.conf" \
+    "$TEST_HOME/win/AppData/Roaming/alacritty/alacritty.toml" \
+    "$TEST_HOME/win/.config/wezterm/wezterm.lua"
   local file="$TEST_HOME/.local.sh"
   touch "$file"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu KITTY_WINDOW_ID=1 bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    configure_wsl_terminals_local_sh "'"$file"'"
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  grep -q 'export TERMINAL="kitty"' "$file"
+  grep -q 'export KITTY_CONFIG_DIRECTORY="'"$TEST_HOME/win/.config/kitty"'"' "$file"
+  grep -q 'export ALACRITTY_XDG_CONFIG_HOME="'"$TEST_HOME/win/AppData/Roaming"'"' "$file"
+  grep -q 'export WEZTERM_CONFIG_DIR="'"$TEST_HOME/win/.config/wezterm"'"' "$file"
+}
+
+@test "wsl_kitty_detected_p finds kitty.conf on Windows profile" {
+  mkdir -p "$TEST_HOME/win/.config/kitty"
+  touch "$TEST_HOME/win/.config/kitty/kitty.conf"
+  run env WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    wsl_kitty_detected_p
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "gogh_export_terminal_env sets KITTY_CONFIG_DIRECTORY on WSL" {
+  mkdir -p "$TEST_HOME/win/.config/kitty"
   run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu bash -c '
     source "$REPO_ROOT/lib/helpers.sh"
     wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
-    wsl_wezterm_detected_p() { return 0; }
-    configure_wsl_wezterm_local_sh "'"$file"'"
+    gogh_export_terminal_env kitty
+    printf "%s" "$KITTY_CONFIG_DIRECTORY"
   ' REPO_ROOT="$REPO_ROOT"
   [ "$status" -eq 0 ]
-  grep -q 'export TERMINAL="wezterm"' "$file"
-  grep -q 'export WEZTERM_CONFIG_DIR="'"$TEST_HOME/win/.config/wezterm"'"' "$file"
+  [ "$output" = "$TEST_HOME/win/.config/kitty" ]
 }

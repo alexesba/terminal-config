@@ -31,10 +31,18 @@ _gogh_host_is_wezterm() {
 }
 
 # Resolve alacritty|kitty|wezterm for colorscheme / apply_saved.
-# WezTerm on WSL wins over a stale TERMINAL=kitty|alacritty in ~/.local.sh.
+# Hosting terminal env wins over a stale TERMINAL in ~/.local.sh.
 gogh_resolve_terminal() {
   local term="${TERMINAL:-}"
 
+  if hosting_kitty_p; then
+    printf 'kitty\n'
+    return 0
+  fi
+  if hosting_alacritty_p; then
+    printf 'alacritty\n'
+    return 0
+  fi
   if _gogh_host_is_wezterm; then
     printf 'wezterm\n'
     return 0
@@ -59,12 +67,13 @@ gogh_apply_theme_script() {
     printf 'Gogh checkout incomplete: missing %s\n' "$apply" >&2
     printf 'Fix: colorscheme update   or   ./bootstrap.sh --gogh\n' >&2
     if is_wsl && [ "$term" != wezterm ]; then
-      printf 'WSL: GUI terminals run on Windows — use export TERMINAL=wezterm in ~/.local.sh\n' >&2
+      printf 'WSL: set TERMINAL and config paths in ~/.local.sh (re-run install.sh on WSL).\n' >&2
     fi
     return 1
   fi
 
   installs="$(dirname "$theme_file")"
+  gogh_export_terminal_env "$term"
   GOGH_APPLY_SCRIPT="$apply" \
   SCRIPT_PATH="$installs" \
   TERMINAL="$term" \

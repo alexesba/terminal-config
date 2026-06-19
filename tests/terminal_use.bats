@@ -16,6 +16,23 @@ _setup_terminal_bins() {
   done
 }
 
+@test "terminal_list rows includes kitty on WSL without Linux binary" {
+  mkdir -p "$TEST_HOME/win/.config/kitty"
+  touch "$TEST_HOME/win/.config/kitty/kitty.conf"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WSL_DISTRO_NAME=Ubuntu \
+    KITTY_CONFIG_DIRECTORY="$TEST_HOME/win/.config/kitty" PATH="/usr/bin:/bin" \
+    bash "$REPO_ROOT/shell/common/terminal/list.sh" rows kitty kitty
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"kitty|"* ]]
+}
+
+@test "gogh_resolve_terminal prefers kitty when KITTY_WINDOW_ID is set" {
+  run env DOTFILES_DIR="$REPO_ROOT" TERMINAL=wezterm KITTY_WINDOW_ID=1 bash -c \
+    'source "$DOTFILES_DIR/shell/common/gogh/paths.sh"; gogh_resolve_terminal'
+  [ "$status" -eq 0 ]
+  [ "$output" = "kitty" ]
+}
+
 @test "terminal_list rows includes wezterm when hosted in WezTerm" {
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WEZTERM_PANE=1 PATH="/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/terminal/list.sh" rows wezterm wezterm

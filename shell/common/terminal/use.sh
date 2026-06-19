@@ -50,9 +50,9 @@ _use_terminal_activate() {
   local term="$1" apply="$2" default="$3" cfg
   cfg="$(_terminal_config_path "$term")"
   if [ -n "$cfg" ] && [ ! -f "$cfg" ]; then
-    if [ "$term" = wezterm ] && is_wsl; then
-      printf 'note: WezTerm config not found at %s\n' "$cfg" >&2
-      printf 'Copy terminal-emulators/wezterm.lua.example to that path on your Windows profile.\n' >&2
+    if is_wsl && { [ "$term" = wezterm ] || [ "$term" = kitty ] || [ "$term" = alacritty ]; }; then
+      printf 'note: %s config not found at %s\n' "$term" "$cfg" >&2
+      printf 'Re-run ./install.sh on WSL or copy the repo template to your Windows profile.\n' >&2
     else
       printf 'Config not found: %s\n' "$cfg" >&2
       printf 'Run ./update.sh to copy the repo template, or re-run install.sh for that terminal.\n' >&2

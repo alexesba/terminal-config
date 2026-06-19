@@ -80,7 +80,8 @@ _gogh_state_seed_from_configs() {
 
   path="$(gogh_state_terminal_file kitty)"
   if [ ! -f "$path" ]; then
-    local kitty_colors="${KITTY_CONFIG_DIRECTORY:-$HOME/.config/kitty}/colors.conf"
+    local kitty_colors
+    kitty_colors="$(kitty_config_dir)/colors.conf"
     if [ -f "$kitty_colors" ]; then
       name=$(sed -n 's/^# Color theme: //p' "$kitty_colors" | head -n1)
       [ -n "$name" ] && _gogh_state_write_terminal_file kitty "$name" ""

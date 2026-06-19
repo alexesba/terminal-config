@@ -96,6 +96,10 @@ _terminal_status_label() {
   cfg="$(_terminal_config_path "$term")"
   if [ "$term" = wezterm ]; then
     wezterm_config_present_p || { printf 'no config'; return 0; }
+  elif [ "$term" = kitty ]; then
+    kitty_config_present_p || { printf 'no config'; return 0; }
+  elif [ "$term" = alacritty ]; then
+    alacritty_config_present_p || { printf 'no config'; return 0; }
   elif [ ! -f "$cfg" ]; then
     printf 'no config'
     return 0

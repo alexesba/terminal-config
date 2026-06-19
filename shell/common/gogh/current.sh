@@ -57,7 +57,8 @@ read_config_for_terminal() {
       fi
       ;;
     kitty)
-      local kitty_colors="${KITTY_CONFIG_DIRECTORY:-$HOME/.config/kitty}/colors.conf"
+      local kitty_colors
+      kitty_colors="$(kitty_config_dir)/colors.conf"
       if [ -f "$kitty_colors" ]; then
         name=$(sed -n 's/^# Color theme: //p' "$kitty_colors" | head -n1)
         [ -z "$file" ] && [ -n "$name" ] && file=$(file_from_profile_name "$name" || true)

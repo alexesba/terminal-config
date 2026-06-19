@@ -33,8 +33,10 @@
 # export TERMINAL_AUTO_DETECT=0
 # export TERMINAL={{TERMINAL}}
 #
-# WSL + WezTerm on Windows: install.sh sets TERMINAL and WEZTERM_CONFIG_DIR automatically
-# when WezTerm is detected. Override manually if your config lives elsewhere:
+# WSL + Windows terminals: install.sh auto-sets paths when WezTerm / Kitty / Alacritty
+# are detected. Override manually if your config lives elsewhere:
+# export KITTY_CONFIG_DIRECTORY="/mnt/c/Users/<you>/.config/kitty"
+# export ALACRITTY_XDG_CONFIG_HOME="/mnt/c/Users/<you>/AppData/Roaming"
 # export WEZTERM_CONFIG_DIR="/mnt/c/Users/<you>/.config/wezterm"
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────

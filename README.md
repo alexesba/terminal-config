@@ -245,7 +245,7 @@ Run standalone:
 |---|---|
 | **macOS** | Full support. Uses Homebrew for all installs. |
 | **Linux** | Detects `apt-get` / `dnf` / `pacman` automatically. |
-| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. Terminal emulator configs belong on the Windows side. On WSL, `install.sh` auto-sets `TERMINAL=wezterm` and `WEZTERM_CONFIG_DIR` when WezTerm is detected on Windows, and copies `wezterm.lua.example` there if missing. |
+| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. GUI terminals run on Windows. `install.sh` auto-detects WezTerm, Kitty, and Alacritty and writes `TERMINAL` plus config paths (`WEZTERM_CONFIG_DIR`, `KITTY_CONFIG_DIRECTORY`, `ALACRITTY_XDG_CONFIG_HOME`) to `~/.local.sh`. |
 
 ---
 

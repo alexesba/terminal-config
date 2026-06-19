@@ -156,19 +156,22 @@ q_yn_if_shell INSTALL_NVIM_EDITOR 4 "Default editor (nvim)" "Set EDITOR=nvim?" \
   "Used by git, the Ctrl-O/Ctrl-F file opener, and other CLI tools."
 
 # ── 5. Terminal emulator + font ───────────────────────────────────────────────
-INSTALL_WSL_WEZTERM=0
+INSTALL_WSL_TERMINAL=0
+_wsl_detected_terms=""
 tui_begin
 echo -e "${BOLD}5. Terminal emulator config${RESET}"
 if is_wsl; then
   echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators run on the Windows side."
   INSTALL_TERMINAL=4
-  if wsl_wezterm_detected_p; then
-    INSTALL_WSL_WEZTERM=1
-    _wsl_wezterm_dir="$(WEZTERM_CONFIG_DIR= wezterm_config_dir)"
-    echo -e "   ${GREEN}✓${RESET}  WezTerm detected — colorscheme will target Windows config:"
-    echo -e "      ${DIM}${_wsl_wezterm_dir}${RESET}"
+  wsl_wezterm_detected_p && _wsl_detected_terms="${_wsl_detected_terms}wezterm "
+  wsl_kitty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}kitty "
+  wsl_alacritty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}alacritty "
+  if [ -n "$_wsl_detected_terms" ]; then
+    INSTALL_WSL_TERMINAL=1
+    echo -e "   ${GREEN}✓${RESET}  Detected on Windows:${RESET} ${BOLD}${_wsl_detected_terms}${RESET}"
+    echo -e "   ${DIM}install will set ~/.local.sh paths and copy missing config templates.${RESET}"
   else
-    echo -e "   ${DIM}WezTerm not detected on Windows. Install it, then re-run install or set WEZTERM_CONFIG_DIR in ~/.local.sh.${RESET}"
+    echo -e "   ${DIM}No WezTerm, Kitty, or Alacritty detected. Install one on Windows, then re-run install.${RESET}"
   fi
 else
   _saved_terminal=""
@@ -245,8 +248,8 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   else
     tui_collapse "5. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
-elif [[ "$INSTALL_WSL_WEZTERM" == 1 ]]; then
-  tui_collapse "5. Terminal" "WezTerm (Windows) → ${_wsl_wezterm_dir}"
+elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
+  tui_collapse "5. Terminal" "Windows: ${_wsl_detected_terms% }"
 else
   tui_collapse "5. Terminal" "${DIM}skip${RESET}"
 fi
@@ -344,8 +347,8 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   else
     _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config (font: skip)"
   fi
-elif [[ "$INSTALL_WSL_WEZTERM" == 1 ]]; then
-  _sum "Terminal" "WezTerm (WSL → Windows config + ~/.local.sh)"
+elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
+  _sum "Terminal" "Windows: ${_wsl_detected_terms% } → ~/.local.sh + templates"
 else
   _sum "Terminal" "${DIM}skip${RESET}"
 fi
@@ -417,10 +420,10 @@ step_terminal()  {
   set_env_var "$LOCAL_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
   set_env_var "$LOCAL_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
 }
-step_wsl_wezterm() {
+step_wsl_terminals() {
   _ensure_local_file
-  configure_wsl_wezterm_local_sh "$LOCAL_FILE"
-  install_wsl_wezterm_config "$DOTFILES_DIR" \
+  configure_wsl_terminals_local_sh "$LOCAL_FILE"
+  install_wsl_terminal_configs "$DOTFILES_DIR" \
     "$(nerd_font_family_for_terminal caskaydia wezterm)"
 }
 run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1"; }
@@ -436,8 +439,8 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   add_step "Terminal app (${TERMINAL_NAME})" run_bootstrap_flag "--terminal=${TERMINAL_NAME}"
   [[ "$INSTALL_FONT" == true ]] && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
   add_step "Terminal config (${TERMINAL_NAME})" step_terminal
-elif [[ "$INSTALL_WSL_WEZTERM" == 1 ]]; then
-  add_step "WezTerm (WSL → Windows)" step_wsl_wezterm
+elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
+  add_step "Terminals (WSL → Windows)" step_wsl_terminals
 fi
 for flag in "${BOOTSTRAP_FLAGS[@]}"; do
   add_step "$(bootstrap_label "$flag")" run_bootstrap_flag "$flag"

@@ -407,6 +407,73 @@ hosting_wezterm_p() {
   [ -n "${WEZTERM_PANE:-}" ] || [ -n "${WEZTERM_EXECUTABLE:-}" ] || [ "${TERM_PROGRAM:-}" = WezTerm ]
 }
 
+# True when this shell is hosted inside Kitty.
+hosting_kitty_p() {
+  [ -n "${KITTY_WINDOW_ID:-}" ] || [ "${TERM_PROGRAM:-}" = kitty ] || [ "${TERM:-}" = xterm-kitty ]
+}
+
+# True when this shell is hosted inside Alacritty.
+hosting_alacritty_p() {
+  [ -n "${ALACRITTY_SOCKET:-}" ] || [ -n "${ALACRITTY_LOG:-}" ] || [ "${TERM:-}" = alacritty ]
+}
+
+# Windows %APPDATA% (Roaming) as a WSL path, e.g. /mnt/c/Users/you/AppData/Roaming.
+wsl_appdata_roaming() {
+  local win_home
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] && printf '%s/AppData/Roaming' "$win_home"
+}
+
+# Directory where Kitty reads kitty.conf / colors.conf.
+# Override with KITTY_CONFIG_DIRECTORY in ~/.local.sh.
+kitty_config_dir() {
+  if [ -n "${KITTY_CONFIG_DIRECTORY:-}" ]; then
+    printf '%s\n' "$KITTY_CONFIG_DIRECTORY"
+    return 0
+  fi
+  if is_wsl; then
+    local win_home
+    win_home="$(wsl_windows_home 2>/dev/null || true)"
+    if [ -n "$win_home" ]; then
+      printf '%s/.config/kitty\n' "$win_home"
+      return 0
+    fi
+  fi
+  printf '%s/.config/kitty\n' "$HOME"
+}
+
+# Directory containing alacritty.toml (or .yml).
+alacritty_config_dir() {
+  local roaming
+  if is_wsl; then
+    roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+    if [ -n "$roaming" ] && [ -d "$roaming/alacritty" ]; then
+      printf '%s/alacritty\n' "$roaming"
+      return 0
+    fi
+  fi
+  printf '%s/alacritty\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
+# XDG_CONFIG_HOME value for Gogh's apply-alacritty.py (parent of alacritty/).
+# On WSL + Windows Alacritty this is %APPDATA% (Roaming), not ~/.config.
+# Override with ALACRITTY_XDG_CONFIG_HOME in ~/.local.sh.
+alacritty_xdg_config_home() {
+  if [ -n "${ALACRITTY_XDG_CONFIG_HOME:-}" ]; then
+    printf '%s\n' "$ALACRITTY_XDG_CONFIG_HOME"
+    return 0
+  fi
+  if is_wsl; then
+    local roaming
+    roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+    if [ -n "$roaming" ]; then
+      printf '%s\n' "$roaming"
+      return 0
+    fi
+  fi
+  printf '%s\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
 # True when a WezTerm config or generated colors.lua exists (Linux or WSL Windows mount).
 wezterm_config_present_p() {
   local dir
@@ -414,11 +481,33 @@ wezterm_config_present_p() {
   [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ] || [ -f "$dir/colors.lua" ]
 }
 
+kitty_config_present_p() {
+  local dir
+  dir="$(kitty_config_dir)"
+  [ -f "$dir/kitty.conf" ] || [ -f "$dir/colors.conf" ]
+}
+
+alacritty_config_present_p() {
+  local dir
+  dir="$(alacritty_config_dir)"
+  [ -f "$dir/alacritty.toml" ] || [ -f "$dir/alacritty.yml" ]
+}
+
 # Config file path for alacritty|kitty|wezterm (for display and existence checks).
 terminal_emulator_config_path() {
   case "$1" in
-    alacritty) printf '%s/.config/alacritty/alacritty.toml\n' "$HOME" ;;
-    kitty)     printf '%s/.config/kitty/kitty.conf\n' "$HOME" ;;
+    alacritty)
+      local dir
+      dir="$(alacritty_config_dir)"
+      if [ -f "$dir/alacritty.toml" ]; then
+        printf '%s/alacritty.toml\n' "$dir"
+      elif [ -f "$dir/alacritty.yml" ]; then
+        printf '%s/alacritty.yml\n' "$dir"
+      else
+        printf '%s/alacritty.toml\n' "$dir"
+      fi
+      ;;
+    kitty)     printf '%s/kitty.conf\n' "$(kitty_config_dir)" ;;
     wezterm)
       local dir
       dir="$(wezterm_config_dir)"
@@ -439,12 +528,26 @@ terminal_emulator_installed_p() {
       command -v wezterm >/dev/null 2>&1 && return 0
       hosting_wezterm_p && return 0
       wezterm_config_present_p && return 0
-      # WezTerm is a Windows app on WSL — no Linux binary required.
       is_wsl && return 0
       return 1
       ;;
-    alacritty|kitty)
-      command -v "$1" >/dev/null 2>&1
+    kitty)
+      command -v kitty >/dev/null 2>&1 && return 0
+      hosting_kitty_p && return 0
+      if is_wsl; then
+        kitty_config_present_p && return 0
+        wsl_kitty_detected_p && return 0
+      fi
+      return 1
+      ;;
+    alacritty)
+      command -v alacritty >/dev/null 2>&1 && return 0
+      hosting_alacritty_p && return 0
+      if is_wsl; then
+        alacritty_config_present_p && return 0
+        wsl_alacritty_detected_p && return 0
+      fi
+      return 1
       ;;
     *) return 1 ;;
   esac
@@ -470,26 +573,173 @@ wsl_wezterm_detected_p() {
   return 1
 }
 
-# Write TERMINAL=wezterm and WEZTERM_CONFIG_DIR to ~/.local.sh (WSL + WezTerm on Windows).
-configure_wsl_wezterm_local_sh() {
-  local file="$1" dir
+# True when Kitty appears installed on Windows (WSL).
+wsl_kitty_detected_p() {
+  local win_home
 
-  is_wsl || return 0
-  wsl_wezterm_detected_p || return 0
+  is_wsl || return 1
+  hosting_kitty_p && return 0
+  kitty_config_present_p && return 0
 
-  dir="$(WEZTERM_CONFIG_DIR= wezterm_config_dir)"
-  set_env_var "$file" TERMINAL "wezterm"
-  set_env_var "$file" WEZTERM_CONFIG_DIR "$dir"
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] || return 1
+
+  for exe in \
+    "/mnt/c/Program Files/Kitty/kitty.exe" \
+    "$win_home/AppData/Local/Programs/kitty/kitty.exe"; do
+    [ -f "$exe" ] && return 0
+  done
+  return 1
 }
 
-# Copy wezterm.lua.example to the Windows WezTerm config dir when missing (WSL only).
+# True when Alacritty appears installed on Windows (WSL).
+wsl_alacritty_detected_p() {
+  local win_home
+
+  is_wsl || return 1
+  hosting_alacritty_p && return 0
+  alacritty_config_present_p && return 0
+
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] || return 1
+
+  for exe in \
+    "/mnt/c/Program Files/Alacritty/alacritty.exe" \
+    "$win_home/AppData/Local/Programs/Alacritty/alacritty.exe"; do
+    [ -f "$exe" ] && return 0
+  done
+  return 1
+}
+
+# True when any supported GUI terminal is detected on Windows (WSL).
+wsl_terminal_detected_p() {
+  wsl_wezterm_detected_p || wsl_kitty_detected_p || wsl_alacritty_detected_p
+}
+
+# Export env vars Gogh needs to write kitty/alacritty configs on WSL.
+gogh_export_terminal_env() {
+  local _dir
+  case "$1" in
+    kitty)
+      _dir="$(kitty_config_dir)"
+      export KITTY_CONFIG_DIRECTORY="$_dir"
+      ;;
+    alacritty)
+      _dir="$(alacritty_xdg_config_home)"
+      export XDG_CONFIG_HOME="$_dir"
+      ;;
+  esac
+}
+
+# Nudge Windows Kitty to reload config from WSL (no-op when unavailable).
+wsl_kitty_reload_config() {
+  local exe win_home
+
+  is_wsl || return 1
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  for exe in \
+    "/mnt/c/Program Files/Kitty/kitty.exe" \
+    "$win_home/AppData/Local/Programs/kitty/kitty.exe"; do
+    if [ -f "$exe" ]; then
+      "$exe" @ load-config 2>/dev/null && return 0
+    fi
+  done
+  return 1
+}
+
+# Write TERMINAL and Windows config paths to ~/.local.sh for detected WSL terminals.
+configure_wsl_terminals_local_sh() {
+  local file="$1" default_term=""
+
+  is_wsl || return 0
+  wsl_terminal_detected_p || return 0
+
+  if wsl_kitty_detected_p; then
+    set_env_var "$file" KITTY_CONFIG_DIRECTORY "$(kitty_config_dir)"
+    default_term="${default_term:-kitty}"
+  fi
+  if wsl_alacritty_detected_p; then
+    set_env_var "$file" ALACRITTY_XDG_CONFIG_HOME "$(alacritty_xdg_config_home)"
+    default_term="${default_term:-alacritty}"
+  fi
+  if wsl_wezterm_detected_p; then
+    set_env_var "$file" WEZTERM_CONFIG_DIR "$(unset WEZTERM_CONFIG_DIR; wezterm_config_dir)"
+    default_term="${default_term:-wezterm}"
+  fi
+
+  if hosting_kitty_p; then
+    default_term="kitty"
+  elif hosting_alacritty_p; then
+    default_term="alacritty"
+  elif hosting_wezterm_p; then
+    default_term="wezterm"
+  fi
+
+  [ -n "$default_term" ] && set_env_var "$file" TERMINAL "$default_term"
+}
+
+# Back-compat alias.
+configure_wsl_wezterm_local_sh() {
+  configure_wsl_terminals_local_sh "$@"
+}
+
+# Copy terminal templates to Windows config dirs when missing (WSL only).
+install_wsl_terminal_configs() {
+  local dotfiles="$1" font_family="$2"
+
+  is_wsl || return 0
+
+  if wsl_wezterm_detected_p; then
+    install_wsl_wezterm_config "$dotfiles" "$font_family"
+  fi
+  if wsl_kitty_detected_p; then
+    install_wsl_kitty_config "$dotfiles" "$font_family"
+  fi
+  if wsl_alacritty_detected_p; then
+    install_wsl_alacritty_config "$dotfiles" "$font_family"
+  fi
+}
+
+install_wsl_kitty_config() {
+  local dotfiles="$1" font_family="$2" dir dest
+
+  dir="$(kitty_config_dir)"
+  dest="$dir/kitty.conf"
+  if [ -f "$dest" ]; then
+    echo -e "  ${GREEN}✓${RESET}  Kitty config already exists — skipping template copy."
+    return 0
+  fi
+  mkdir -p "$dir"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/kitty.conf.example" \
+    "$dest" \
+    "$font_family"
+}
+
+install_wsl_alacritty_config() {
+  local dotfiles="$1" font_family="$2" dir dest roaming
+
+  roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+  dir="$(alacritty_config_dir)"
+  dest="$dir/alacritty.toml"
+  if [ -f "$dest" ] || { [ -n "$roaming" ] && [ -f "$roaming/alacritty/alacritty.yml" ]; }; then
+    echo -e "  ${GREEN}✓${RESET}  Alacritty config already exists — skipping template copy."
+    return 0
+  fi
+  mkdir -p "$dir"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/alacritty.toml.example" \
+    "$dest" \
+    "$font_family"
+}
+
 install_wsl_wezterm_config() {
   local dotfiles="$1" font_family="$2" dir dest win_home
 
   is_wsl || return 0
   wsl_wezterm_detected_p || return 0
 
-  dir="$(WEZTERM_CONFIG_DIR= wezterm_config_dir)"
+  dir="$(unset WEZTERM_CONFIG_DIR; wezterm_config_dir)"
   win_home="$(wsl_windows_home 2>/dev/null || true)"
   if [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ]; then
     echo -e "  ${GREEN}✓${RESET}  WezTerm config already exists — skipping template copy."
