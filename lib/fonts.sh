@@ -28,12 +28,101 @@ nerd_font_family_ui() {
 
 # Usage: nerd_font_family_for_terminal <id> <terminal>
 nerd_font_family_for_terminal() {
-  local id="$1" terminal="$2"
+  local id="$1" terminal="$2" resolved
+
+  # Linux/WSL: use fontconfig Mono variant (NFM) — Propo/NFP misses terminal icons.
+  if _nerd_font_linux_install_target_p; then
+    if resolved=$(nerd_font_fc_resolve "$id"); then
+      printf '%s\n' "$resolved"
+      return 0
+    fi
+    case "$terminal" in
+      alacritty|wezterm) nerd_font_family_linux_ui "$id" ;;
+      *) nerd_font_family_linux "$id" ;;
+    esac
+    return 0
+  fi
+
   case "$terminal" in
     kitty) nerd_font_family "$id" ;;
     alacritty|wezterm) nerd_font_family_ui "$id" ;;
     *) nerd_font_family "$id" ;;
   esac
+}
+
+# Mono family names for Linux terminals (fontconfig). Prefer NFM over NFP/Propo.
+# Usage: nerd_font_family_linux <id>
+nerd_font_family_linux() {
+  case "$1" in
+    caskaydia) echo "CaskaydiaCove NFM" ;;
+    jetbrains) echo "JetBrainsMono NFM" ;;
+    fira)      echo "FiraCode Nerd Font Mono" ;;
+    hack)      echo "Hack Nerd Font Mono" ;;
+    *)         return 1 ;;
+  esac
+}
+
+# Long Mono family names for Alacritty on Linux when fc-match is unavailable.
+# Usage: nerd_font_family_linux_ui <id>
+nerd_font_family_linux_ui() {
+  case "$1" in
+    caskaydia) echo "CaskaydiaCove Nerd Font Mono" ;;
+    jetbrains) echo "JetBrainsMono Nerd Font" ;;
+    fira)      echo "FiraCode Nerd Font Mono" ;;
+    hack)      echo "Hack Nerd Font Mono" ;;
+    *)         return 1 ;;
+  esac
+}
+
+# Font family names to try with fc-match (Mono first). One candidate per line.
+# Usage: nerd_font_fc_candidates <id>
+nerd_font_fc_candidates() {
+  case "$1" in
+    caskaydia)
+      printf '%s\n' \
+        'CaskaydiaCove NFM' \
+        'CaskaydiaCove Nerd Font Mono' \
+        'CaskaydiaCove NF' \
+        'CaskaydiaCove Nerd Font'
+      ;;
+    jetbrains)
+      printf '%s\n' \
+        'JetBrainsMono NFM' \
+        'JetBrainsMono Nerd Font' \
+        'JetBrainsMono NF'
+      ;;
+    fira)
+      printf '%s\n' \
+        'FiraCode Nerd Font Mono' \
+        'FiraCode NFM' \
+        'FiraCode NF'
+      ;;
+    hack)
+      printf '%s\n' \
+        'Hack Nerd Font Mono' \
+        'Hack NFM' \
+        'Hack NF'
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# Resolve an installed Nerd Font family via fontconfig (Linux/WSL).
+# Usage: nerd_font_fc_resolve <id>
+nerd_font_fc_resolve() {
+  local id="$1" candidate resolved
+  command -v fc-match >/dev/null 2>&1 || return 1
+  while IFS= read -r candidate; do
+    [[ -n "$candidate" ]] || continue
+    resolved=$(fc-match -f '%{family}\n' "$candidate" 2>/dev/null | head -1)
+    [[ -z "$resolved" ]] && continue
+    case "$resolved" in
+      DejaVu*|Liberation*|FreeMono|monospace|sans-serif|serif) continue ;;
+    esac
+    printf '%s\n' "$resolved"
+    return 0
+  done < <(nerd_font_fc_candidates "$id")
+  return 1
 }
 
 # Usage: nerd_font_brew_cask <id>
@@ -63,11 +152,12 @@ nerd_font_release_zip() {
 # Usage: nerd_font_id_from_family <family>
 nerd_font_id_from_family() {
   case "$1" in
+    "CaskaydiaCove NFM"|"CaskaydiaCove Nerd Font Mono"|"CaskaydiaCove NF"|"CaskaydiaCove Nerd Font"| \
     "CaskaydiaCove NFP"|"CaskaydiaCove Nerd Font Propo") echo "caskaydia" ;;
-    "JetBrainsMono NFM"|"JetBrainsMono Nerd Font")       echo "jetbrains" ;;
-    "FiraCode Nerd Font Mono"|"FiraCode Nerd Font")       echo "fira" ;;
-    "Hack Nerd Font Mono")                                 echo "hack" ;;
-    *)                                                     return 1 ;;
+    "JetBrainsMono NFM"|"JetBrainsMono Nerd Font"|"JetBrainsMono NF") echo "jetbrains" ;;
+    "FiraCode Nerd Font Mono"|"FiraCode Nerd Font"|"FiraCode NFM"|"FiraCode NF") echo "fira" ;;
+    "Hack Nerd Font Mono"|"Hack NFM"|"Hack NF") echo "hack" ;;
+    *) return 1 ;;
   esac
 }
 
@@ -175,7 +265,13 @@ _install_nerd_font_linux() {
 
   mkdir -p "$font_dir" "${tmpdir}/extracted"
   unzip -q "${tmpdir}/font.zip" -d "${tmpdir}/extracted"
-  find "${tmpdir}/extracted" \( -name '*.ttf' -o -name '*.otf' \) -exec cp {} "$font_dir/" \;
+  if find "${tmpdir}/extracted" \( -iname '*NerdFontMono*' -o -iname '*NFM.*' \) \
+    \( -name '*.ttf' -o -name '*.otf' \) -print -quit 2>/dev/null | grep -q .; then
+    find "${tmpdir}/extracted" \( -iname '*NerdFontMono*' -o -iname '*NFM.*' \) \
+      \( -name '*.ttf' -o -name '*.otf' \) -exec cp {} "$font_dir/" \;
+  else
+    find "${tmpdir}/extracted" \( -name '*.ttf' -o -name '*.otf' \) -exec cp {} "$font_dir/" \;
+  fi
   rm -rf "$tmpdir"
 
   if command -v fc-cache &>/dev/null; then
@@ -253,6 +349,25 @@ sync_wsl_linux_terminal_fonts() {
     update_terminal_font_config kitty "$(nerd_font_family_for_terminal "$font_id" kitty)"
   fi
   if wsl_linux_alacritty_p; then
+    update_terminal_font_config alacritty "$(nerd_font_family_for_terminal "$font_id" alacritty)"
+  fi
+}
+
+# Re-apply font family names after Linux font install (WSL or native).
+# Usage: sync_linux_terminal_fonts <font_id>
+sync_linux_terminal_fonts() {
+  local font_id="$1"
+
+  _nerd_font_linux_install_target_p || return 0
+  if declare -f wsl_linux_gui_terminal_detected_p >/dev/null 2>&1 \
+    && wsl_linux_gui_terminal_detected_p 2>/dev/null; then
+    sync_wsl_linux_terminal_fonts "$font_id"
+    return 0
+  fi
+  if [[ -f "${HOME}/.config/kitty/kitty.conf" ]]; then
+    update_terminal_font_config kitty "$(nerd_font_family_for_terminal "$font_id" kitty)"
+  fi
+  if [[ -f "${HOME}/.config/alacritty/alacritty.toml" ]]; then
     update_terminal_font_config alacritty "$(nerd_font_family_for_terminal "$font_id" alacritty)"
   fi
 }

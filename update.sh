@@ -77,7 +77,7 @@ if is_wsl && wsl_linux_gui_terminal_detected_p; then
   _wsl_font_id="$(resolve_nerd_font_id "$HOME/.local.sh" 2>/dev/null || true)"
   _wsl_font_id="${_wsl_font_id:-caskaydia}"
   nerd_font_installed_p "$_wsl_font_id" || install_nerd_font "$_wsl_font_id" || true
-  sync_wsl_linux_terminal_fonts "$_wsl_font_id"
+  sync_linux_terminal_fonts "$_wsl_font_id"
 fi
 
 echo ""
