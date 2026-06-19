@@ -9,10 +9,31 @@ load test_helper
   [ "$(nerd_font_family hack)" = "Hack Nerd Font Mono" ]
 }
 
-@test "nerd_font_family_for_terminal picks ui name for alacritty and wezterm" {
-  [ "$(nerd_font_family_for_terminal caskaydia alacritty)" = "CaskaydiaCove Nerd Font Propo" ]
-  [ "$(nerd_font_family_for_terminal caskaydia wezterm)" = "CaskaydiaCove Nerd Font Propo" ]
-  [ "$(nerd_font_family_for_terminal caskaydia kitty)" = "CaskaydiaCove NFP" ]
+@test "nerd_font_family_for_terminal picks ui name for alacritty and wezterm on macOS" {
+  run env OSTYPE=darwin bash -c '
+    source "$1/lib/fonts.sh"
+    nerd_font_family_for_terminal caskaydia alacritty
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$output" = "CaskaydiaCove Nerd Font Propo" ]
+  [ "$(OSTYPE=darwin bash -c "source $REPO_ROOT/lib/fonts.sh; nerd_font_family_for_terminal caskaydia kitty")" = "CaskaydiaCove NFP" ]
+}
+
+@test "nerd_font_family_for_terminal uses linux mono fallback without fc-match" {
+  run env OSTYPE=linux-gnu bash -c '
+    source "$1/lib/fonts.sh"
+    nerd_font_fc_resolve() { return 1; }
+    nerd_font_family_for_terminal caskaydia kitty
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$output" = "CaskaydiaCove NFM" ]
+  run env OSTYPE=linux-gnu bash -c '
+    source "$1/lib/fonts.sh"
+    nerd_font_fc_resolve() { return 1; }
+    nerd_font_family_for_terminal caskaydia alacritty
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$output" = "CaskaydiaCove Nerd Font Mono" ]
 }
 
 @test "nerd_font_id_from_family reverses family to id" {
@@ -69,4 +90,70 @@ EOF
   printf '%s\n' 'export TERMINAL_FONT="Hack Nerd Font Mono"' >"$file"
 
   [ "$(resolve_nerd_font_id "$file")" = "hack" ]
+}
+
+@test "ensure_nerd_font_linux_deps installs missing packages" {
+  run env OSTYPE=linux-gnu bash -c '
+    source "$1/lib/helpers.sh"
+    source "$1/lib/fonts.sh"
+    _deps_ready=0
+    function command {
+      if [[ "$1" = -v && "$2" = unzip ]]; then
+        ((_deps_ready)) && return 0
+        return 1
+      fi
+      if [[ "$1" = -v && "$2" = fc-cache ]]; then
+        ((_deps_ready)) && return 0
+        return 1
+      fi
+      builtin command "$@"
+    }
+    linux_install_packages() {
+      _deps_ready=1
+      return 0
+    }
+    _ensure_nerd_font_linux_deps
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Installing font dependencies"* ]]
+  [[ "$output" == *"unzip"* ]]
+}
+
+@test "nerd_font_installed_p detects files in ~/.local/share/fonts" {
+  mkdir -p "$TEST_HOME/.local/share/fonts"
+  : >"$TEST_HOME/.local/share/fonts/CaskaydiaCoveNerdFont-Regular.ttf"
+  run env HOME="$TEST_HOME" bash -c '
+    source "$1/lib/fonts.sh"
+    nerd_font_installed_p caskaydia
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "update_terminal_font_config writes kitty font_family" {
+  mkdir -p "$TEST_HOME/.config/kitty"
+  printf 'font_family monospace\n' >"$TEST_HOME/.config/kitty/kitty.conf"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" OSTYPE=linux-gnu bash -c '
+    source "$DOTFILES_DIR/lib/helpers.sh"
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    nerd_font_fc_resolve() { return 1; }
+    update_terminal_font_config kitty "$(nerd_font_family_for_terminal caskaydia kitty)"
+  '
+  [ "$status" -eq 0 ]
+  grep -q '^font_family CaskaydiaCove NFM$' "$TEST_HOME/.config/kitty/kitty.conf"
+}
+
+@test "update_terminal_font_config writes alacritty family" {
+  mkdir -p "$TEST_HOME/.config/alacritty"
+  cat >"$TEST_HOME/.config/alacritty/alacritty.toml" <<'EOF'
+[font.normal]
+family = "monospace"
+EOF
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" OSTYPE=linux-gnu bash -c '
+    source "$DOTFILES_DIR/lib/helpers.sh"
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    nerd_font_fc_resolve() { return 1; }
+    update_terminal_font_config alacritty "$(nerd_font_family_for_terminal caskaydia alacritty)"
+  '
+  [ "$status" -eq 0 ]
+  grep -q 'family = "CaskaydiaCove Nerd Font Mono"' "$TEST_HOME/.config/alacritty/alacritty.toml"
 }

@@ -6,8 +6,11 @@
 set -u
 
 _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_dotfiles="${DOTFILES_DIR:-$(cd "$_dir/../../.." && pwd)}"
 # shellcheck source=state.sh disable=SC1091
 source "$_dir/state.sh"
+# shellcheck source=../../../lib/helpers.sh disable=SC1091
+source "$_dotfiles/lib/helpers.sh"
 
 case "${1:-}" in
   --terminal)
@@ -40,7 +43,7 @@ lua_string() {
 # WezTerm: write colors.lua; config reload applies palette to all panes (no OSC).
 case "$term" in
   wezterm)
-    cfg="${WEZTERM_CONFIG_DIR:-$HOME/.config/wezterm}"
+    cfg="$(wezterm_config_dir)"
     mkdir -p "$cfg"
     out="$cfg/colors.lua"
     cursor=$(field CURSOR_COLOR)

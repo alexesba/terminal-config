@@ -135,6 +135,10 @@ enable_experimental_conpty_backend = false
 "window.dynamic_title" = true
 "window.opacity" = 1.0
 
+[general]
+live_config_reload = true
+working_directory = "None"
+
 [mouse]
 hide_when_typing = false
 
@@ -167,6 +171,9 @@ EOF
   ! grep -q 'enable_experimental_conpty_backend' "$toml"
   ! grep -q 'window.dynamic_title' "$toml"
   ! grep -q 'window.opacity' "$toml"
+  ! grep -q '^\[general\]$' "$toml"
+  ! grep -q '^live_config_reload = true$' "$toml"
+  ! grep -q '^working_directory = "None"$' "$toml"
   ! grep -q 'use_thin_strokes' "$toml"
   ! grep -q 'ref_test' "$toml"
   grep -q 'hide_when_typing' "$toml"
@@ -368,4 +375,81 @@ EOF
     run needs_fzf_for_install "$opt"
     [ "$status" -ne 0 ]
   done
+}
+
+@test "wsl_wezterm_detected_p finds wezterm.exe under Windows profile" {
+  mkdir -p "$TEST_HOME/win/AppData/Local/Programs/WezTerm"
+  touch "$TEST_HOME/win/AppData/Local/Programs/WezTerm/wezterm.exe"
+  run env WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    wsl_wezterm_detected_p
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "configure_wsl_terminals_local_sh writes paths for detected WSL terminals" {
+  mkdir -p "$TEST_HOME/.config/kitty" \
+    "$TEST_HOME/win/AppData/Roaming/alacritty" \
+    "$TEST_HOME/win/.config/wezterm"
+  touch "$TEST_HOME/.config/kitty/kitty.conf" \
+    "$TEST_HOME/win/AppData/Roaming/alacritty/alacritty.toml" \
+    "$TEST_HOME/win/.config/wezterm/wezterm.lua"
+  local file="$TEST_HOME/.local.sh"
+  touch "$file"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu KITTY_WINDOW_ID=1 PATH="/usr/bin:/bin" bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    configure_wsl_terminals_local_sh "'"$file"'"
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  grep -q 'export TERMINAL="kitty"' "$file"
+  grep -q 'export KITTY_CONFIG_DIRECTORY="'"$TEST_HOME/.config/kitty"'"' "$file"
+  grep -q 'export ALACRITTY_XDG_CONFIG_HOME="'"$TEST_HOME/win/AppData/Roaming"'"' "$file"
+  grep -q 'export WEZTERM_CONFIG_DIR="'"$TEST_HOME/win/.config/wezterm"'"' "$file"
+}
+
+@test "wsl_kitty_detected_p finds Linux kitty in WSL" {
+  mkdir -p "$TEST_HOME/.config/kitty"
+  touch "$TEST_HOME/.config/kitty/kitty.conf"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_kitty_detected_p
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "wsl_linux_alacritty_p finds Linux alacritty in WSL" {
+  mkdir -p "$TEST_HOME/bin" "$TEST_HOME/.config/alacritty"
+  printf '#!/bin/sh\n' >"$TEST_HOME/bin/alacritty"
+  chmod +x "$TEST_HOME/bin/alacritty"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu PATH="$TEST_HOME/bin:/usr/bin:/bin" bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_linux_alacritty_p
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "gogh_export_terminal_env uses Linux XDG path for alacritty in WSL" {
+  mkdir -p "$TEST_HOME/bin" "$TEST_HOME/.config/alacritty"
+  printf '#!/bin/sh\n' >"$TEST_HOME/bin/alacritty"
+  chmod +x "$TEST_HOME/bin/alacritty"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu PATH="$TEST_HOME/bin:/usr/bin:/bin" bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    gogh_export_terminal_env alacritty
+    printf "%s" "$XDG_CONFIG_HOME"
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$output" = "$TEST_HOME/.config" ]
+}
+
+@test "gogh_export_terminal_env sets KITTY_CONFIG_DIRECTORY on WSL" {
+  mkdir -p "$TEST_HOME/.config/kitty"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    gogh_export_terminal_env kitty
+    printf "%s" "$KITTY_CONFIG_DIRECTORY"
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$output" = "$TEST_HOME/.config/kitty" ]
 }

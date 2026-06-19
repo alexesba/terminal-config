@@ -32,6 +32,11 @@
 # Auto-detect hosting emulator on shell start / colorscheme (default on): TERMINAL_AUTO_DETECT=1
 # export TERMINAL_AUTO_DETECT=0
 # export TERMINAL={{TERMINAL}}
+#
+# WSL: install.sh auto-configures WezTerm (Windows) and Kitty/Alacritty (Linux in WSL).
+# For Windows-native Alacritty only, set Roaming explicitly:
+# export ALACRITTY_XDG_CONFIG_HOME="/mnt/c/Users/<you>/AppData/Roaming"
+# export WEZTERM_CONFIG_DIR="/mnt/c/Users/<you>/.config/wezterm"
 
 # ── Terminal font (written into emulator config by install.sh) ────────────────
 # export TERMINAL_FONT={{TERMINAL_FONT}}

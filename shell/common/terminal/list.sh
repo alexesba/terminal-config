@@ -63,11 +63,7 @@ _terminal_repeat() {
 
 # Config path for emulator id $1.
 _terminal_config_path() {
-  case "$1" in
-    alacritty) printf '%s/.config/alacritty/alacritty.toml\n' "$HOME" ;;
-    kitty)     printf '%s/.config/kitty/kitty.conf\n' "$HOME" ;;
-    wezterm)   printf '%s/.config/wezterm/wezterm.lua\n' "$HOME" ;;
-  esac
+  terminal_emulator_config_path "$1"
 }
 
 # Human-readable name for emulator id $1.
@@ -89,16 +85,22 @@ _terminal_short_path() {
   esac
 }
 
-# True when emulator binary $1 is on PATH.
+# True when emulator $1 is available for the picker.
 _terminal_installed_p() {
-  command -v "$1" >/dev/null 2>&1
+  terminal_emulator_installed_p "$1"
 }
 
 # Status column for picker row: active, default, no config, etc.
 _terminal_status_label() {
   local term="$1" current="$2" default="$3" cfg
   cfg="$(_terminal_config_path "$term")"
-  if [ ! -f "$cfg" ]; then
+  if [ "$term" = wezterm ]; then
+    wezterm_config_present_p || { printf 'no config'; return 0; }
+  elif [ "$term" = kitty ]; then
+    kitty_config_present_p || { printf 'no config'; return 0; }
+  elif [ "$term" = alacritty ]; then
+    alacritty_config_present_p || { printf 'no config'; return 0; }
+  elif [ ! -f "$cfg" ]; then
     printf 'no config'
     return 0
   fi

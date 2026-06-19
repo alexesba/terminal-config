@@ -10,9 +10,12 @@ Alias: color_scheme (-h and --help show this message)
 EOF
 }
 
+# shellcheck source=paths.sh disable=SC1091
+source "$DOTFILES_DIR/shell/common/gogh/paths.sh"
+
 # fzf picker: sync TERMINAL, apply Gogh theme, persist, sync tmux panes, reload config emulators.
 function colorscheme() {
-  local gogh_root="${GOGH_DIR:-$HOME/src/gogh}"
+  local gogh_root gogh_dir term
   local update_script="$DOTFILES_DIR/shell/common/gogh/update.sh"
 
   case "${1:-}" in
@@ -27,16 +30,17 @@ function colorscheme() {
           return 0
           ;;
       esac
-      bash "$update_script" "$gogh_root"
+      bash "$update_script" "$(gogh_repo_root)"
       return $?
       ;;
   esac
 
   sync_terminal_to_host 2>/dev/null || true
+  term="$(gogh_resolve_terminal)"
+  export TERMINAL="$term"
 
-  # GOGH_DIR points at the Gogh repo root (matches bootstrap.sh); themes live in
-  # its installs/ subdirectory.
-  local gogh_dir="$gogh_root/installs"
+  gogh_root="$(gogh_repo_root)"
+  gogh_dir="$(gogh_installs_dir)"
   if [ ! -d "$gogh_dir" ]; then
     echo "gogh themes not found at $gogh_dir"
     echo "Clone it: git clone https://github.com/Gogh-Co/Gogh ~/src/gogh"
@@ -81,20 +85,20 @@ function colorscheme() {
     --preview-window='up:50%:border-bottom:wrap') || return
 
   [ -z "$selection" ] && return
-  if [ "${TERMINAL:-}" = alacritty ]; then
+  if [ "$term" = alacritty ]; then
     if ! bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" ensure; then
       bash "$DOTFILES_DIR/shell/common/gogh/deps.sh" hint >&2
       return 1
     fi
   fi
   # Kitty/Alacritty: Gogh writes config files. WezTerm: persist + config reload only.
-  if [ "${TERMINAL:-}" != wezterm ]; then
-    bash "$gogh_dir/$selection"
+  if [ "$term" != wezterm ]; then
+    gogh_apply_theme_script "$gogh_root" "$gogh_dir/$selection" "$term" || return 1
   fi
-  [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
-  if [ "${TERMINAL:-}" = alacritty ]; then
+  [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "$term"
+  if [ "$term" = alacritty ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/reload_alacritty.sh" 2>/dev/null || true
-  elif [ "${TERMINAL:-}" = kitty ]; then
+  elif [ "$term" = kitty ]; then
     bash "$DOTFILES_DIR/shell/common/gogh/reload_kitty.sh" 2>/dev/null || true
   fi
 }

@@ -219,12 +219,38 @@ _sanitize_alacritty_toml() {
   [[ -f "$toml" ]] || return 0
   tmp=$(mktemp)
   awk '
+    function flush_general() {
+      if (!in_general) return
+      if (general_keep) {
+        print "[general]"
+        printf "%s", general_buf
+      }
+      in_general = 0
+      general_keep = 0
+      general_buf = ""
+    }
     /^\[(mouse\.double_click|mouse\.triple_click|mouse\.hints|window\.dpi)\]/ { skip = 1; next }
-    /^\[/ { skip = 0 }
+    /^\[/ {
+      skip = 0
+      if ($0 == "[general]") {
+        flush_general()
+        in_general = 1
+        next
+      }
+      flush_general()
+    }
+    in_general {
+      if ($0 ~ /^[[:space:]]*live_config_reload[[:space:]]*=[[:space:]]*true[[:space:]]*$/) next
+      if ($0 ~ /^[[:space:]]*working_directory[[:space:]]*=[[:space:]]*"None"[[:space:]]*$/) next
+      general_keep = 1
+      general_buf = general_buf $0 ORS
+      next
+    }
     skip { next }
     /^"window\.(dynamic_title|opacity)"[[:space:]]*=/ { next }
     /^[[:space:]]*(alt_send_esc|enable_experimental_conpty_backend|ref_test|use_thin_strokes)[[:space:]]*=/ { next }
     { print }
+    END { flush_general() }
   ' "$toml" >"$tmp" && mv "$tmp" "$toml"
 }
 
@@ -349,7 +375,432 @@ remove_legacy_repo_copy() {
 
 # Returns 0 (true) when running inside WSL (Windows Subsystem for Linux).
 is_wsl() {
+  [ -n "${WSL_DISTRO_NAME:-}" ] && return 0
   grep -qi microsoft /proc/version 2>/dev/null
+}
+
+# Install packages via apt, dnf, or pacman (Linux/WSL). Requires sudo.
+# Usage: linux_install_packages <pkg> [<pkg> ...]
+linux_install_packages() {
+  if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get install -y "$@"
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y "$@"
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm "$@"
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Unknown package manager — please install ${BOLD}$*${RESET} manually."
+    return 1
+  fi
+}
+
+# Windows username for /mnt/c/Users/<name> (WSL only).
+wsl_windows_user() {
+  command -v cmd.exe >/dev/null 2>&1 || return 1
+  cmd.exe /c 'echo %USERNAME%' 2>/dev/null | tr -d '\r\n'
+}
+
+# Mounted Windows user profile, e.g. /mnt/c/Users/alexesba (WSL only).
+wsl_windows_home() {
+  local user
+  [ -d /mnt/c/Users ] || return 1
+  user="$(wsl_windows_user 2>/dev/null || true)"
+  if [ -n "$user" ] && [ -d "/mnt/c/Users/$user" ]; then
+    printf '/mnt/c/Users/%s\n' "$user"
+    return 0
+  fi
+  return 1
+}
+
+# True when Kitty or Linux Alacritty runs inside WSL (needs fonts in ~/.local/share/fonts).
+wsl_linux_gui_terminal_detected_p() {
+  is_wsl || return 1
+  wsl_kitty_detected_p || wsl_linux_alacritty_p
+}
+
+# Directory where WezTerm reads wezterm.lua / colors.lua.
+# Override with WEZTERM_CONFIG_DIR in ~/.local.sh.
+# On WSL, defaults to the Windows profile when not set.
+wezterm_config_dir() {
+  if [ -n "${WEZTERM_CONFIG_DIR:-}" ]; then
+    printf '%s\n' "$WEZTERM_CONFIG_DIR"
+    return 0
+  fi
+
+  if is_wsl; then
+    local win_home
+    win_home="$(wsl_windows_home 2>/dev/null || true)"
+    if [ -n "$win_home" ]; then
+      if [ -f "$win_home/.config/wezterm/wezterm.lua" ] || [ -f "$win_home/.config/wezterm/colors.lua" ]; then
+        printf '%s/.config/wezterm\n' "$win_home"
+        return 0
+      fi
+      if [ -f "$win_home/.wezterm.lua" ]; then
+        printf '%s\n' "$win_home"
+        return 0
+      fi
+      printf '%s/.config/wezterm\n' "$win_home"
+      return 0
+    fi
+  fi
+
+  printf '%s/.config/wezterm\n' "$HOME"
+}
+
+# True when this shell is hosted inside WezTerm (including WSL panes).
+hosting_wezterm_p() {
+  [ -n "${WEZTERM_PANE:-}" ] || [ -n "${WEZTERM_EXECUTABLE:-}" ] || [ "${TERM_PROGRAM:-}" = WezTerm ]
+}
+
+# True when this shell is hosted inside Kitty.
+hosting_kitty_p() {
+  [ -n "${KITTY_WINDOW_ID:-}" ] || [ "${TERM_PROGRAM:-}" = kitty ] || [ "${TERM:-}" = xterm-kitty ]
+}
+
+# True when this shell is hosted inside Alacritty.
+hosting_alacritty_p() {
+  [ -n "${ALACRITTY_SOCKET:-}" ] || [ -n "${ALACRITTY_LOG:-}" ] || [ "${TERM:-}" = alacritty ]
+}
+
+# Windows %APPDATA% (Roaming) as a WSL path, e.g. /mnt/c/Users/you/AppData/Roaming.
+wsl_appdata_roaming() {
+  local win_home
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] && printf '%s/AppData/Roaming' "$win_home"
+}
+
+# Directory where Kitty reads kitty.conf / colors.conf.
+# Override with KITTY_CONFIG_DIRECTORY in ~/.local.sh.
+# Kitty has no native Windows build; on WSL use the Linux package and ~/.config/kitty.
+kitty_config_dir() {
+  if [ -n "${KITTY_CONFIG_DIRECTORY:-}" ]; then
+    printf '%s\n' "$KITTY_CONFIG_DIRECTORY"
+    return 0
+  fi
+  printf '%s/.config/kitty\n' "$HOME"
+}
+
+# Directory containing alacritty.toml (or .yml).
+# On WSL: Linux package → ~/.config/alacritty; Windows .exe → %APPDATA%/alacritty.
+# Override parent dir with ALACRITTY_XDG_CONFIG_HOME in ~/.local.sh.
+alacritty_config_dir() {
+  if [ -n "${ALACRITTY_XDG_CONFIG_HOME:-}" ]; then
+    printf '%s/alacritty\n' "$ALACRITTY_XDG_CONFIG_HOME"
+    return 0
+  fi
+  if is_wsl && wsl_linux_alacritty_p; then
+    printf '%s/alacritty\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+    return 0
+  fi
+  if is_wsl; then
+    local roaming
+    roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+    if [ -n "$roaming" ] && wsl_windows_alacritty_p; then
+      printf '%s/alacritty\n' "$roaming"
+      return 0
+    fi
+  fi
+  printf '%s/alacritty\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
+# XDG_CONFIG_HOME value for Gogh's apply-alacritty.py (parent of alacritty/).
+alacritty_xdg_config_home() {
+  if [ -n "${ALACRITTY_XDG_CONFIG_HOME:-}" ]; then
+    printf '%s\n' "$ALACRITTY_XDG_CONFIG_HOME"
+    return 0
+  fi
+  if is_wsl && wsl_linux_alacritty_p; then
+    printf '%s\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+    return 0
+  fi
+  if is_wsl; then
+    local roaming
+    roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+    if [ -n "$roaming" ] && wsl_windows_alacritty_p; then
+      printf '%s\n' "$roaming"
+      return 0
+    fi
+  fi
+  printf '%s\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
+# True when a WezTerm config or generated colors.lua exists (Linux or WSL Windows mount).
+wezterm_config_present_p() {
+  local dir
+  dir="$(wezterm_config_dir)"
+  [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ] || [ -f "$dir/colors.lua" ]
+}
+
+kitty_config_present_p() {
+  local dir
+  dir="$(kitty_config_dir)"
+  [ -f "$dir/kitty.conf" ] || [ -f "$dir/colors.conf" ]
+}
+
+alacritty_config_present_p() {
+  local dir
+  dir="$(alacritty_config_dir)"
+  [ -f "$dir/alacritty.toml" ] || [ -f "$dir/alacritty.yml" ]
+}
+
+# Config file path for alacritty|kitty|wezterm (for display and existence checks).
+terminal_emulator_config_path() {
+  case "$1" in
+    alacritty)
+      local dir
+      dir="$(alacritty_config_dir)"
+      if [ -f "$dir/alacritty.toml" ]; then
+        printf '%s/alacritty.toml\n' "$dir"
+      elif [ -f "$dir/alacritty.yml" ]; then
+        printf '%s/alacritty.yml\n' "$dir"
+      else
+        printf '%s/alacritty.toml\n' "$dir"
+      fi
+      ;;
+    kitty)     printf '%s/kitty.conf\n' "$(kitty_config_dir)" ;;
+    wezterm)
+      local dir
+      dir="$(wezterm_config_dir)"
+      if [ -f "$dir/.wezterm.lua" ]; then
+        printf '%s/.wezterm.lua\n' "$dir"
+      else
+        printf '%s/wezterm.lua\n' "$dir"
+      fi
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# True when emulator $1 is available for use-terminal / colorscheme.
+terminal_emulator_installed_p() {
+  case "$1" in
+    wezterm)
+      command -v wezterm >/dev/null 2>&1 && return 0
+      hosting_wezterm_p && return 0
+      wezterm_config_present_p && return 0
+      is_wsl && return 0
+      return 1
+      ;;
+    kitty)
+      command -v kitty >/dev/null 2>&1 && return 0
+      hosting_kitty_p && return 0
+      is_wsl && kitty_config_present_p && return 0
+      return 1
+      ;;
+    alacritty)
+      command -v alacritty >/dev/null 2>&1 && return 0
+      hosting_alacritty_p && return 0
+      is_wsl && wsl_alacritty_detected_p && return 0
+      return 1
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# True when WezTerm appears to be installed on Windows (WSL install-time detection).
+wsl_wezterm_detected_p() {
+  local win_home exe
+
+  is_wsl || return 1
+  hosting_wezterm_p && return 0
+  wezterm_config_present_p && return 0
+
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] || return 1
+
+  for exe in \
+    "/mnt/c/Program Files/WezTerm/wezterm.exe" \
+    "/mnt/c/Program Files/WezTerm/wezterm-gui.exe" \
+    "$win_home/AppData/Local/Programs/WezTerm/wezterm.exe"; do
+    [ -f "$exe" ] && return 0
+  done
+  return 1
+}
+
+# True when Linux Kitty is available in WSL (apt install kitty; no Windows build).
+wsl_kitty_detected_p() {
+  is_wsl || return 1
+  command -v kitty >/dev/null 2>&1 && return 0
+  hosting_kitty_p && return 0
+  kitty_config_present_p && return 0
+  return 1
+}
+
+# True when Alacritty runs as a Linux package in WSL (apt, etc.).
+wsl_linux_alacritty_p() {
+  is_wsl || return 1
+  command -v alacritty >/dev/null 2>&1 && return 0
+  hosting_alacritty_p && return 0
+  if [ -f "$HOME/.config/alacritty/alacritty.toml" ] \
+    || [ -f "$HOME/.config/alacritty/alacritty.yml" ]; then
+    return 0
+  fi
+  return 1
+}
+
+# True when the Windows Alacritty .exe (or its Roaming config) is present.
+wsl_windows_alacritty_p() {
+  local win_home roaming exe
+
+  is_wsl || return 1
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  if [ -n "$win_home" ]; then
+    for exe in \
+      "/mnt/c/Program Files/Alacritty/alacritty.exe" \
+      "$win_home/AppData/Local/Programs/Alacritty/alacritty.exe"; do
+      [ -f "$exe" ] && return 0
+    done
+  fi
+  roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+  if [ -n "$roaming" ] && {
+    [ -f "$roaming/alacritty/alacritty.toml" ] || [ -f "$roaming/alacritty/alacritty.yml" ]
+  }; then
+    return 0
+  fi
+  return 1
+}
+
+# True when Alacritty is available in WSL (Linux package and/or Windows install).
+wsl_alacritty_detected_p() {
+  wsl_linux_alacritty_p || wsl_windows_alacritty_p
+}
+
+# True when any supported GUI terminal is detected on Windows (WSL).
+wsl_terminal_detected_p() {
+  wsl_wezterm_detected_p || wsl_kitty_detected_p || wsl_alacritty_detected_p
+}
+
+# Export env vars Gogh needs to write kitty/alacritty configs on WSL.
+gogh_export_terminal_env() {
+  local _dir
+  case "$1" in
+    kitty)
+      _dir="$(kitty_config_dir)"
+      export KITTY_CONFIG_DIRECTORY="$_dir"
+      ;;
+    alacritty)
+      _dir="$(alacritty_xdg_config_home)"
+      export XDG_CONFIG_HOME="$_dir"
+      ;;
+  esac
+}
+
+# Write TERMINAL and Windows config paths to ~/.local.sh for detected WSL terminals.
+configure_wsl_terminals_local_sh() {
+  local file="$1" default_term=""
+
+  is_wsl || return 0
+  wsl_terminal_detected_p || return 0
+
+  if wsl_kitty_detected_p; then
+    set_env_var "$file" KITTY_CONFIG_DIRECTORY "$(kitty_config_dir)"
+    default_term="${default_term:-kitty}"
+  fi
+  if wsl_alacritty_detected_p; then
+    if wsl_windows_alacritty_p && ! wsl_linux_alacritty_p; then
+      set_env_var "$file" ALACRITTY_XDG_CONFIG_HOME "$(alacritty_xdg_config_home)"
+    fi
+    default_term="${default_term:-alacritty}"
+  fi
+  if wsl_wezterm_detected_p; then
+    set_env_var "$file" WEZTERM_CONFIG_DIR "$(unset WEZTERM_CONFIG_DIR; wezterm_config_dir)"
+    default_term="${default_term:-wezterm}"
+  fi
+
+  if hosting_kitty_p; then
+    default_term="kitty"
+  elif hosting_alacritty_p; then
+    default_term="alacritty"
+  elif hosting_wezterm_p; then
+    default_term="wezterm"
+  fi
+
+  [ -n "$default_term" ] && set_env_var "$file" TERMINAL "$default_term"
+}
+
+# Back-compat alias.
+configure_wsl_wezterm_local_sh() {
+  configure_wsl_terminals_local_sh "$@"
+}
+
+# Copy terminal templates when missing (WSL: Windows path for wezterm; Linux home for kitty/alacritty).
+# Usage: install_wsl_terminal_configs <dotfiles_dir> [font_id]
+install_wsl_terminal_configs() {
+  local dotfiles="$1" font_id="${2:-caskaydia}"
+
+  is_wsl || return 0
+
+  if wsl_wezterm_detected_p; then
+    install_wsl_wezterm_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" wezterm)"
+  fi
+  if wsl_kitty_detected_p; then
+    install_wsl_kitty_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" kitty)"
+  fi
+  if wsl_alacritty_detected_p; then
+    migrate_alacritty_yaml_config "$(nerd_font_family_for_terminal "$font_id" alacritty)"
+    install_wsl_alacritty_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" alacritty)"
+  fi
+}
+
+install_wsl_kitty_config() {
+  local dotfiles="$1" font_family="$2" dir dest
+
+  dir="$(kitty_config_dir)"
+  dest="$dir/kitty.conf"
+  if [ -f "$dest" ]; then
+    echo -e "  ${GREEN}✓${RESET}  Kitty config already exists — skipping template copy."
+    return 0
+  fi
+  mkdir -p "$dir"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/kitty.conf.example" \
+    "$dest" \
+    "$font_family"
+}
+
+install_wsl_alacritty_config() {
+  local dotfiles="$1" font_family="$2" dir dest roaming
+
+  roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+  dir="$(alacritty_config_dir)"
+  dest="$dir/alacritty.toml"
+  if [ -f "$dest" ] || { [ -n "$roaming" ] && [ -f "$roaming/alacritty/alacritty.yml" ]; }; then
+    echo -e "  ${GREEN}✓${RESET}  Alacritty config already exists — skipping template copy."
+    return 0
+  fi
+  mkdir -p "$dir"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/alacritty.toml.example" \
+    "$dest" \
+    "$font_family"
+}
+
+install_wsl_wezterm_config() {
+  local dotfiles="$1" font_family="$2" dir dest win_home
+
+  is_wsl || return 0
+  wsl_wezterm_detected_p || return 0
+
+  dir="$(unset WEZTERM_CONFIG_DIR; wezterm_config_dir)"
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  if [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ]; then
+    echo -e "  ${GREEN}✓${RESET}  WezTerm config already exists — skipping template copy."
+    return 0
+  fi
+  if [ -n "$win_home" ] && [ -f "$win_home/.wezterm.lua" ]; then
+    echo -e "  ${GREEN}✓${RESET}  WezTerm config already exists at ${win_home}/.wezterm.lua — skipping."
+    return 0
+  fi
+
+  mkdir -p "$dir"
+  dest="$dir/wezterm.lua"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/wezterm.lua.example" \
+    "$dest" \
+    "$font_family"
 }
 
 # Sets or updates an `export VAR="value"` line in a target file, idempotently.

@@ -7,6 +7,8 @@ setup() {
   export TEST_HOME="${BATS_TEST_TMPDIR}/home"
   mkdir -p "$TEST_HOME"
   export HOME="$TEST_HOME"
+  # CI runners often export XDG_CONFIG_HOME=/home/runner/.config; tests use $HOME/.config.
+  unset XDG_CONFIG_HOME
   export REPO_ROOT="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
   export DOTFILES_DIR="$REPO_ROOT"
   # shellcheck source=../lib/helpers.sh disable=SC1091
