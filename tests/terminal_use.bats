@@ -198,8 +198,9 @@ EOF
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WSL_DISTRO_NAME=Ubuntu \
     PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash -c '
+    set +o pipefail 2>/dev/null || true
     source "$DOTFILES_DIR/shell/common/terminal/use.sh"
-    use-terminal >/dev/null
+    use-terminal &>/dev/null
     printf "%s" "$TERMINAL"
   '
   [ "$status" -eq 0 ]
