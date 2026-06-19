@@ -16,11 +16,13 @@ _setup_terminal_bins() {
   done
 }
 
-@test "terminal_list rows includes kitty on WSL without Linux binary" {
-  mkdir -p "$TEST_HOME/win/.config/kitty"
-  touch "$TEST_HOME/win/.config/kitty/kitty.conf"
+@test "terminal_list rows includes kitty when Linux kitty is installed on WSL" {
+  mkdir -p "$TEST_HOME/bin" "$TEST_HOME/.config/kitty"
+  printf '#!/bin/sh\n' >"$TEST_HOME/bin/kitty"
+  chmod +x "$TEST_HOME/bin/kitty"
+  touch "$TEST_HOME/.config/kitty/kitty.conf"
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" WSL_DISTRO_NAME=Ubuntu \
-    KITTY_CONFIG_DIRECTORY="$TEST_HOME/win/.config/kitty" PATH="/usr/bin:/bin" \
+    PATH="$TEST_HOME/bin:/usr/bin:/bin" \
     bash "$REPO_ROOT/shell/common/terminal/list.sh" rows kitty kitty
   [ "$status" -eq 0 ]
   [[ "$output" == *"kitty|"* ]]

@@ -426,28 +426,31 @@ wsl_appdata_roaming() {
 
 # Directory where Kitty reads kitty.conf / colors.conf.
 # Override with KITTY_CONFIG_DIRECTORY in ~/.local.sh.
+# Kitty has no native Windows build; on WSL use the Linux package and ~/.config/kitty.
 kitty_config_dir() {
   if [ -n "${KITTY_CONFIG_DIRECTORY:-}" ]; then
     printf '%s\n' "$KITTY_CONFIG_DIRECTORY"
     return 0
   fi
-  if is_wsl; then
-    local win_home
-    win_home="$(wsl_windows_home 2>/dev/null || true)"
-    if [ -n "$win_home" ]; then
-      printf '%s/.config/kitty\n' "$win_home"
-      return 0
-    fi
-  fi
   printf '%s/.config/kitty\n' "$HOME"
 }
 
 # Directory containing alacritty.toml (or .yml).
+# On WSL: Linux package → ~/.config/alacritty; Windows .exe → %APPDATA%/alacritty.
+# Override parent dir with ALACRITTY_XDG_CONFIG_HOME in ~/.local.sh.
 alacritty_config_dir() {
-  local roaming
+  if [ -n "${ALACRITTY_XDG_CONFIG_HOME:-}" ]; then
+    printf '%s/alacritty\n' "$ALACRITTY_XDG_CONFIG_HOME"
+    return 0
+  fi
+  if is_wsl && wsl_linux_alacritty_p; then
+    printf '%s/alacritty\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+    return 0
+  fi
   if is_wsl; then
+    local roaming
     roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
-    if [ -n "$roaming" ] && [ -d "$roaming/alacritty" ]; then
+    if [ -n "$roaming" ] && wsl_windows_alacritty_p; then
       printf '%s/alacritty\n' "$roaming"
       return 0
     fi
@@ -456,17 +459,19 @@ alacritty_config_dir() {
 }
 
 # XDG_CONFIG_HOME value for Gogh's apply-alacritty.py (parent of alacritty/).
-# On WSL + Windows Alacritty this is %APPDATA% (Roaming), not ~/.config.
-# Override with ALACRITTY_XDG_CONFIG_HOME in ~/.local.sh.
 alacritty_xdg_config_home() {
   if [ -n "${ALACRITTY_XDG_CONFIG_HOME:-}" ]; then
     printf '%s\n' "$ALACRITTY_XDG_CONFIG_HOME"
     return 0
   fi
+  if is_wsl && wsl_linux_alacritty_p; then
+    printf '%s\n' "${XDG_CONFIG_HOME:-$HOME/.config}"
+    return 0
+  fi
   if is_wsl; then
     local roaming
     roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
-    if [ -n "$roaming" ]; then
+    if [ -n "$roaming" ] && wsl_windows_alacritty_p; then
       printf '%s\n' "$roaming"
       return 0
     fi
@@ -534,19 +539,13 @@ terminal_emulator_installed_p() {
     kitty)
       command -v kitty >/dev/null 2>&1 && return 0
       hosting_kitty_p && return 0
-      if is_wsl; then
-        kitty_config_present_p && return 0
-        wsl_kitty_detected_p && return 0
-      fi
+      is_wsl && kitty_config_present_p && return 0
       return 1
       ;;
     alacritty)
       command -v alacritty >/dev/null 2>&1 && return 0
       hosting_alacritty_p && return 0
-      if is_wsl; then
-        alacritty_config_present_p && return 0
-        wsl_alacritty_detected_p && return 0
-      fi
+      is_wsl && wsl_alacritty_detected_p && return 0
       return 1
       ;;
     *) return 1 ;;
@@ -573,42 +572,52 @@ wsl_wezterm_detected_p() {
   return 1
 }
 
-# True when Kitty appears installed on Windows (WSL).
+# True when Linux Kitty is available in WSL (apt install kitty; no Windows build).
 wsl_kitty_detected_p() {
-  local win_home
-
   is_wsl || return 1
+  command -v kitty >/dev/null 2>&1 && return 0
   hosting_kitty_p && return 0
   kitty_config_present_p && return 0
-
-  win_home="$(wsl_windows_home 2>/dev/null || true)"
-  [ -n "$win_home" ] || return 1
-
-  for exe in \
-    "/mnt/c/Program Files/Kitty/kitty.exe" \
-    "$win_home/AppData/Local/Programs/kitty/kitty.exe"; do
-    [ -f "$exe" ] && return 0
-  done
   return 1
 }
 
-# True when Alacritty appears installed on Windows (WSL).
-wsl_alacritty_detected_p() {
-  local win_home
+# True when Alacritty runs as a Linux package in WSL (apt, etc.).
+wsl_linux_alacritty_p() {
+  is_wsl || return 1
+  command -v alacritty >/dev/null 2>&1 && return 0
+  hosting_alacritty_p && return 0
+  if [ -f "$HOME/.config/alacritty/alacritty.toml" ] \
+    || [ -f "$HOME/.config/alacritty/alacritty.yml" ]; then
+    return 0
+  fi
+  return 1
+}
+
+# True when the Windows Alacritty .exe (or its Roaming config) is present.
+wsl_windows_alacritty_p() {
+  local win_home roaming exe
 
   is_wsl || return 1
-  hosting_alacritty_p && return 0
-  alacritty_config_present_p && return 0
-
   win_home="$(wsl_windows_home 2>/dev/null || true)"
-  [ -n "$win_home" ] || return 1
-
-  for exe in \
-    "/mnt/c/Program Files/Alacritty/alacritty.exe" \
-    "$win_home/AppData/Local/Programs/Alacritty/alacritty.exe"; do
-    [ -f "$exe" ] && return 0
-  done
+  if [ -n "$win_home" ]; then
+    for exe in \
+      "/mnt/c/Program Files/Alacritty/alacritty.exe" \
+      "$win_home/AppData/Local/Programs/Alacritty/alacritty.exe"; do
+      [ -f "$exe" ] && return 0
+    done
+  fi
+  roaming="$(wsl_appdata_roaming 2>/dev/null || true)"
+  if [ -n "$roaming" ] && {
+    [ -f "$roaming/alacritty/alacritty.toml" ] || [ -f "$roaming/alacritty/alacritty.yml" ]
+  }; then
+    return 0
+  fi
   return 1
+}
+
+# True when Alacritty is available in WSL (Linux package and/or Windows install).
+wsl_alacritty_detected_p() {
+  wsl_linux_alacritty_p || wsl_windows_alacritty_p
 }
 
 # True when any supported GUI terminal is detected on Windows (WSL).
@@ -631,22 +640,6 @@ gogh_export_terminal_env() {
   esac
 }
 
-# Nudge Windows Kitty to reload config from WSL (no-op when unavailable).
-wsl_kitty_reload_config() {
-  local exe win_home
-
-  is_wsl || return 1
-  win_home="$(wsl_windows_home 2>/dev/null || true)"
-  for exe in \
-    "/mnt/c/Program Files/Kitty/kitty.exe" \
-    "$win_home/AppData/Local/Programs/kitty/kitty.exe"; do
-    if [ -f "$exe" ]; then
-      "$exe" @ load-config 2>/dev/null && return 0
-    fi
-  done
-  return 1
-}
-
 # Write TERMINAL and Windows config paths to ~/.local.sh for detected WSL terminals.
 configure_wsl_terminals_local_sh() {
   local file="$1" default_term=""
@@ -659,7 +652,9 @@ configure_wsl_terminals_local_sh() {
     default_term="${default_term:-kitty}"
   fi
   if wsl_alacritty_detected_p; then
-    set_env_var "$file" ALACRITTY_XDG_CONFIG_HOME "$(alacritty_xdg_config_home)"
+    if wsl_windows_alacritty_p && ! wsl_linux_alacritty_p; then
+      set_env_var "$file" ALACRITTY_XDG_CONFIG_HOME "$(alacritty_xdg_config_home)"
+    fi
     default_term="${default_term:-alacritty}"
   fi
   if wsl_wezterm_detected_p; then
@@ -683,7 +678,7 @@ configure_wsl_wezterm_local_sh() {
   configure_wsl_terminals_local_sh "$@"
 }
 
-# Copy terminal templates to Windows config dirs when missing (WSL only).
+# Copy terminal templates when missing (WSL: Windows path for wezterm; Linux home for kitty/alacritty).
 install_wsl_terminal_configs() {
   local dotfiles="$1" font_family="$2"
 

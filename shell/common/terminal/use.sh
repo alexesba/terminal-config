@@ -50,9 +50,12 @@ _use_terminal_activate() {
   local term="$1" apply="$2" default="$3" cfg
   cfg="$(_terminal_config_path "$term")"
   if [ -n "$cfg" ] && [ ! -f "$cfg" ]; then
-    if is_wsl && { [ "$term" = wezterm ] || [ "$term" = kitty ] || [ "$term" = alacritty ]; }; then
+    if is_wsl && [ "$term" = wezterm ]; then
       printf 'note: %s config not found at %s\n' "$term" "$cfg" >&2
       printf 'Re-run ./install.sh on WSL or copy the repo template to your Windows profile.\n' >&2
+    elif is_wsl && { [ "$term" = kitty ] || [ "$term" = alacritty ]; }; then
+      printf 'note: %s config not found at %s\n' "$term" "$cfg" >&2
+      printf 'Re-run ./install.sh on WSL or copy the repo template under ~/.config/%s/.\n' "$term" >&2
     else
       printf 'Config not found: %s\n' "$cfg" >&2
       printf 'Run ./update.sh to copy the repo template, or re-run install.sh for that terminal.\n' >&2

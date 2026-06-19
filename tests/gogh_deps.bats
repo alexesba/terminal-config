@@ -33,6 +33,40 @@ load test_helper
   [ "$status" -eq 0 ]
 }
 
+@test "gogh_python_deps_hint mentions apt when pip is missing" {
+  run bash -c '
+    export GOGH_DIR="/tmp/gogh"
+    export PATH="/usr/bin:/bin"
+    source "$1/shell/common/gogh/deps.sh"
+    _gogh_pip_available() { return 1; }
+    gogh_python_deps_hint
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"apt install python3-pip"* ]]
+}
+
+@test "install_gogh_python_deps bootstraps pip before install" {
+  mkdir -p "$TEST_HOME/gogh" "$TEST_HOME/bin"
+  printf 'tomli\n' >"$TEST_HOME/gogh/requirements.txt"
+  cat >"$TEST_HOME/bin/python3" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *import*) exit 1 ;;
+  *ensurepip*) exit 0 ;;
+  *pip\ --version*) exit 0 ;;
+  *pip\ install*) exit 0 ;;
+  *) exit 1 ;;
+esac
+EOF
+  chmod +x "$TEST_HOME/bin/python3"
+  run env HOME="$TEST_HOME" PATH="$TEST_HOME/bin:/usr/bin:/bin" bash -c '
+    source "$1/shell/common/gogh/deps.sh"
+    _gogh_install_pip_linux() { return 1; }
+    install_gogh_python_deps "'"$TEST_HOME"'/gogh"
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
 @test "apply_saved fails with hint when alacritty theme apply fails" {
   mkdir -p "$TEST_HOME/.local/state/gogh" "$TEST_HOME/gogh/installs"
   cat >"$TEST_HOME/.local/state/gogh/current" <<'EOF'

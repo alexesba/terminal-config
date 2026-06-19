@@ -33,9 +33,8 @@
 # export TERMINAL_AUTO_DETECT=0
 # export TERMINAL={{TERMINAL}}
 #
-# WSL + Windows terminals: install.sh auto-sets paths when WezTerm / Kitty / Alacritty
-# are detected. Override manually if your config lives elsewhere:
-# export KITTY_CONFIG_DIRECTORY="/mnt/c/Users/<you>/.config/kitty"
+# WSL: install.sh auto-configures WezTerm (Windows) and Kitty/Alacritty (Linux in WSL).
+# For Windows-native Alacritty only, set Roaming explicitly:
 # export ALACRITTY_XDG_CONFIG_HOME="/mnt/c/Users/<you>/AppData/Roaming"
 # export WEZTERM_CONFIG_DIR="/mnt/c/Users/<you>/.config/wezterm"
 

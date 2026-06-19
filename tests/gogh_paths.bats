@@ -72,8 +72,8 @@ EOF
 @test "gogh_apply_theme_script exports KITTY_CONFIG_DIRECTORY on WSL" {
   local root
   root="$(setup_gogh_repo)"
-  mkdir -p "$TEST_HOME/win/.config/kitty"
-  touch "$TEST_HOME/win/.config/kitty/kitty.conf"
+  mkdir -p "$TEST_HOME/.config/kitty"
+  touch "$TEST_HOME/.config/kitty/kitty.conf"
   cat >"$root/installs/demo.sh" <<'EOF'
 #!/usr/bin/env bash
 printf 'kitty_dir=%s\n' "${KITTY_CONFIG_DIRECTORY:-}"
@@ -82,11 +82,10 @@ EOF
   chmod +x "$root/installs/demo.sh"
   run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" GOGH_DIR="$root" WSL_DISTRO_NAME=Ubuntu bash -c '
     source "$DOTFILES_DIR/shell/common/gogh/paths.sh"
-    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
     gogh_apply_theme_script "$(gogh_repo_root)" "$(gogh_installs_dir)/demo.sh" kitty
   '
   [ "$status" -eq 0 ]
-  [[ "$output" == *"kitty_dir=$TEST_HOME/win/.config/kitty"* ]]
+  [[ "$output" == *"kitty_dir=$TEST_HOME/.config/kitty"* ]]
 }
 
 @test "persist.sh writes colors.lua to wezterm_config_dir on WSL" {

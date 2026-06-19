@@ -12,8 +12,8 @@ bash "$_dir/clear_tmux_pane_colors.sh" --session 2>/dev/null || true
 
 if command -v kitty >/dev/null 2>&1; then
   pkill -USR1 -x kitty 2>/dev/null || killall -USR1 kitty 2>/dev/null || true
-elif is_wsl; then
-  wsl_kitty_reload_config 2>/dev/null || true
-  conf="$(kitty_config_dir)/kitty.conf"
-  [ -f "$conf" ] && touch "$conf"
+fi
+conf="$(kitty_config_dir)/kitty.conf"
+if [ -f "$conf" ]; then
+  touch "$conf"
 fi

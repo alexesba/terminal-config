@@ -161,17 +161,17 @@ _wsl_detected_terms=""
 tui_begin
 echo -e "${BOLD}5. Terminal emulator config${RESET}"
 if is_wsl; then
-  echo -e "   ${YELLOW}⚠${RESET}  WSL detected — terminal emulators run on the Windows side."
+  echo -e "   ${YELLOW}⚠${RESET}  WSL detected — WezTerm uses Windows; Kitty/Alacritty can run as Linux packages in WSL (or Alacritty on Windows)."
   INSTALL_TERMINAL=4
   wsl_wezterm_detected_p && _wsl_detected_terms="${_wsl_detected_terms}wezterm "
   wsl_kitty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}kitty "
   wsl_alacritty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}alacritty "
   if [ -n "$_wsl_detected_terms" ]; then
     INSTALL_WSL_TERMINAL=1
-    echo -e "   ${GREEN}✓${RESET}  Detected on Windows:${RESET} ${BOLD}${_wsl_detected_terms}${RESET}"
+    echo -e "   ${GREEN}✓${RESET}  Detected:${RESET} ${BOLD}${_wsl_detected_terms% }${RESET}"
     echo -e "   ${DIM}install will set ~/.local.sh paths and copy missing config templates.${RESET}"
   else
-    echo -e "   ${DIM}No WezTerm, Kitty, or Alacritty detected. Install one on Windows, then re-run install.${RESET}"
+    echo -e "   ${DIM}No terminal detected. Install WezTerm on Windows and/or kitty/alacritty in WSL, then re-run install.${RESET}"
   fi
 else
   _saved_terminal=""
@@ -249,7 +249,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     tui_collapse "5. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
 elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
-  tui_collapse "5. Terminal" "Windows: ${_wsl_detected_terms% }"
+  tui_collapse "5. Terminal" "WSL: ${_wsl_detected_terms% }"
 else
   tui_collapse "5. Terminal" "${DIM}skip${RESET}"
 fi
@@ -440,7 +440,7 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   [[ "$INSTALL_FONT" == true ]] && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
   add_step "Terminal config (${TERMINAL_NAME})" step_terminal
 elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
-  add_step "Terminals (WSL → Windows)" step_wsl_terminals
+  add_step "Terminals (WSL)" step_wsl_terminals
 fi
 for flag in "${BOOTSTRAP_FLAGS[@]}"; do
   add_step "$(bootstrap_label "$flag")" run_bootstrap_flag "$flag"

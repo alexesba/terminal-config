@@ -245,7 +245,7 @@ Run standalone:
 |---|---|
 | **macOS** | Full support. Uses Homebrew for all installs. |
 | **Linux** | Detects `apt-get` / `dnf` / `pacman` automatically. |
-| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. GUI terminals run on Windows. `install.sh` auto-detects WezTerm, Kitty, and Alacritty and writes `TERMINAL` plus config paths (`WEZTERM_CONFIG_DIR`, `KITTY_CONFIG_DIRECTORY`, `ALACRITTY_XDG_CONFIG_HOME`) to `~/.local.sh`. |
+| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. WezTerm typically runs on Windows; Kitty and Alacritty often run as Linux packages in WSL (`~/.config/…`), with Windows-native Alacritty also supported. `install.sh` auto-detects and writes `TERMINAL` plus config paths to `~/.local.sh`. |
 
 ---
 
