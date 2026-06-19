@@ -70,3 +70,40 @@ EOF
 
   [ "$(resolve_nerd_font_id "$file")" = "hack" ]
 }
+
+@test "nerd_font_installed_p detects files in ~/.local/share/fonts" {
+  mkdir -p "$TEST_HOME/.local/share/fonts"
+  : >"$TEST_HOME/.local/share/fonts/CaskaydiaCoveNerdFont-Regular.ttf"
+  run env HOME="$TEST_HOME" bash -c '
+    source "$1/lib/fonts.sh"
+    nerd_font_installed_p caskaydia
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "update_terminal_font_config writes kitty font_family" {
+  mkdir -p "$TEST_HOME/.config/kitty"
+  printf 'font_family monospace\n' >"$TEST_HOME/.config/kitty/kitty.conf"
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" bash -c '
+    source "$DOTFILES_DIR/lib/helpers.sh"
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    update_terminal_font_config kitty "CaskaydiaCove NFP"
+  '
+  [ "$status" -eq 0 ]
+  grep -q '^font_family CaskaydiaCove NFP$' "$TEST_HOME/.config/kitty/kitty.conf"
+}
+
+@test "update_terminal_font_config writes alacritty family" {
+  mkdir -p "$TEST_HOME/.config/alacritty"
+  cat >"$TEST_HOME/.config/alacritty/alacritty.toml" <<'EOF'
+[font.normal]
+family = "monospace"
+EOF
+  run env HOME="$TEST_HOME" DOTFILES_DIR="$REPO_ROOT" bash -c '
+    source "$DOTFILES_DIR/lib/helpers.sh"
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    update_terminal_font_config alacritty "CaskaydiaCove Nerd Font Propo"
+  '
+  [ "$status" -eq 0 ]
+  grep -q 'family = "CaskaydiaCove Nerd Font Propo"' "$TEST_HOME/.config/alacritty/alacritty.toml"
+}

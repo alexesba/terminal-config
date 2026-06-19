@@ -135,6 +135,10 @@ enable_experimental_conpty_backend = false
 "window.dynamic_title" = true
 "window.opacity" = 1.0
 
+[general]
+live_config_reload = true
+working_directory = "None"
+
 [mouse]
 hide_when_typing = false
 
@@ -167,6 +171,9 @@ EOF
   ! grep -q 'enable_experimental_conpty_backend' "$toml"
   ! grep -q 'window.dynamic_title' "$toml"
   ! grep -q 'window.opacity' "$toml"
+  ! grep -q '^\[general\]$' "$toml"
+  ! grep -q '^live_config_reload = true$' "$toml"
+  ! grep -q '^working_directory = "None"$' "$toml"
   ! grep -q 'use_thin_strokes' "$toml"
   ! grep -q 'ref_test' "$toml"
   grep -q 'hide_when_typing' "$toml"

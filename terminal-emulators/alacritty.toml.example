@@ -63,10 +63,6 @@ family = "{{FONT_FAMILY}}"
 [font.bold_italic]
 family = "{{FONT_FAMILY}}"
 
-[general]
-live_config_reload = true
-working_directory = "None"
-
 [mouse]
 hide_when_typing = false
 

@@ -157,6 +157,7 @@ q_yn_if_shell INSTALL_NVIM_EDITOR 4 "Default editor (nvim)" "Set EDITOR=nvim?" \
 
 # ── 5. Terminal emulator + font ───────────────────────────────────────────────
 INSTALL_WSL_TERMINAL=0
+WSL_NEEDS_LINUX_FONT=0
 _wsl_detected_terms=""
 tui_begin
 echo -e "${BOLD}5. Terminal emulator config${RESET}"
@@ -166,10 +167,14 @@ if is_wsl; then
   wsl_wezterm_detected_p && _wsl_detected_terms="${_wsl_detected_terms}wezterm "
   wsl_kitty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}kitty "
   wsl_alacritty_detected_p && _wsl_detected_terms="${_wsl_detected_terms}alacritty "
+  wsl_linux_gui_terminal_detected_p && WSL_NEEDS_LINUX_FONT=1
   if [ -n "$_wsl_detected_terms" ]; then
     INSTALL_WSL_TERMINAL=1
     echo -e "   ${GREEN}✓${RESET}  Detected:${RESET} ${BOLD}${_wsl_detected_terms% }${RESET}"
     echo -e "   ${DIM}install will set ~/.local.sh paths and copy missing config templates.${RESET}"
+    if [[ "$WSL_NEEDS_LINUX_FONT" == 1 ]]; then
+      echo -e "   ${DIM}Kitty/Alacritty in WSL also install Nerd Fonts into ~/.local/share/fonts.${RESET}"
+    fi
   else
     echo -e "   ${DIM}No terminal detected. Install WezTerm on Windows and/or kitty/alacritty in WSL, then re-run install.${RESET}"
   fi
@@ -214,7 +219,7 @@ case "$INSTALL_TERMINAL" in
   3) TERMINAL_NAME="wezterm" ;;
 esac
 
-if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
+if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]] || [[ "${WSL_NEEDS_LINUX_FONT:-0}" == 1 ]]; then
   _saved_font_id=""
   [ -f "$LOCAL_FILE" ] && _saved_font_id=$(resolve_nerd_font_id "$LOCAL_FILE")
   case "$_saved_font_id" in
@@ -249,7 +254,11 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     tui_collapse "5. Terminal" "${TERMINAL_NAME} ${DIM}(font: skip)${RESET}"
   fi
 elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
-  tui_collapse "5. Terminal" "WSL: ${_wsl_detected_terms% }"
+  if [[ "$INSTALL_FONT" == true && "$WSL_NEEDS_LINUX_FONT" == 1 ]]; then
+    tui_collapse "5. Terminal" "WSL: ${_wsl_detected_terms% } + ${TERMINAL_FONT_FAMILY}"
+  else
+    tui_collapse "5. Terminal" "WSL: ${_wsl_detected_terms% }"
+  fi
 else
   tui_collapse "5. Terminal" "${DIM}skip${RESET}"
 fi
@@ -348,7 +357,11 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
     _sum "Terminal" "${TERMINAL_NAME} (install if missing) + config (font: skip)"
   fi
 elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
-  _sum "Terminal" "Windows: ${_wsl_detected_terms% } → ~/.local.sh + templates"
+  if [[ "$INSTALL_FONT" == true && "$WSL_NEEDS_LINUX_FONT" == 1 ]]; then
+    _sum "Terminal" "WSL: ${_wsl_detected_terms% } + ${TERMINAL_FONT_FAMILY} → ~/.local.sh"
+  else
+    _sum "Terminal" "WSL: ${_wsl_detected_terms% } → ~/.local.sh + templates"
+  fi
 else
   _sum "Terminal" "${DIM}skip${RESET}"
 fi
@@ -423,8 +436,15 @@ step_terminal()  {
 step_wsl_terminals() {
   _ensure_local_file
   configure_wsl_terminals_local_sh "$LOCAL_FILE"
-  install_wsl_terminal_configs "$DOTFILES_DIR" \
-    "$(nerd_font_family_for_terminal caskaydia wezterm)"
+  local font_id="${TERMINAL_FONT_ID:-caskaydia}"
+  install_wsl_terminal_configs "$DOTFILES_DIR" "$font_id"
+  if [[ "${WSL_NEEDS_LINUX_FONT:-0}" == 1 ]]; then
+    sync_wsl_linux_terminal_fonts "$font_id"
+    if [[ -n "${TERMINAL_FONT_ID:-}" ]]; then
+      set_env_var "$LOCAL_FILE" TERMINAL_FONT "$TERMINAL_FONT_FAMILY"
+      set_env_var "$LOCAL_FILE" TERMINAL_FONT_ID "$TERMINAL_FONT_ID"
+    fi
+  fi
 }
 run_bootstrap_flag() { BOOTSTRAP_QUIET=1 bash "$DOTFILES_DIR/bootstrap.sh" "$1"; }
 
@@ -440,6 +460,8 @@ if [[ "$INSTALL_TERMINAL" =~ ^[123]$ ]]; then
   [[ "$INSTALL_FONT" == true ]] && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
   add_step "Terminal config (${TERMINAL_NAME})" step_terminal
 elif [[ "$INSTALL_WSL_TERMINAL" == 1 ]]; then
+  [[ "$INSTALL_FONT" == true && "$WSL_NEEDS_LINUX_FONT" == 1 ]] \
+    && add_step "Nerd Font (${TERMINAL_FONT_ID})" step_font
   add_step "Terminals (WSL)" step_wsl_terminals
 fi
 for flag in "${BOOTSTRAP_FLAGS[@]}"; do

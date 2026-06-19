@@ -219,12 +219,38 @@ _sanitize_alacritty_toml() {
   [[ -f "$toml" ]] || return 0
   tmp=$(mktemp)
   awk '
+    function flush_general() {
+      if (!in_general) return
+      if (general_keep) {
+        print "[general]"
+        printf "%s", general_buf
+      }
+      in_general = 0
+      general_keep = 0
+      general_buf = ""
+    }
     /^\[(mouse\.double_click|mouse\.triple_click|mouse\.hints|window\.dpi)\]/ { skip = 1; next }
-    /^\[/ { skip = 0 }
+    /^\[/ {
+      skip = 0
+      if ($0 == "[general]") {
+        flush_general()
+        in_general = 1
+        next
+      }
+      flush_general()
+    }
+    in_general {
+      if ($0 ~ /^[[:space:]]*live_config_reload[[:space:]]*=[[:space:]]*true[[:space:]]*$/) next
+      if ($0 ~ /^[[:space:]]*working_directory[[:space:]]*=[[:space:]]*"None"[[:space:]]*$/) next
+      general_keep = 1
+      general_buf = general_buf $0 ORS
+      next
+    }
     skip { next }
     /^"window\.(dynamic_title|opacity)"[[:space:]]*=/ { next }
     /^[[:space:]]*(alt_send_esc|enable_experimental_conpty_backend|ref_test|use_thin_strokes)[[:space:]]*=/ { next }
     { print }
+    END { flush_general() }
   ' "$toml" >"$tmp" && mv "$tmp" "$toml"
 }
 
@@ -371,6 +397,12 @@ wsl_windows_home() {
     return 0
   fi
   return 1
+}
+
+# True when Kitty or Linux Alacritty runs inside WSL (needs fonts in ~/.local/share/fonts).
+wsl_linux_gui_terminal_detected_p() {
+  is_wsl || return 1
+  wsl_kitty_detected_p || wsl_linux_alacritty_p
 }
 
 # Directory where WezTerm reads wezterm.lua / colors.lua.
@@ -679,19 +711,24 @@ configure_wsl_wezterm_local_sh() {
 }
 
 # Copy terminal templates when missing (WSL: Windows path for wezterm; Linux home for kitty/alacritty).
+# Usage: install_wsl_terminal_configs <dotfiles_dir> [font_id]
 install_wsl_terminal_configs() {
-  local dotfiles="$1" font_family="$2"
+  local dotfiles="$1" font_id="${2:-caskaydia}"
 
   is_wsl || return 0
 
   if wsl_wezterm_detected_p; then
-    install_wsl_wezterm_config "$dotfiles" "$font_family"
+    install_wsl_wezterm_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" wezterm)"
   fi
   if wsl_kitty_detected_p; then
-    install_wsl_kitty_config "$dotfiles" "$font_family"
+    install_wsl_kitty_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" kitty)"
   fi
   if wsl_alacritty_detected_p; then
-    install_wsl_alacritty_config "$dotfiles" "$font_family"
+    migrate_alacritty_yaml_config "$(nerd_font_family_for_terminal "$font_id" alacritty)"
+    install_wsl_alacritty_config "$dotfiles" \
+      "$(nerd_font_family_for_terminal "$font_id" alacritty)"
   fi
 }
 

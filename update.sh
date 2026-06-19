@@ -71,6 +71,15 @@ remove_legacy_repo_copy "$DOTFILES_DIR/terminal-emulators/wezterm.lua" \
 remove_legacy_repo_copy "$DOTFILES_DIR/terminals/wezterm.lua" \
   "${HOME}/.config/wezterm/wezterm.lua"
 
+if is_wsl && wsl_linux_gui_terminal_detected_p; then
+  # shellcheck source=lib/fonts.sh
+  source "$DOTFILES_DIR/lib/fonts.sh"
+  _wsl_font_id="$(resolve_nerd_font_id "$HOME/.local.sh" 2>/dev/null || true)"
+  _wsl_font_id="${_wsl_font_id:-caskaydia}"
+  nerd_font_installed_p "$_wsl_font_id" || install_nerd_font "$_wsl_font_id" || true
+  sync_wsl_linux_terminal_fonts "$_wsl_font_id"
+fi
+
 echo ""
 echo -e "${GREEN}${BOLD}Done!${RESET}"
 echo ""
