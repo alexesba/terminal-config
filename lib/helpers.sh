@@ -402,11 +402,9 @@ wsl_windows_user() {
 
 # Mounted Windows user profile, e.g. /mnt/c/Users/alexesba (WSL only).
 wsl_windows_home() {
-  local user="${1:-}"
+  local user
   [ -d /mnt/c/Users ] || return 1
-  if [ -z "$user" ]; then
-    user="$(wsl_windows_user 2>/dev/null || true)"
-  fi
+  user="$(wsl_windows_user 2>/dev/null || true)"
   if [ -n "$user" ] && [ -d "/mnt/c/Users/$user" ]; then
     printf '/mnt/c/Users/%s\n' "$user"
     return 0
