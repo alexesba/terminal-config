@@ -142,15 +142,7 @@ _macos_clear_brew_cask_quarantine() {
 # ── Linux package manager helper ──────────────────────────────────────────────
 # Usage: _linux_install <pkg> [<pkg> ...]
 _linux_install() {
-  if command -v apt-get &>/dev/null; then
-    sudo apt-get install -y "$@"
-  elif command -v dnf &>/dev/null; then
-    sudo dnf install -y "$@"
-  elif command -v pacman &>/dev/null; then
-    sudo pacman -S --noconfirm "$@"
-  else
-    echo -e "  ${YELLOW}⚠${RESET}  Unknown package manager — please install ${BOLD}$*${RESET} manually."
-  fi
+  linux_install_packages "$@"
 }
 
 # ── tmux ──────────────────────────────────────────────────────────────────────

@@ -233,6 +233,39 @@ _nerd_font_linux_install_target_p() {
   [[ "${OSTYPE:-}" =~ ^linux ]]
 }
 
+# Ensure curl, unzip, and fontconfig are available before Linux font install.
+# Usage: _ensure_nerd_font_linux_deps
+_ensure_nerd_font_linux_deps() {
+  local missing=() pkg
+
+  command -v curl >/dev/null 2>&1 || missing+=(curl)
+  command -v unzip >/dev/null 2>&1 || missing+=(unzip)
+  command -v fc-cache >/dev/null 2>&1 || missing+=(fontconfig)
+  ((${#missing[@]} == 0)) && return 0
+
+  if ! declare -f linux_install_packages >/dev/null 2>&1; then
+    for pkg in "${missing[@]}"; do
+      echo -e "  ${YELLOW}⚠${RESET}  ${pkg} not found — install ${pkg} and re-run install."
+    done
+    return 1
+  fi
+
+  echo -e "  Installing font dependencies via package manager: ${missing[*]}…"
+  if ! linux_install_packages "${missing[@]}"; then
+    echo -e "  ${YELLOW}⚠${RESET}  Could not install: ${missing[*]}"
+    return 1
+  fi
+
+  for pkg in "${missing[@]}"; do
+    case "$pkg" in
+      curl) command -v curl >/dev/null 2>&1 || return 1 ;;
+      unzip) command -v unzip >/dev/null 2>&1 || return 1 ;;
+      fontconfig) command -v fc-cache >/dev/null 2>&1 || return 1 ;;
+    esac
+  done
+  return 0
+}
+
 # Download and install a Nerd Font into ~/.local/share/fonts.
 # Usage: _install_nerd_font_linux <id>
 _install_nerd_font_linux() {
@@ -244,12 +277,9 @@ _install_nerd_font_linux() {
     return 0
   fi
 
-  for cmd in curl unzip; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-      echo -e "  ${YELLOW}⚠${RESET}  ${cmd} not found — install ${cmd} and re-run install."
-      return 1
-    fi
-  done
+  if ! _ensure_nerd_font_linux_deps; then
+    return 1
+  fi
 
   version="v3.4.0"
   url="https://github.com/ryanoasis/nerd-fonts/releases/download/${version}/${zip_name}.zip"
@@ -280,7 +310,7 @@ _install_nerd_font_linux() {
       || echo -e "  ${GREEN}✓${RESET}  Font installed to ${font_dir}."
   else
     echo -e "  ${GREEN}✓${RESET}  Font installed to ${font_dir}."
-    echo -e "  ${DIM}Install fontconfig and run: fc-cache -fv ${font_dir}${RESET}"
+    echo -e "  ${YELLOW}⚠${RESET}  fc-cache not found — install fontconfig for immediate font pickup."
   fi
   return 0
 }

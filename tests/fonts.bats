@@ -92,6 +92,33 @@ EOF
   [ "$(resolve_nerd_font_id "$file")" = "hack" ]
 }
 
+@test "ensure_nerd_font_linux_deps installs missing packages" {
+  run env OSTYPE=linux-gnu bash -c '
+    source "$1/lib/helpers.sh"
+    source "$1/lib/fonts.sh"
+    _deps_ready=0
+    function command {
+      if [[ "$1" = -v && "$2" = unzip ]]; then
+        ((_deps_ready)) && return 0
+        return 1
+      fi
+      if [[ "$1" = -v && "$2" = fc-cache ]]; then
+        ((_deps_ready)) && return 0
+        return 1
+      fi
+      builtin command "$@"
+    }
+    linux_install_packages() {
+      _deps_ready=1
+      return 0
+    }
+    _ensure_nerd_font_linux_deps
+  ' _ "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Installing font dependencies"* ]]
+  [[ "$output" == *"unzip"* ]]
+}
+
 @test "nerd_font_installed_p detects files in ~/.local/share/fonts" {
   mkdir -p "$TEST_HOME/.local/share/fonts"
   : >"$TEST_HOME/.local/share/fonts/CaskaydiaCoveNerdFont-Regular.ttf"

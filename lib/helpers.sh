@@ -379,6 +379,21 @@ is_wsl() {
   grep -qi microsoft /proc/version 2>/dev/null
 }
 
+# Install packages via apt, dnf, or pacman (Linux/WSL). Requires sudo.
+# Usage: linux_install_packages <pkg> [<pkg> ...]
+linux_install_packages() {
+  if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get install -y "$@"
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y "$@"
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm "$@"
+  else
+    echo -e "  ${YELLOW}⚠${RESET}  Unknown package manager — please install ${BOLD}$*${RESET} manually."
+    return 1
+  fi
+}
+
 # Windows username for /mnt/c/Users/<name> (WSL only).
 wsl_windows_user() {
   command -v cmd.exe >/dev/null 2>&1 || return 1
