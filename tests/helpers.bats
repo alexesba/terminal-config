@@ -369,3 +369,29 @@ EOF
     [ "$status" -ne 0 ]
   done
 }
+
+@test "wsl_wezterm_detected_p finds wezterm.exe under Windows profile" {
+  mkdir -p "$TEST_HOME/win/AppData/Local/Programs/WezTerm"
+  touch "$TEST_HOME/win/AppData/Local/Programs/WezTerm/wezterm.exe"
+  run env WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    wsl_wezterm_detected_p
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "configure_wsl_wezterm_local_sh writes TERMINAL and WEZTERM_CONFIG_DIR" {
+  mkdir -p "$TEST_HOME/win/.config/wezterm"
+  local file="$TEST_HOME/.local.sh"
+  touch "$file"
+  run env HOME="$TEST_HOME" WSL_DISTRO_NAME=Ubuntu bash -c '
+    source "$REPO_ROOT/lib/helpers.sh"
+    wsl_windows_home() { printf "%s\n" "'"$TEST_HOME/win"'"; }
+    wsl_wezterm_detected_p() { return 0; }
+    configure_wsl_wezterm_local_sh "'"$file"'"
+  ' REPO_ROOT="$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  grep -q 'export TERMINAL="wezterm"' "$file"
+  grep -q 'export WEZTERM_CONFIG_DIR="'"$TEST_HOME/win/.config/wezterm"'"' "$file"
+}

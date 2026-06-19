@@ -245,7 +245,7 @@ Run standalone:
 |---|---|
 | **macOS** | Full support. Uses Homebrew for all installs. |
 | **Linux** | Detects `apt-get` / `dnf` / `pacman` automatically. |
-| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. Terminal emulator configs belong on the Windows side. `colorscheme` auto-detects WezTerm (`WEZTERM_PANE`) and writes `colors.lua` under your Windows profile (`/mnt/c/Users/…/.config/wezterm` by default). Set `WEZTERM_CONFIG_DIR` in `~/.local.sh` if your config lives elsewhere. |
+| **WSL** | `open` alias uses `wslview` (wslu) or `explorer.exe`. Terminal emulator configs belong on the Windows side. On WSL, `install.sh` auto-sets `TERMINAL=wezterm` and `WEZTERM_CONFIG_DIR` when WezTerm is detected on Windows, and copies `wezterm.lua.example` there if missing. |
 
 ---
 

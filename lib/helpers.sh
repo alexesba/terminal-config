@@ -449,6 +449,66 @@ terminal_emulator_installed_p() {
     *) return 1 ;;
   esac
 }
+
+# True when WezTerm appears to be installed on Windows (WSL install-time detection).
+wsl_wezterm_detected_p() {
+  local win_home exe
+
+  is_wsl || return 1
+  hosting_wezterm_p && return 0
+  wezterm_config_present_p && return 0
+
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  [ -n "$win_home" ] || return 1
+
+  for exe in \
+    "/mnt/c/Program Files/WezTerm/wezterm.exe" \
+    "/mnt/c/Program Files/WezTerm/wezterm-gui.exe" \
+    "$win_home/AppData/Local/Programs/WezTerm/wezterm.exe"; do
+    [ -f "$exe" ] && return 0
+  done
+  return 1
+}
+
+# Write TERMINAL=wezterm and WEZTERM_CONFIG_DIR to ~/.local.sh (WSL + WezTerm on Windows).
+configure_wsl_wezterm_local_sh() {
+  local file="$1" dir
+
+  is_wsl || return 0
+  wsl_wezterm_detected_p || return 0
+
+  dir="$(WEZTERM_CONFIG_DIR= wezterm_config_dir)"
+  set_env_var "$file" TERMINAL "wezterm"
+  set_env_var "$file" WEZTERM_CONFIG_DIR "$dir"
+}
+
+# Copy wezterm.lua.example to the Windows WezTerm config dir when missing (WSL only).
+install_wsl_wezterm_config() {
+  local dotfiles="$1" font_family="$2" dir dest win_home
+
+  is_wsl || return 0
+  wsl_wezterm_detected_p || return 0
+
+  dir="$(WEZTERM_CONFIG_DIR= wezterm_config_dir)"
+  win_home="$(wsl_windows_home 2>/dev/null || true)"
+  if [ -f "$dir/wezterm.lua" ] || [ -f "$dir/.wezterm.lua" ]; then
+    echo -e "  ${GREEN}✓${RESET}  WezTerm config already exists — skipping template copy."
+    return 0
+  fi
+  if [ -n "$win_home" ] && [ -f "$win_home/.wezterm.lua" ]; then
+    echo -e "  ${GREEN}✓${RESET}  WezTerm config already exists at ${win_home}/.wezterm.lua — skipping."
+    return 0
+  fi
+
+  mkdir -p "$dir"
+  dest="$dir/wezterm.lua"
+  install_config_from_template "$dotfiles" \
+    "terminal-emulators/wezterm.lua.example" \
+    "$dest" \
+    "$font_family"
+}
+
+# Sets or updates an `export VAR="value"` line in a target file, idempotently.
 # Replaces an existing export of the same VAR — including a commented-out
 # placeholder like `# export VAR=...` left by the template — otherwise appends.
 # Usage: set_env_var <file> <VAR> <value>
