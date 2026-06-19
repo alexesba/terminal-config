@@ -53,3 +53,8 @@ EOF
   ! grep -q 'reload_wezterm.sh' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
   ! grep -q 'apply_persisted' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
 }
+
+@test "colorscheme applies gogh themes with bash not sh" {
+  ! grep -q 'sh "$gogh_dir/$selection"' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
+  grep -q 'bash "$gogh_dir/$selection"' "$REPO_ROOT/shell/common/gogh/colorscheme.sh"
+}

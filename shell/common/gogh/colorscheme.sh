@@ -89,7 +89,7 @@ function colorscheme() {
   fi
   # Kitty/Alacritty: Gogh writes config files. WezTerm: persist + config reload only.
   if [ "${TERMINAL:-}" != wezterm ]; then
-    sh "$gogh_dir/$selection"
+    bash "$gogh_dir/$selection"
   fi
   [ -f "$persist_script" ] && bash "$persist_script" "$gogh_dir/$selection" "${TERMINAL:-}"
   if [ "${TERMINAL:-}" = alacritty ]; then
