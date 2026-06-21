@@ -254,6 +254,24 @@ _sanitize_alacritty_toml() {
   ' "$toml" >"$tmp" && mv "$tmp" "$toml"
 }
 
+# Source lib/fonts.sh from dotfiles when available; fall back to DOTFILES_DIR.
+# Usage: safe_source_fonts <dotfiles_dir>
+safe_source_fonts() {
+  local dotfiles="$1"
+
+  if [[ -f "$dotfiles/lib/fonts.sh" ]]; then
+    # shellcheck source=fonts.sh disable=SC1091
+    source "$dotfiles/lib/fonts.sh"
+    return 0
+  fi
+  if [[ -n "${DOTFILES_DIR:-}" && -f "$DOTFILES_DIR/lib/fonts.sh" ]]; then
+    # shellcheck source=fonts.sh disable=SC1091
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    return 0
+  fi
+  return 1
+}
+
 # Migrate deprecated alacritty.yml to alacritty.toml (Alacritty 0.13+).
 # Renames the YAML to alacritty.yml.old once TOML exists so launch warnings stop.
 # Usage: migrate_alacritty_yaml_config [font_family]
@@ -283,9 +301,7 @@ migrate_alacritty_yaml_config() {
 
     if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$toml" 2>/dev/null; then
       dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-      # shellcheck source=fonts.sh
-      source "$dotfiles/lib/fonts.sh"
-      substitute_font_placeholder "$toml" "$font_family"
+      safe_source_fonts "$dotfiles" && substitute_font_placeholder "$toml" "$font_family"
     fi
   fi
 }
@@ -312,8 +328,7 @@ install_config_from_template() {
 
   _apply_template_placeholders() {
     [[ -f "$dest" ]] || return 0
-    # shellcheck source=fonts.sh
-    source "$dotfiles/lib/fonts.sh"
+    safe_source_fonts "$dotfiles" || return 0
 
     if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
       substitute_font_placeholder "$dest" "$font_family"
