@@ -52,6 +52,29 @@ load test_helper
   ! grep -q '{{FONT_FAMILY}}' "$file"
 }
 
+@test "substitute_cjk_font_placeholder replaces {{CJK_FONT_FAMILY}} in config" {
+  local file="$TEST_HOME/kitty.conf"
+  printf '%s\n' "symbol_map U+FF65-U+FF9F {{CJK_FONT_FAMILY}}" >"$file"
+
+  substitute_cjk_font_placeholder "$file" "MS Gothic"
+
+  grep -q "symbol_map U+FF65-U+FF9F MS Gothic" "$file"
+  ! grep -q '{{CJK_FONT_FAMILY}}' "$file"
+}
+
+@test "install_config_from_template substitutes kitty placeholders on copy" {
+  local dest="$TEST_HOME/.config/kitty/kitty.conf"
+
+  install_config_from_template "$REPO_ROOT" \
+    "terminal-emulators/kitty.conf.example" "$dest" \
+    "CaskaydiaCove NFP" >/dev/null
+
+  grep -q "font_family CaskaydiaCove NFP" "$dest"
+  grep -q "symbol_map U+FF65-U+FF9F $(cjk_font_family)" "$dest"
+  ! grep -q '{{FONT_FAMILY}}' "$dest"
+  ! grep -q '{{CJK_FONT_FAMILY}}' "$dest"
+}
+
 @test "install_config_from_template substitutes font placeholder on copy" {
   local dest="$TEST_HOME/.config/wezterm/wezterm.lua"
 

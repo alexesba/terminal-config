@@ -310,18 +310,28 @@ install_config_from_template() {
   [ -f "$example" ] || return 1
   mkdir -p "$(dirname "$dest")"
 
-  _apply_font_if_needed() {
-    if [[ -n "$font_family" ]] && [[ -f "$dest" ]]; then
-      # shellcheck source=fonts.sh
-      source "$dotfiles/lib/fonts.sh"
+  _apply_template_placeholders() {
+    [[ -f "$dest" ]] || return 0
+    # shellcheck source=fonts.sh
+    source "$dotfiles/lib/fonts.sh"
+
+    if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
       substitute_font_placeholder "$dest" "$font_family"
+    fi
+    if grep -q '{{CJK_FONT_FAMILY}}' "$dest" 2>/dev/null; then
+      substitute_cjk_font_placeholder "$dest"
+    fi
+    if [[ "$dest" == *"/kitty/kitty.conf" ]]; then
+      install_wsl_windows_fontconfig "$dotfiles"
     fi
   }
 
   if [ -f "$dest" ] && [ ! -L "$dest" ]; then
-    if grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
-      _apply_font_if_needed
-      echo -e "  ${GREEN}✓${RESET}  $dest already exists — applied missing font substitution."
+    if grep -qE '{{FONT_FAMILY}}|{{CJK_FONT_FAMILY}}' "$dest" 2>/dev/null; then
+      _apply_template_placeholders
+      echo -e "  ${GREEN}✓${RESET}  $dest already exists — applied missing template substitutions."
+    elif [[ "$dest" == *"/kitty/kitty.conf" ]]; then
+      _apply_template_placeholders
     else
       echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
     fi
@@ -341,7 +351,7 @@ install_config_from_template() {
       echo -e "  ${YELLOW}⚠${RESET}  Symlink target missing (${legacy_src}) — using template."
       rm "$dest"
       cp "$example" "$dest"
-      _apply_font_if_needed
+      _apply_template_placeholders
     fi
     echo -e "  ${GREEN}✓${RESET}  Replaced dotfiles symlink with local copy at $dest"
     return 0
@@ -349,7 +359,7 @@ install_config_from_template() {
 
   if [ ! -e "$dest" ]; then
     cp "$example" "$dest"
-    _apply_font_if_needed
+    _apply_template_placeholders
     echo -e "  ${GREEN}✓${RESET}  Created $dest from template."
     return 0
   fi

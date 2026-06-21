@@ -10,6 +10,11 @@ Templates use a `{{FONT_FAMILY}}` placeholder; `install.sh` replaces it with
 your Nerd Font choice (default: Caskaydia Cove Nerd Font Propo) when the config
 is first created.
 
+Kitty also uses `{{CJK_FONT_FAMILY}}` for CJK `symbol_map` fallbacks (halfwidth
+katakana and ideographs). On WSL, `install.sh` installs
+`fontconfig/30-wsl-windows-fonts.conf` so Windows fonts (e.g. MS Gothic) are
+available to Kitty.
+
 | Template | Installed to |
 |---|---|
 | `alacritty.toml.example` | `~/.config/alacritty/alacritty.toml` |

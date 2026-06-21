@@ -48,6 +48,12 @@ bold_font        auto
 italic_font      auto
 bold_italic_font auto
 
+# Nerd Font patched faces include empty placeholders for some CJK codepoints,
+# which blocks Kitty's automatic fallback. Map halfwidth katakana and common
+# ideographs to a real CJK font (see {{CJK_FONT_FAMILY}} substitution in install.sh).
+symbol_map U+FF65-U+FF9F {{CJK_FONT_FAMILY}}
+symbol_map U+4E00-U+9FFF {{CJK_FONT_FAMILY}}
+
 # font_family Iosevka Term Regular
 # bold_font Iosevka Term Bold
 # italic_font Iosevka Term Italic

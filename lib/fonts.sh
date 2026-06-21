@@ -402,6 +402,56 @@ sync_linux_terminal_fonts() {
   fi
 }
 
+# CJK fallback for Kitty symbol_map (halfwidth katakana, unified ideographs).
+# Usage: cjk_font_family
+cjk_font_family() {
+  if is_wsl; then
+    echo "MS Gothic"
+  elif [[ "$OSTYPE" == darwin* ]]; then
+    echo "Hiragino Sans"
+  else
+    echo "Noto Sans CJK JP"
+  fi
+}
+
+# Replace {{CJK_FONT_FAMILY}} in a copied terminal config file.
+# Usage: substitute_cjk_font_placeholder <file> [cjk_font_family]
+substitute_cjk_font_placeholder() {
+  local file="$1"
+  local font="${2:-$(cjk_font_family)}"
+  local escaped
+
+  [ -f "$file" ] || return 1
+  escaped=$(printf '%s\n' "$font" | sed 's/[\/&]/\\&/g')
+  sed -i.bak "s|{{CJK_FONT_FAMILY}}|${escaped}|g" "$file" && rm -f "$file.bak"
+}
+
+# Expose Windows fonts to fontconfig on WSL (MS Gothic, etc.).
+# Usage: install_wsl_windows_fontconfig <dotfiles_dir>
+install_wsl_windows_fontconfig() {
+  local dotfiles="$1"
+  local example="$dotfiles/terminal-emulators/fontconfig/30-wsl-windows-fonts.conf"
+  local dest="${HOME}/.config/fontconfig/conf.d/30-wsl-windows-fonts.conf"
+
+  is_wsl || return 0
+  [ -f "$example" ] || return 1
+
+  mkdir -p "$(dirname "$dest")"
+  if [ -f "$dest" ] && cmp -s "$example" "$dest"; then
+    echo -e "  ${GREEN}✓${RESET}  ${dest} already up to date."
+    return 0
+  fi
+
+  cp "$example" "$dest"
+  if command -v fc-cache &>/dev/null; then
+    fc-cache -r >/dev/null 2>&1 \
+      && echo -e "  ${GREEN}✓${RESET}  Installed ${dest} (fc-cache updated)." \
+      || echo -e "  ${GREEN}✓${RESET}  Installed ${dest}."
+  else
+    echo -e "  ${GREEN}✓${RESET}  Installed ${dest}."
+  fi
+}
+
 # Install a Nerd Font by id (caskaydia|jetbrains|fira|hack).
 # Usage: install_nerd_font <id>
 install_nerd_font() {
