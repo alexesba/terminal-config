@@ -254,6 +254,24 @@ _sanitize_alacritty_toml() {
   ' "$toml" >"$tmp" && mv "$tmp" "$toml"
 }
 
+# Source lib/fonts.sh from dotfiles when available; fall back to DOTFILES_DIR.
+# Usage: safe_source_fonts <dotfiles_dir>
+safe_source_fonts() {
+  local dotfiles="$1"
+
+  if [[ -f "$dotfiles/lib/fonts.sh" ]]; then
+    # shellcheck source=fonts.sh disable=SC1091
+    source "$dotfiles/lib/fonts.sh"
+    return 0
+  fi
+  if [[ -n "${DOTFILES_DIR:-}" && -f "$DOTFILES_DIR/lib/fonts.sh" ]]; then
+    # shellcheck source=fonts.sh disable=SC1091
+    source "$DOTFILES_DIR/lib/fonts.sh"
+    return 0
+  fi
+  return 1
+}
+
 # Migrate deprecated alacritty.yml to alacritty.toml (Alacritty 0.13+).
 # Renames the YAML to alacritty.yml.old once TOML exists so launch warnings stop.
 # Usage: migrate_alacritty_yaml_config [font_family]
@@ -283,9 +301,7 @@ migrate_alacritty_yaml_config() {
 
     if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$toml" 2>/dev/null; then
       dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-      # shellcheck source=fonts.sh
-      source "$dotfiles/lib/fonts.sh"
-      substitute_font_placeholder "$toml" "$font_family"
+      safe_source_fonts "$dotfiles" && substitute_font_placeholder "$toml" "$font_family"
     fi
   fi
 }
@@ -310,18 +326,27 @@ install_config_from_template() {
   [ -f "$example" ] || return 1
   mkdir -p "$(dirname "$dest")"
 
-  _apply_font_if_needed() {
-    if [[ -n "$font_family" ]] && [[ -f "$dest" ]]; then
-      # shellcheck source=fonts.sh
-      source "$dotfiles/lib/fonts.sh"
+  _apply_template_placeholders() {
+    [[ -f "$dest" ]] || return 0
+    safe_source_fonts "$dotfiles" || return 0
+
+    if [[ -n "$font_family" ]] && grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
       substitute_font_placeholder "$dest" "$font_family"
+    fi
+    if grep -q '{{CJK_FONT_FAMILY}}' "$dest" 2>/dev/null; then
+      substitute_cjk_font_placeholder "$dest"
+    fi
+    if [[ "$dest" == *"/kitty/kitty.conf" ]]; then
+      install_wsl_windows_fontconfig "$dotfiles"
     fi
   }
 
   if [ -f "$dest" ] && [ ! -L "$dest" ]; then
-    if grep -q '{{FONT_FAMILY}}' "$dest" 2>/dev/null; then
-      _apply_font_if_needed
-      echo -e "  ${GREEN}✓${RESET}  $dest already exists — applied missing font substitution."
+    if grep -qE '{{FONT_FAMILY}}|{{CJK_FONT_FAMILY}}' "$dest" 2>/dev/null; then
+      _apply_template_placeholders
+      echo -e "  ${GREEN}✓${RESET}  $dest already exists — applied missing template substitutions."
+    elif [[ "$dest" == *"/kitty/kitty.conf" ]]; then
+      _apply_template_placeholders
     else
       echo -e "  ${GREEN}✓${RESET}  $dest already exists (local file) — skipping."
     fi
@@ -341,7 +366,7 @@ install_config_from_template() {
       echo -e "  ${YELLOW}⚠${RESET}  Symlink target missing (${legacy_src}) — using template."
       rm "$dest"
       cp "$example" "$dest"
-      _apply_font_if_needed
+      _apply_template_placeholders
     fi
     echo -e "  ${GREEN}✓${RESET}  Replaced dotfiles symlink with local copy at $dest"
     return 0
@@ -349,7 +374,7 @@ install_config_from_template() {
 
   if [ ! -e "$dest" ]; then
     cp "$example" "$dest"
-    _apply_font_if_needed
+    _apply_template_placeholders
     echo -e "  ${GREEN}✓${RESET}  Created $dest from template."
     return 0
   fi
