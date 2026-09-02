@@ -26,9 +26,9 @@ function _precmd_jobs() {
   fi
 
   local -A counts=()
-  local job
-  for job in ${(k)jobtexts}; do
-    local prog="${jobtexts[$job]%% *}"
+  local text prog
+  for text in ${(v)jobtexts}; do
+    prog="${text%% *}"
     (( counts[$prog]++ ))
   done
 
